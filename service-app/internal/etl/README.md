@@ -1,1 +1,0 @@
-# Handles S3, SQS processing for document scan

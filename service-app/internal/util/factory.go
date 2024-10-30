@@ -19,6 +19,18 @@ func ProcessDocument(data []byte, docType, format string) (interface{}, error) {
 		return nil, fmt.Errorf("failed to parse document: %w", parseErr)
 	}
 
+	// Cast parsedDoc to LP1FDocument
+	// TODO: this should be more generic and handle other document types.
+	lp1fDoc, ok := parsedDoc.(*types.LP1FDocument)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast parsed document to LP1FDocument")
+	}
+	sanitizer := lp1f.NewSanitizer()
+	sanitizedData, err := sanitizer.Sanitize(lp1fDoc)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sanitize data: %w", err)
+	}
+
 	if errors := parser.GetErrors(); len(errors) > 0 {
 		fmt.Println("Parsing completed with the following errors:")
 		for _, e := range errors {
@@ -26,8 +38,8 @@ func ProcessDocument(data []byte, docType, format string) (interface{}, error) {
 		}
 	}
 
-	fmt.Printf("Parsed Document: %+v\n", parsedDoc)
-	return parsedDoc, nil
+	fmt.Printf("Parsed Document: %+v\n", sanitizedData)
+	return sanitizedData, nil
 }
 
 // NewParser returns a DocumentParser based on the given document type and format.
