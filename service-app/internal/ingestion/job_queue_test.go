@@ -3,7 +3,6 @@ package ingestion
 import (
 	"sync/atomic"
 	"testing"
-	"time"
 )
 
 // Create an array of sample XML
@@ -51,13 +50,9 @@ func TestJobQueue(t *testing.T) {
 	numJobs := 2
 
 	for i := 0; i < numJobs; i++ {
-		queue.AddToQueue(sampleXMLArray[i], "LP1F", "xml")
-	}
-
-	start := time.Now()
-	for time.Since(start) < 2*time.Second {
-		atomic.AddInt32(&processedJobs, int32(numJobs))
-		break
+		queue.AddToQueue(sampleXMLArray[i], "LP1F", "xml", func() {
+			atomic.AddInt32(&processedJobs, 1)
+		})
 	}
 
 	queue.Wait()

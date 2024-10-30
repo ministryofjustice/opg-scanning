@@ -8,9 +8,10 @@ import (
 )
 
 type Job struct {
-	Data    interface{}
-	docType string
-	format  string
+	Data       interface{}
+	docType    string
+	format     string
+	onComplete func()
 }
 
 type JobQueue struct {
@@ -28,8 +29,8 @@ func NewJobQueue() *JobQueue {
 	return queue
 }
 
-func (q *JobQueue) AddToQueue(data interface{}, docType string, format string) {
-	job := Job{Data: data, docType: docType, format: format}
+func (q *JobQueue) AddToQueue(data interface{}, docType string, format string, onComplete func()) {
+	job := Job{Data: data, docType: docType, format: format, onComplete: onComplete}
 	q.wg.Add(1)
 	q.Jobs <- job
 }
@@ -51,6 +52,9 @@ func (q *JobQueue) StartWorkerPool(numWorkers int) {
 					q.logger.ErrorFormated("Worker %d failed to process job: %v, error: %v\n", workerID, job.Data, err)
 				} else {
 					q.logger.InfoFormated("Worker %d successfully processed job: %+v\n", workerID, parsedDoc)
+					if job.onComplete != nil {
+						job.onComplete()
+					}
 				}
 
 				q.wg.Done()

@@ -1,1 +1,1 @@
-# Centralized logging setup and helper functions
+# Setup and helper functions
