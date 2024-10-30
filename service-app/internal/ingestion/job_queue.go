@@ -1,9 +1,9 @@
 package ingestion
 
 import (
-	"fmt"
 	"sync"
 
+	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
@@ -14,8 +14,9 @@ type Job struct {
 }
 
 type JobQueue struct {
-	Jobs chan Job
-	wg   *sync.WaitGroup
+	Jobs   chan Job
+	wg     *sync.WaitGroup
+	logger *logger.Logger
 }
 
 func NewJobQueue() *JobQueue {
@@ -37,21 +38,22 @@ func (q *JobQueue) StartWorkerPool(numWorkers int) {
 	for i := 0; i < numWorkers; i++ {
 		go func(workerID int) {
 			for job := range q.Jobs {
-				defer q.wg.Done()
-				fmt.Printf("Worker %d processing job: %+v\n", workerID, job.Data)
+				q.logger.InfoFormated("Worker %d processing job: %+v\n", workerID, job.Data)
 
 				data, ok := job.Data.([]byte)
 				if !ok {
-					fmt.Printf("Worker %d failed on type assertion: %v\n", workerID, job.Data)
+					q.logger.InfoFormated("Worker %d failed on type assertion: %v\n", workerID, job.Data)
 					continue
 				}
 
 				parsedDoc, err := util.ProcessDocument(data, job.docType, job.format)
 				if err != nil {
-					fmt.Printf("Worker %d failed to process job: %v, error: %v\n", workerID, job.Data, err)
+					q.logger.ErrorFormated("Worker %d failed to process job: %v, error: %v\n", workerID, job.Data, err)
 				} else {
-					fmt.Printf("Worker %d successfully processed job: %+v\n", workerID, parsedDoc)
+					q.logger.InfoFormated("Worker %d successfully processed job: %+v\n", workerID, parsedDoc)
 				}
+
+				q.wg.Done()
 			}
 		}(i)
 	}

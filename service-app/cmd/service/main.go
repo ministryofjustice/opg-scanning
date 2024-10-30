@@ -1,4 +1,3 @@
-// Entry Point: cmd/service/main.go
 package main
 
 import (
