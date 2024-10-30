@@ -37,25 +37,16 @@ func ProcessDocument(data []byte, docType, format string) (interface{}, error) {
 func NewParser(data []byte, docType string, format string) (parser.DocumentParser, error) {
 	switch docType {
 	case "LP1F":
-		lp1fDoc, err := parseLP1FDocument(data, format) // Helper function based on format
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse LP1F %s: %w", format, err)
+		var lp1fDoc *types.LP1FDocument
+		var err error
+		if format == "xml" {
+			lp1fDoc, err = lp1f.ParseLP1FXml(data)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse LP1F XML: %w", err)
+			}
 		}
 		return &lp1f.LP1FParser{Doc: lp1fDoc}, nil
 	default:
 		return nil, fmt.Errorf("unsupported document type: %s", docType)
 	}
-}
-
-// parseLP1FDocument parses an LP1F document from the given data, based on the given format.
-// It currently supports "xml" and will return an error for other formats.
-func parseLP1FDocument(data []byte, format string) (*types.LP1FDocument, error) {
-	switch format {
-	case "xml":
-		return lp1f.ParseLP1FXml(data)
-	case "json":
-		// return lp1f.ParseLP1FJson(data) // Add JSON parsing function
-	}
-
-	return nil, fmt.Errorf("unsupported format: %s", format)
 }
