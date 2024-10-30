@@ -1,2 +1,2 @@
-# Auth habdling
+# Auth handling
 # HTTP API handlers
