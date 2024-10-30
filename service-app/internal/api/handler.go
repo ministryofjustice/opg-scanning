@@ -42,7 +42,8 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Queue the parsed document for further processing
-	c.queue.AddToQueue(data, docType, format)
+	// TODO: handle callback
+	c.queue.AddToQueue(data, docType, format, func() {})
 	c.logger.Info("Job added to queue")
 	w.WriteHeader(http.StatusAccepted)
 }
