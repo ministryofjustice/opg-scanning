@@ -9,14 +9,14 @@ import (
 
 type IndexController struct {
 	validator *ingestion.Validator
-	queue     *ingestion.JobQueue
+	Queue     *ingestion.JobQueue
 	logger    *logger.Logger
 }
 
 func NewIndexController() *IndexController {
 	return &IndexController{
 		validator: ingestion.NewValidator(),
-		queue:     ingestion.NewJobQueue(),
+		Queue:     ingestion.NewJobQueue(),
 		logger:    logger.NewLogger(),
 	}
 }
@@ -42,12 +42,13 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Queue the parsed document for further processing
-	// TODO: handle callback
-	c.queue.AddToQueue(data, docType, format, func() {})
+	c.Queue.AddToQueue(data, docType, format, func() {
+		c.logger.Info("Job processing completed for data: " + string(data))
+	})
 	c.logger.Info("Job added to queue")
 	w.WriteHeader(http.StatusAccepted)
 }
 
 func (c *IndexController) CloseQueue() {
-	c.queue.Close()
+	c.Queue.Close()
 }

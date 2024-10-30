@@ -1,8 +1,10 @@
 package ingestion
 
 import (
+	"context"
 	"sync/atomic"
 	"testing"
+	"time"
 )
 
 // Create an array of sample XML
@@ -44,7 +46,12 @@ var sampleXMLArray = [][]byte{
 
 func TestJobQueue(t *testing.T) {
 	queue := NewJobQueue()
-	defer queue.Close()
+
+	// Create a context that will manage the worker lifecycle
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// Start worker pool
+	queue.StartWorkerPool(ctx, 3)
 
 	var processedJobs int32
 	numJobs := 2
@@ -54,10 +61,22 @@ func TestJobQueue(t *testing.T) {
 			atomic.AddInt32(&processedJobs, 1)
 		})
 	}
+	done := make(chan struct{})
+	go func() {
+		queue.Wait()
+		close(done)
+	}()
 
-	queue.Wait()
-
-	if atomic.LoadInt32(&processedJobs) != int32(numJobs) {
-		t.Errorf("Expected %d jobs to be processed, but got %d", numJobs, atomic.LoadInt32(&processedJobs))
+	select {
+	case <-done:
+		// All jobs processed
+		if atomic.LoadInt32(&processedJobs) != int32(numJobs) {
+			t.Errorf("Expected %d jobs to be processed, but got %d", numJobs, atomic.LoadInt32(&processedJobs))
+		}
+	case <-time.After(5 * time.Second):
+		t.Error("Test timed out waiting for jobs to be processed")
 	}
+
+	cancel()
+	queue.Close()
 }

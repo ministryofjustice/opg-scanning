@@ -1,7 +1,9 @@
 package ingestion
 
 import (
+	"context"
 	"sync"
+	"time"
 
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
@@ -25,7 +27,6 @@ func NewJobQueue() *JobQueue {
 		Jobs: make(chan Job, 10), // Buffer size can be adjusted based on needs
 		wg:   &sync.WaitGroup{},
 	}
-	queue.StartWorkerPool(3) // Start with 3 workers
 	return queue
 }
 
@@ -35,29 +36,41 @@ func (q *JobQueue) AddToQueue(data interface{}, docType string, format string, o
 	q.Jobs <- job
 }
 
-func (q *JobQueue) StartWorkerPool(numWorkers int) {
+func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 	for i := 0; i < numWorkers; i++ {
 		go func(workerID int) {
-			for job := range q.Jobs {
-				q.logger.InfoFormated("Worker %d processing job: %+v\n", workerID, job.Data)
-
-				data, ok := job.Data.([]byte)
+			select {
+			case job, ok := <-q.Jobs:
 				if !ok {
-					q.logger.InfoFormated("Worker %d failed on type assertion: %v\n", workerID, job.Data)
-					continue
+					return
 				}
 
-				parsedDoc, err := util.ProcessDocument(data, job.docType, job.format)
-				if err != nil {
-					q.logger.ErrorFormated("Worker %d failed to process job: %v, error: %v\n", workerID, job.Data, err)
-				} else {
-					q.logger.InfoFormated("Worker %d successfully processed job: %+v\n", workerID, parsedDoc)
+				processCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+				defer cancel()
+
+				done := make(chan struct{})
+				go func() {
+					defer close(done)
+					_, err := util.ProcessDocument(job.Data.([]byte), job.docType, job.format)
+					if err != nil {
+						q.logger.ErrorFormated("Worker %d failed to process job: %v, error: %v\n", workerID, job.Data, err)
+					}
+				}()
+
+				select {
+				case <-processCtx.Done():
+					q.logger.ErrorFormated("Worker %d timed out processing job: %v\n", workerID, job.Data)
+				case <-done:
 					if job.onComplete != nil {
 						job.onComplete()
 					}
 				}
 
 				q.wg.Done()
+
+			case <-ctx.Done():
+				q.logger.Info("Worker pool stopped")
+				return
 			}
 		}(i)
 	}
