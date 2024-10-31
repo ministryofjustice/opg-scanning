@@ -2,65 +2,69 @@ package ingestion
 
 import (
 	"context"
+	"encoding/base64"
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/ministryofjustice/opg-scanning/internal/types"
 )
 
-// Create an array of sample XML
-var sampleXMLArray = [][]byte{
-	[]byte(`
-		<LP1F>
-			<Page1>
-				<Section1>
-					<Title>Mr.</Title>
-					<FirstName>John</FirstName>
-					<LastName>Doe</LastName>
-					<OtherNames>Johnny</OtherNames>
-					<DOB>1980-01-01</DOB>
-					<Address>123 Main St, Springfield, USA</Address>
-					<EmailAddress>john.doe@example.com</EmailAddress>
-				</Section1>
-				<BURN>123456789</BURN>
-				<PhysicalPage>1</PhysicalPage>
-			</Page1>
-		</LP1F>
-		`),
-	[]byte(`
-		<LP1F>
-			<Page1>
-				<Section1>
-					<Title>Ms.</Title>
-					<FirstName>Jane</FirstName>
-					<LastName>Doe</LastName>
-					<OtherNames>Janey</OtherNames>
-					<DOB>1988-01-11</DOB>
-					<Address>123 Main St, Springfield, USA</Address>
-					<EmailAddress>jane.doe@example.com</EmailAddress>
-				</Section1>
-				<BURN>123456789</BURN>
-				<PhysicalPage>1</PhysicalPage>
-			</Page1>
-		</LP1F>
-`)}
+// Define an array of sample XML documents for testing
+var sampleXMLArray = []string{
+	`
+	<LP1F>
+		<Page1>
+			<Section1>
+				<Title>Mr.</Title>
+				<FirstName>John</FirstName>
+				<LastName>Doe</LastName>
+			</Section1>
+			<BURN>123456789</BURN>
+		</Page1>
+	</LP1F>
+	`,
+	`
+	<LP1F>
+		<Page1>
+			<Section1>
+				<Title>Ms.</Title>
+				<FirstName>Jane</FirstName>
+				<LastName>Doe</LastName>
+			</Section1>
+			<BURN>987654321</BURN>
+		</Page1>
+	</LP1F>
+	`,
+}
 
 func TestJobQueue(t *testing.T) {
 	queue := NewJobQueue()
 
-	// Create a context that will manage the worker lifecycle
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	// Start worker pool
 	queue.StartWorkerPool(ctx, 3)
 
 	var processedJobs int32
-	numJobs := 2
+	numJobs := len(sampleXMLArray)
 
-	for i := 0; i < numJobs; i++ {
-		queue.AddToQueue(sampleXMLArray[i], "LP1F", "xml", func() {
+	for _, xml := range sampleXMLArray {
+		encodedXML := base64.StdEncoding.EncodeToString([]byte(xml))
+
+		doc := &types.Document{
+			Type:        "LP1F",
+			Encoding:    "base64",
+			NoPages:     1,
+			EmbeddedXML: encodedXML,
+		}
+
+		queue.AddToQueue(doc, "LP1F", "xml", func() {
 			atomic.AddInt32(&processedJobs, 1)
 		})
 	}
+
+	// Wait for all jobs to be processed with a timeout
 	done := make(chan struct{})
 	go func() {
 		queue.Wait()
@@ -69,7 +73,7 @@ func TestJobQueue(t *testing.T) {
 
 	select {
 	case <-done:
-		// All jobs processed
+		// Ensure the number of processed jobs matches the number of added jobs
 		if atomic.LoadInt32(&processedJobs) != int32(numJobs) {
 			t.Errorf("Expected %d jobs to be processed, but got %d", numJobs, atomic.LoadInt32(&processedJobs))
 		}
@@ -77,6 +81,6 @@ func TestJobQueue(t *testing.T) {
 		t.Error("Test timed out waiting for jobs to be processed")
 	}
 
-	cancel()
+	// Close the queue and cancel the context to stop workers
 	queue.Close()
 }

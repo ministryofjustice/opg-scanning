@@ -1,0 +1,1114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2014 rel. 2 (x64) (http://www.altova.com) by Elaine Matthews (Banctec Limited) -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning" elementFormDefault="qualified" attributeFormDefault="unqualified" vc:minVersion="1.1">
+	<xs:element name="LPA-PA">
+		<xs:annotation>
+			<xs:documentation>LPA Property and affairs. No data keyed or captured.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Page1">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page2">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page3">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page4">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page5">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartA">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="Part1">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Salutation"/>
+													<xs:element ref="Forename"/>
+													<xs:element ref="MiddleName"/>
+													<xs:element ref="LastName"/>
+													<xs:element ref="DOB"/>
+													<xs:element ref="OtherNames"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part2">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="FullAddress"/>
+													<xs:element name="Postcode" type="xs:string"/>
+													<xs:element ref="Telephone"/>
+													<xs:element ref="Mobile"/>
+													<xs:element ref="Email"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page6">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartA">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="Part3">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="Attorney" minOccurs="2" maxOccurs="2">
+														<xs:complexType>
+															<xs:sequence>
+																<xs:element ref="Salutation"/>
+																<xs:element ref="Forename"/>
+																<xs:element ref="LastName"/>
+															</xs:sequence>
+														</xs:complexType>
+													</xs:element>
+													<xs:element ref="CompanyName"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page7">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartA">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="Part4">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="Together" type="xs:boolean"/>
+													<xs:element name="TogetherInd" type="xs:boolean"/>
+													<xs:element name="TogetherSomeIndOther" type="xs:boolean"/>
+													<xs:element name="IfText" type="xs:string"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page8">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartA">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="Part5">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="YesorNo"/>
+													<xs:element ref="Salutation"/>
+													<xs:element ref="Forename"/>
+													<xs:element ref="LastName"/>
+													<xs:element name="Restrictions" type="xs:string"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page9">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartA">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="Part6">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="YesorNo"/>
+													<xs:element name="Restrictions" type="xs:string"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page10">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartA">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="Part7">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="Guidance" type="xs:string"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part8">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="YesorNo"/>
+													<xs:element name="Information" type="xs:string"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page11">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartA">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="Part9">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="NamedOthers" minOccurs="3" maxOccurs="3"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page12">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartA">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="Part9">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="NamedOthers" minOccurs="2" maxOccurs="2"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page13">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartA">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="Part10">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="IReadInfo" type="xs:boolean"/>
+													<xs:element name="HadInfoRead" type="xs:boolean"/>
+													<xs:element name="ReadBy" type="xs:string"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part11">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="Intend" type="xs:boolean"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part12">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="Paragraph9" type="xs:boolean"/>
+													<xs:element name="DoNotWant" type="xs:boolean"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part13">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="IChose" type="xs:boolean"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part14">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Signature"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part15">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Date"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part16">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Signature"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part17">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="FullName"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part18">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="FullAddress"/>
+													<xs:element ref="Postcode"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page14">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartA">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="Part19">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Signature"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part20">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Date"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part21">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="FullName"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part22">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="FullAddress"/>
+													<xs:element ref="Postcode"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part23">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Signature"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part24">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="FullName"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part25">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="FullAddress"/>
+													<xs:element ref="Postcode"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part26">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Signature"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part27">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="FullName"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part28">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="FullAddress"/>
+													<xs:element ref="Postcode"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page15">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartB">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="IConfirm" type="xs:boolean"/>
+										<xs:element name="Aged18" type="xs:boolean"/>
+										<xs:element ref="Salutation"/>
+										<xs:element ref="Forename"/>
+										<xs:element ref="MiddleName"/>
+										<xs:element ref="LastName"/>
+										<xs:element ref="FullAddress"/>
+										<xs:element ref="Postcode"/>
+										<xs:element ref="Telephone"/>
+										<xs:element ref="Mobile"/>
+										<xs:element ref="Email"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page16">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartB">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="HaveKnown" type="xs:boolean"/>
+										<xs:element name="HowKnown" type="xs:string"/>
+										<xs:element ref="SkillCertification"/>
+										<xs:element name="ReadPartsAB" type="xs:boolean"/>
+										<xs:element name="DiscussedNoAttorney" type="xs:boolean">
+											<xs:annotation>
+												<xs:documentation>I confirm that I have discussed the contents of thsis LPA with the donor that the arroney was not present</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="EffortToDiscussWithoutAnyone" type="xs:boolean">
+											<xs:annotation>
+												<xs:documentation>I understand that I should make efforts to discussthis LPA with the donor without anyone present</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="DiscussedWithoutAnyone" type="xs:boolean"/>
+										<xs:element name="DiscussedInPresenceOfTickBox" type="xs:boolean"/>
+										<xs:element name="DiscussedInPresenceOfName" type="xs:string"/>
+										<xs:element name="Because" type="xs:string"/>
+										<xs:element name="Confirmation" type="xs:boolean"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page17">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartB">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="DonorUnderstands" type="xs:boolean"/>
+										<xs:element name="NoFraudUnduePressure" type="xs:boolean"/>
+										<xs:element name="NothingElse" type="xs:boolean"/>
+										<xs:element ref="Signature"/>
+										<xs:element ref="FullName"/>
+										<xs:element ref="Date"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page18">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartB">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="ConfirmActingIndependently" type="xs:boolean"/>
+										<xs:element name="AtOver18" type="xs:boolean"/>
+										<xs:element ref="Salutation"/>
+										<xs:element ref="Forename"/>
+										<xs:element ref="MiddleName"/>
+										<xs:element ref="LastName"/>
+										<xs:element ref="FullAddress"/>
+										<xs:element ref="Postcode"/>
+										<xs:element ref="Telephone"/>
+										<xs:element ref="Mobile"/>
+										<xs:element ref="Email"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page19">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartB">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="HaveKnown" type="xs:boolean"/>
+										<xs:element name="HowKnown" type="xs:string"/>
+										<xs:element ref="SkillCertification"/>
+										<xs:element name="ReadPartsAB" type="xs:boolean"/>
+										<xs:element name="DiscussedNoAttorney" type="xs:boolean">
+											<xs:annotation>
+												<xs:documentation>I confirm that I have discussed the contents of thsis LPA with the donor that the arroney was not present</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="EffortToDiscussWithoutAnyone" type="xs:boolean">
+											<xs:annotation>
+												<xs:documentation>I understand that I should make efforts to discussthis LPA with the donor without anyone present</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="DiscussedWithoutAnyone" type="xs:boolean"/>
+										<xs:element name="DiscussedInPresenceOfTickBox" type="xs:boolean"/>
+										<xs:element name="DiscussedInPresenceOfName" type="xs:string"/>
+										<xs:element name="Because" type="xs:string"/>
+										<xs:element name="Confirmation" type="xs:boolean"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page20">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartB">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="DonorUnderstands" type="xs:boolean"/>
+										<xs:element name="NoFraudUnduePressure" type="xs:boolean"/>
+										<xs:element name="NothingElse" type="xs:boolean"/>
+										<xs:element ref="Signature"/>
+										<xs:element ref="FullName"/>
+										<xs:element ref="Date"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page21">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartC">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="Part29">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Salutation"/>
+													<xs:element ref="Forename"/>
+													<xs:element ref="MiddleName"/>
+													<xs:element ref="LastName"/>
+													<xs:element ref="Date"/>
+													<xs:element ref="Telephone"/>
+													<xs:element ref="Mobile"/>
+													<xs:element ref="Email"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part30">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="ReadPrescribedInfo" type="xs:boolean"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part31">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="UndestandDuties" type="xs:boolean"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part32">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="NotBankrupt" type="xs:boolean"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part33">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="CannotAct" type="xs:boolean"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part34">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Signature"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part35">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Date"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part36">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Signature"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part37">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="FullName"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part38">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="FullAddress"/>
+													<xs:element ref="Postcode"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page22">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartC">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="Part29">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Salutation"/>
+													<xs:element ref="Forename"/>
+													<xs:element ref="MiddleName"/>
+													<xs:element ref="LastName"/>
+													<xs:element ref="Date"/>
+													<xs:element ref="Telephone"/>
+													<xs:element ref="Mobile"/>
+													<xs:element ref="Email"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part30">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="ReadPrescribedInfo" type="xs:boolean"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part31">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="UndestandDuties" type="xs:boolean"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part32">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="NotBankrupt" type="xs:boolean"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part33">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="CannotAct" type="xs:boolean"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part34">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Signature"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part35">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Date"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part36">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Signature"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part37">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="FullName"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part38">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="FullAddress"/>
+													<xs:element ref="Postcode"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page23">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartC">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="Part39">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="CompanyName"/>
+													<xs:element name="CompanySeal" type="xs:boolean"/>
+													<xs:element ref="FullAddress"/>
+													<xs:element ref="Postcode"/>
+													<xs:element name="RegistrationNo" type="xs:string"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part40">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="ReadPrescribedInfo" type="xs:boolean"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part41">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="UnderstandDuties" type="xs:boolean"/>
+													<xs:element name="ShouldNotBeExecuted" type="xs:string"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page24">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartC">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="Part42">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Salutation"/>
+													<xs:element ref="Forename"/>
+													<xs:element ref="MiddleName"/>
+													<xs:element ref="LastName"/>
+													<xs:element ref="Date"/>
+													<xs:element ref="Telephone"/>
+													<xs:element ref="Mobile"/>
+													<xs:element ref="Email"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part43">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="ReadPrescribedInfo" type="xs:boolean"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part44">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="UnderstandOriginalAttorney" type="xs:boolean"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part45">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="UnderstandDoNotHaveAuthority" type="xs:boolean"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part46">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="UnderstandDuties" type="xs:boolean"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part47">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="NotBankrupt" type="xs:boolean"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part48">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="UnderstandCannotAct" type="xs:boolean"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part49">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Signature"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part50">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Date"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page25">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartC">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="Part51">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Signature"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part52">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="FullName"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="Part53">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="FullAddress"/>
+													<xs:element ref="Postcode"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page26">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+							<xs:element name="PartC">
+								<xs:complexType>
+									<xs:sequence/>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="InfoPage" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Name">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Salutation"/>
+				<xs:element ref="LastName"/>
+				<xs:element ref="Forename"/>
+				<xs:element ref="OtherForenames"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Salutation">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Mr" type="xs:boolean"/>
+				<xs:element name="Mrs" type="xs:boolean"/>
+				<xs:element name="Ms" type="xs:boolean"/>
+				<xs:element name="Miss" type="xs:boolean"/>
+				<xs:element name="Other" type="xs:boolean"/>
+				<xs:element name="OtherName" type="xs:string"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Address">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Address1" type="xs:string"/>
+				<xs:element name="Address2" type="xs:string"/>
+				<xs:element name="Address3" type="xs:string"/>
+				<xs:element name="TownCity" type="xs:string"/>
+				<xs:element name="County" type="xs:string"/>
+				<xs:element name="Postcode" type="xs:string"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Telephone" type="xs:string"/>
+	<xs:element name="DOB" type="xs:string"/>
+	<xs:element name="Email" type="xs:string"/>
+	<xs:element name="Attorney">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Name"/>
+				<xs:element ref="CompanyName"/>
+				<xs:element ref="Address"/>
+				<xs:element ref="DXDetails"/>
+				<xs:element ref="DOB"/>
+				<xs:element ref="Telephone"/>
+				<xs:element ref="Email"/>
+				<xs:element ref="Occupation"/>
+				<xs:element ref="Relationship"/>
+				<xs:element name="Appointment">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Jointly" type="xs:boolean"/>
+							<xs:element name="JointlyAndSeverally" type="xs:boolean"/>
+							<xs:element name="Alone" type="xs:boolean"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="DXDetails">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="DXNumber" type="xs:string"/>
+				<xs:element name="DXExchange" type="xs:string"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Relationship">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="CivilPartnerSpouse" type="xs:boolean"/>
+				<xs:element name="Child" type="xs:boolean"/>
+				<xs:element name="OtherRelation" type="xs:boolean"/>
+				<xs:element name="NoRelation" type="xs:boolean"/>
+				<xs:element name="Solicitor" type="xs:boolean"/>
+				<xs:element name="OtherProfessional" type="xs:boolean"/>
+				<xs:element name="OtherName" type="xs:string">
+					<xs:annotation>
+						<xs:documentation>If other or other professional, please specify</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Notification">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="NoticeDate" type="xs:string"/>
+				<xs:element name="LastName" type="xs:string"/>
+				<xs:element name="FirstName" type="xs:string"/>
+				<xs:element ref="Address"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="IorWe">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="I" type="xs:boolean"/>
+				<xs:element name="We" type="xs:boolean"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Date" type="xs:string"/>
+	<xs:element name="YesorNo">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Yes" type="xs:boolean"/>
+				<xs:element name="No" type="xs:boolean"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="LastName" type="xs:string"/>
+	<xs:element name="Forename" type="xs:string"/>
+	<xs:element name="Declaration">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Signed" type="xs:boolean"/>
+				<xs:element ref="Date"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="CompanyName" type="xs:string"/>
+	<xs:element name="Occupation" type="xs:string"/>
+	<xs:element name="OtherForenames" type="xs:string"/>
+	<xs:element name="Relative">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="FullName" type="xs:string"/>
+				<xs:element name="Relationship" type="xs:string"/>
+				<xs:element name="Address1" type="xs:string"/>
+				<xs:element name="Address2" type="xs:string"/>
+				<xs:element name="Address3" type="xs:string"/>
+				<xs:element ref="Date"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="BURN" type="xs:string"/>
+	<xs:element name="PhysicalPage" type="xs:int"/>
+	<xs:element name="MiddleName" type="xs:string"/>
+	<xs:element name="FullAddress" type="xs:string"/>
+	<xs:element name="OtherNames" type="xs:string"/>
+	<xs:element name="Mobile" type="xs:string"/>
+	<xs:element name="NamedOthers">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Salutation"/>
+				<xs:element ref="FullName"/>
+				<xs:element ref="FullAddress"/>
+				<xs:element name="Postcode" type="xs:string"/>
+				<xs:element ref="Telephone"/>
+				<xs:element ref="Email"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Signature" type="xs:boolean"/>
+	<xs:element name="FullName" type="xs:string"/>
+	<xs:element name="Postcode" type="xs:string"/>
+	<xs:element name="SkillCertification">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="RegisteredProfessional" type="xs:boolean"/>
+				<xs:element name="BarristerSolicitorAdvocate" type="xs:boolean"/>
+				<xs:element name="SocialWorker" type="xs:boolean"/>
+				<xs:element name="IMCA" type="xs:boolean"/>
+				<xs:element name="NoneOfTheAbove" type="xs:boolean"/>
+				<xs:element name="SkillsAndExpertise" type="xs:string"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
