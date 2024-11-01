@@ -9,32 +9,21 @@ import (
 )
 
 type XmlValidator struct {
-	config    config.Config
-	sanitizer *Sanitizer
+	config config.Config
 }
 
 func NewXmlValidator(config config.Config) *XmlValidator {
 	return &XmlValidator{
-		config:    config,
-		sanitizer: NewSanitizer(),
+		config: config,
 	}
 }
 
-func (v *XmlValidator) XmlValidate(xmlData string) (*types.Set, error) {
+func (v *XmlValidator) XmlValidateSanitize(xmlData string) (*types.Set, error) {
 	if xmlData == "" {
 		return nil, fmt.Errorf("empty XML data provided")
 	}
 
-	xsdValidator, err := NewXSDValidator(v.config.XSDDirectory, xmlData)
-	if err != nil {
-		return nil, fmt.Errorf("dailed to create XSD validator: " + err.Error())
-	}
-
-	if err := xsdValidator.ValidateXsd(); err != nil {
-		return nil, fmt.Errorf("xsd Validation failed: " + err.Error())
-	}
-
-	sanitizedXmlData, err := v.sanitizer.XmlSanitize(xmlData)
+	sanitizedXmlData, err := XmlSanitize(xmlData)
 	if err != nil {
 		return nil, fmt.Errorf("sanitization failed: " + err.Error())
 	}

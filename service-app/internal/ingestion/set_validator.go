@@ -19,7 +19,7 @@ func NewValidator() *Validator {
 	return &Validator{}
 }
 
-func (v *Validator) Validate(parsedSet *types.Set) error {
+func (v *Validator) ValidateSet(parsedSet *types.Set) error {
 	if parsedSet == nil {
 		return errors.New("parsedSet is nil")
 	}

@@ -6,13 +6,7 @@ import (
 	"strings"
 )
 
-type Sanitizer struct{}
-
-func NewSanitizer() *Sanitizer {
-	return &Sanitizer{}
-}
-
-func (s *Sanitizer) XmlSanitize(xmlData string) (string, error) {
+func XmlSanitize(xmlData string) (string, error) {
 	if xmlData == "" {
 		return "", errors.New("empty XML data provided")
 	}

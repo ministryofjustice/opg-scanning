@@ -1,10 +1,12 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 
+	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"gopkg.in/yaml.v2"
 )
 
@@ -14,7 +16,14 @@ type Config struct {
 
 var config *Config
 
-func LoadConfig(configPath string) (*Config, error) {
+func LoadConfig() (*Config, error) {
+	projectRoot, err := util.GetProjectRoot()
+	if err != nil {
+		return nil, fmt.Errorf("could not determine project root: %w", err)
+	}
+
+	configPath := filepath.Join(projectRoot, "service-app/config/config.yml")
+
 	data, err := os.ReadFile(filepath.Clean(configPath))
 	if err != nil {
 		return nil, err
@@ -26,6 +35,9 @@ func LoadConfig(configPath string) (*Config, error) {
 	}
 
 	config = &cfg
+
+	cfg.XSDDirectory = filepath.Join(projectRoot, cfg.XSDDirectory)
+
 	return config, nil
 }
 

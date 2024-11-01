@@ -23,7 +23,7 @@ var xmlPayload = `<Set>
 </Set>`
 
 func init() {
-	_, err := config.LoadConfig("../../config/config.yml")
+	_, err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}

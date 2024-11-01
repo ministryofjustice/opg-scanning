@@ -41,8 +41,8 @@ func (v *XSDValidator) ValidateXsd() error {
 	return v.schema.Validate(doc)
 }
 
-func (v *XSDValidator) getXsdName() (string, error) {
-	decoder := xml.NewDecoder(strings.NewReader(v.xmlContent))
+func ExtractDocType(xmlContent string) (string, error) {
+	decoder := xml.NewDecoder(strings.NewReader(xmlContent))
 
 	// Search for the root element with the specified attribute
 	var root Root

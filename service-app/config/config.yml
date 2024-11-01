@@ -1,2 +1,2 @@
 # config.yaml
-xsd_directory: "opg-scanning/service-app/xsd"
+xsd_directory: "service-app/xsd"
