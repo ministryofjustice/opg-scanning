@@ -13,7 +13,7 @@ import (
 type IndexController struct {
 	config    *config.Config
 	validator *ingestion.Validator
-	queue     *ingestion.JobQueue
+	Queue     *ingestion.JobQueue
 	logger    *logger.Logger
 }
 
@@ -21,7 +21,7 @@ func NewIndexController() *IndexController {
 	return &IndexController{
 		config:    config.GetConfig(),
 		validator: ingestion.NewValidator(),
-		queue:     ingestion.NewJobQueue(),
+		Queue:     ingestion.NewJobQueue(),
 		logger:    logger.NewLogger(),
 	}
 }
@@ -50,8 +50,9 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	}
 	docType := "LP1F" // TODO: Determine the document type dynamically if possible
 
+	c.logger.Info("Begin validation of XML document")
 	var parsedBaseXml *types.Set
-	if format == "application/xml" || format == "text/xml" {
+	if format == "xml" {
 		xmlValidator := ingestion.NewXmlValidator(*c.config)
 		parsedBaseXml, err = xmlValidator.XmlValidate(string(body))
 		if err != nil {
@@ -62,6 +63,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Validate the parsed document
+	c.logger.Info("Begin validation of generic document")
 	if err := c.validator.Validate(parsedBaseXml); err != nil {
 		c.logger.Error("Document validation failed: " + err.Error())
 		http.Error(w, "Invalid document data", http.StatusBadRequest)
@@ -69,9 +71,10 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Queue each document within the parsed XML set for further processing
+	c.logger.Info("Queueing documents for processing")
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
-		c.queue.AddToQueue(doc, docType, format, func() {
+		c.Queue.AddToQueue(doc, docType, format, func() {
 			c.logger.Info("Job processing completed for document")
 		})
 		c.logger.Info("Job added to queue for document")
@@ -82,5 +85,5 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (c *IndexController) CloseQueue() {
-	c.queue.Close()
+	c.Queue.Close()
 }

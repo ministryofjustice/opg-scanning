@@ -20,6 +20,10 @@ func NewValidator() *Validator {
 }
 
 func (v *Validator) Validate(parsedSet *types.Set) error {
+	if parsedSet == nil {
+		return errors.New("parsedSet is nil")
+	}
+
 	// Validate Header fields
 	if parsedSet.Header == nil {
 		return errors.New("missing required Header element")
