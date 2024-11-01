@@ -41,7 +41,7 @@ func setupController() *IndexController {
 	}
 }
 
-func TestIngestHandler_Success(t *testing.T) {
+func TestIngestHandler_SetValid(t *testing.T) {
 	controller := setupController()
 
 	req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayload)))
@@ -90,6 +90,7 @@ func TestIngestHandler_InvalidXML(t *testing.T) {
 	}
 }
 
+// TODO: Complete this test
 func TestIngestHandler_QueueingDocuments(t *testing.T) {
 	controller := setupController()
 
