@@ -29,6 +29,7 @@ func NewXSDValidator(xsdPath string, xmlContent string) (*XSDValidator, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &XSDValidator{schema: schema, xmlContent: xmlContent}, nil
 }
 
@@ -41,7 +42,7 @@ func (v *XSDValidator) ValidateXsd() error {
 	return v.schema.Validate(doc)
 }
 
-func ExtractDocType(xmlContent string) (string, error) {
+func ExtractSchemaLocation(xmlContent string) (string, error) {
 	decoder := xml.NewDecoder(strings.NewReader(xmlContent))
 
 	// Search for the root element with the specified attribute

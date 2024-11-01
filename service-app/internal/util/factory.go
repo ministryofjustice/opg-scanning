@@ -8,6 +8,8 @@ import (
 )
 
 func ProcessDocument(data *types.Document, docType string, format string) (interface{}, error) {
+	// TODO: Validate docType against xsd schema
+
 	// Parse the document based on the document type
 	parsedDoc, err := NewXMLParser(data, docType)
 	if err != nil {

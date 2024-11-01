@@ -59,7 +59,7 @@ func TestJobQueue(t *testing.T) {
 			EmbeddedXML: encodedXML,
 		}
 
-		queue.AddToQueue(doc, "LP1F", "xml", func() {
+		queue.AddToQueue(doc, "xml", func() {
 			atomic.AddInt32(&processedJobs, 1)
 		})
 	}

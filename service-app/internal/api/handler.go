@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 
@@ -51,7 +52,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	docType, parsedBaseXml, err := c.validateAndSanitizeXML(bodyStr)
+	parsedBaseXml, err := c.validateAndSanitizeXML(bodyStr)
 	if err != nil {
 		c.logger.Error("XML validation failed: " + err.Error())
 		http.Error(w, "Invalid XML data", http.StatusBadRequest)
@@ -69,7 +70,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	c.logger.Info("Queueing documents for processing")
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
-		c.Queue.AddToQueue(doc, docType, "xml", func() {
+		c.Queue.AddToQueue(doc, "xml", func() {
 			c.logger.Info("Job processing completed for document")
 		})
 		c.logger.Info("Job added to queue for document")
@@ -94,28 +95,30 @@ func (c *IndexController) readRequestBody(r *http.Request) (string, error) {
 }
 
 // Helper Method: Validate and Sanitize XML
-func (c *IndexController) validateAndSanitizeXML(bodyStr string) (string, *types.Set, error) {
+func (c *IndexController) validateAndSanitizeXML(bodyStr string) (*types.Set, error) {
 	// Extract the document type from the XML
-	docType, err := ingestion.ExtractDocType(bodyStr)
+	schemaLocation, err := ingestion.ExtractSchemaLocation(bodyStr)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
 	// Validate against XSD
-	xsdValidator, err := ingestion.NewXSDValidator(c.config.XSDDirectory+"/"+docType+".xsd", bodyStr)
+	c.logger.Info("Validating against XSD")
+	xsdValidator, err := ingestion.NewXSDValidator(c.config.XSDDirectory+"/"+schemaLocation, bodyStr)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 	if err := xsdValidator.ValidateXsd(); err != nil {
-		return "", nil, err
+		return nil, fmt.Errorf("XSD validation failed: %w", err)
 	}
 
 	// Validate and sanitize the XML
+	c.logger.Info("Validating and sanitizing XML")
 	xmlValidator := ingestion.NewXmlValidator(*c.config)
 	parsedBaseXml, err := xmlValidator.XmlValidateSanitize(bodyStr)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
-	return docType, parsedBaseXml, nil
+	return parsedBaseXml, nil
 }

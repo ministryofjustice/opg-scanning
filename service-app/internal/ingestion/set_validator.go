@@ -28,12 +28,12 @@ func (v *Validator) ValidateSet(parsedSet *types.Set) error {
 	if parsedSet.Header == nil {
 		return errors.New("missing required Header element")
 	}
-	if parsedSet.Header.CaseNo == "" {
-		return errors.New("missing CaseNo in Header")
-	}
-	if parsedSet.Header.ScanTime == "" {
-		return errors.New("missing ScanTime in Header")
-	}
+	// if parsedSet.Header.CaseNo == "" {
+	// 	return errors.New("missing CaseNo in Header")
+	// }
+	// if parsedSet.Header.ScanTime == "" {
+	// 	return errors.New("missing ScanTime in Header")
+	// }
 
 	// Validate combinations of instruments and applications
 	instrumentsDiscovered := v.getEmbeddedDocumentTypes(parsedSet, Instruments)

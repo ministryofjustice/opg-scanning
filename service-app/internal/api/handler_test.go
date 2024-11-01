@@ -12,15 +12,17 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 )
 
-var xmlPayload = `<Set>
-	<Header CaseNo="1234" Scanner="Scanner1" ScanTime="2021-09-01T12:34:56" ScannerOperator="Operator" />
-	<Body>
-		<Document Type="LP1F" Encoding="UTF-8" NoPages="6">
-			<XML>...base64encodedXML...</XML>
-			<Image>...base64encodedImage...</Image>
-		</Document>
-	</Body>
-</Set>`
+var xmlPayload = `
+<Set xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SET.xsd">
+    <Header CaseNo="" Scanner="9" ScanTime="2014-09-26T12:38:53" ScannerOperator="Administrator" Schedule="02-0001112-20160909185000" FeeNumber="1234"/>
+    <Body>
+        <Document Type="LP1F" Encoding="UTF-8" NoPages="19">
+            <XML>SGVsbG8gd29ybGQ=</XML>
+            <Image>SGVsbG8gd29ybGQ=</Image>
+        </Document>
+    </Body>
+</Set>
+`
 
 func init() {
 	_, err := config.LoadConfig()
@@ -40,7 +42,6 @@ func setupController() *IndexController {
 }
 
 func TestIngestHandler_Success(t *testing.T) {
-
 	controller := setupController()
 
 	req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayload)))
