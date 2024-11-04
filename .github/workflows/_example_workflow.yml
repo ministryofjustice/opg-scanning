@@ -106,6 +106,7 @@ jobs:
         run: |
           docker build -t ${{ env.local_docker_image }} .
       # log in to ECR
+      - uses: unfor19/install-aws-cli-action@v1
       - name: Configure AWS Credentials With Assumed Role to Management
         uses: aws-actions/configure-aws-credentials@v3.0.1
         with:
@@ -150,7 +151,6 @@ jobs:
       ######
       ## Push to ECR
       ######
-      - uses: unfor19/install-aws-cli-action@v1
       - name: Push Container
         env:
           SEMVER_TAG: ${{ needs.semver_tag.outputs.tag }}
