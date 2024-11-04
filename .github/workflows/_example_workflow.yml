@@ -105,12 +105,31 @@ jobs:
         working-directory: ${{ matrix.data.docker_build_directory }}
         run: |
           docker build -t ${{ env.local_docker_image }} .
+      # log in to ECR
+      - name: Configure AWS Credentials With Assumed Role to Management
+        uses: aws-actions/configure-aws-credentials@v3.0.1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+          # management account role
+          role-to-assume: arn:aws:iam::311462405659:role/gh-template-repo-ci
+          role-duration-seconds: 900
+          role-session-name: OPGScanningWorkflowGithubAction
+      - name: ECR Login
+        id: login_ecr
+        uses: aws-actions/amazon-ecr-login@v1.7.0
+        with:
+          registries: 311462405659
       # to check if things worked, output docker image list
       - name: Docker image list
         run: |
           docker images
       - name: Trivy scan
-        uses: aquasecurity/trivy-action@0.11.2
+        uses: aquasecurity/trivy-action@0.28.0
+        env:
+          TRIVY_DB_REPOSITORY: ${{ steps.login_ecr.outputs.registry }}/trivy-db-public-ecr/aquasecurity/trivy-db:2
+          TRIVY_JAVA_DB_REPOSITORY: ${{ steps.login_ecr.outputs.registry }}/trivy-db-public-ecr/aquasecurity/trivy-java-db:1
         with:
           image-ref: ${{ env.local_docker_image }}
           severity: "HIGH,CRITICAL"
@@ -132,26 +151,11 @@ jobs:
       ## Push to ECR
       ######
       - uses: unfor19/install-aws-cli-action@v1
-      - name: Configure AWS Credentials With Assumed Role to Management
-        uses: aws-actions/configure-aws-credentials@v3.0.1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-west-1
-          # management account role
-          role-to-assume: arn:aws:iam::311462405659:role/gh-template-repo-ci
-          role-duration-seconds: 900
-          role-session-name: OPGExampleWorkflowGithubAction
-      - name: ECR Login
-        id: login_ecr
-        uses: aws-actions/amazon-ecr-login@v1.7.0
-        with:
-          registries: 311462405659
       - name: Push Container
         env:
           SEMVER_TAG: ${{ needs.semver_tag.outputs.tag }}
           ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
-          ECR_REPOSITORY: github-template-repository/helloworld
+          ECR_REPOSITORY: sirius/scanning/app
         run: |
           docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.SEMVER_TAG }}
           docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:latest
