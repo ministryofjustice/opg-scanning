@@ -4,6 +4,3 @@ app:
 
 http:
   port: '8080'
-
-logger:
-  log_level: 'debug'

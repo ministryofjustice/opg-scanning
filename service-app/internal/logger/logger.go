@@ -1,41 +1,33 @@
 package logger
 
 import (
-	"log"
+	"fmt"
 
+	"log/slog"
+
+	"github.com/ministryofjustice/opg-go-common/telemetry"
 	"github.com/ministryofjustice/opg-scanning/config"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
 type Logger struct {
-	cfg         *config.Config
-	WriteToFile func(fileName string, message string, path string)
+	cfg        *config.Config
+	SlogLogger *slog.Logger
 }
 
 func NewLogger() *Logger {
+	slogLogger := telemetry.NewLogger("opg-data-lpa-store/getlist")
 	return &Logger{
-		cfg:         config.NewConfig(),
-		WriteToFile: util.WriteToFile,
+		cfg:        config.NewConfig(),
+		SlogLogger: slogLogger,
 	}
-}
-
-func (l *Logger) Logger(fileName, message string) {
-	if l.cfg.Log.Level != "debug" {
-		return
-	}
-	projectRoot, err := util.GetProjectRoot()
-	if err != nil {
-		log.Fatal(err)
-	}
-	l.WriteToFile(fileName, message, projectRoot+"/"+l.cfg.ProjectPath+"/log/")
 }
 
 func (l *Logger) Info(message string, args ...interface{}) {
-	log.Printf("INFO: "+message, args...)
-	l.Logger("InfoLog", message)
+	logMessage := fmt.Sprintf("INFO: "+message, args...)
+	l.SlogLogger.Info(logMessage)
 }
 
 func (l *Logger) Error(message string, args ...interface{}) {
-	log.Printf("ERROR: "+message, args...)
-	l.Logger("ErrorLog", message)
+	logMessage := fmt.Sprintf("ERROR: "+message, args...)
+	l.SlogLogger.Error(logMessage)
 }

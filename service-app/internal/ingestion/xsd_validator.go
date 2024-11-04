@@ -56,5 +56,10 @@ func ExtractSchemaLocation(xmlContent string) (string, error) {
 		return "", errors.New("import error: no schema location found")
 	}
 
+	// Ensure the schema location has no path separators or parent directory references
+	if strings.Contains(root.SchemaLocation, "/") || strings.Contains(root.SchemaLocation, "\\") || strings.Contains(root.SchemaLocation, "..") {
+		return "", errors.New("import error: invalid schema location")
+	}
+
 	return root.SchemaLocation, nil
 }

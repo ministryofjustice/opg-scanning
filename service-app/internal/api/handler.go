@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/ministryofjustice/opg-go-common/telemetry"
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
@@ -28,7 +29,8 @@ func NewIndexController() *IndexController {
 }
 
 func (c *IndexController) HandleRequests() {
-	http.HandleFunc("/ingest", c.IngestHandler)
+	http.Handle("/ingest", telemetry.Middleware(c.logger.SlogLogger)(http.HandlerFunc(c.IngestHandler)))
+
 	c.logger.Info("Starting server on :" + c.config.HTTP.Port)
 	http.ListenAndServe(":"+c.config.HTTP.Port, nil)
 }

@@ -15,7 +15,6 @@ type (
 	Config struct {
 		App  `yaml:"app"`
 		HTTP `yaml:"http"`
-		Log  `yaml:"logger"`
 	}
 
 	// App configuration fields.
@@ -29,11 +28,6 @@ type (
 	// HTTP server configuration fields.
 	HTTP struct {
 		Port string `env-required:"true" yaml:"port" env:"HTTP_PORT"`
-	}
-
-	// Log configuration fields.
-	Log struct {
-		Level string `env-required:"true" yaml:"log_level" env:"LOG_LEVEL"`
 	}
 )
 
