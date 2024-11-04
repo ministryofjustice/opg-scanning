@@ -4,8 +4,8 @@ import "encoding/xml"
 
 // For now we force XML but we could negotiate in the future
 type LP1FDocument struct {
-	XMLName xml.Name `xml:"LP1F"`
-	Page1   Page1    `xml:"Page1"`
+	XMLName xml.Name `xml:"LP1F" required:"true"`
+	Page1   Page1    `xml:"Page1" required:"true"`
 	Page2   Page2    `xml:"Page2"`
 	Page3   Page3    `xml:"Page3"`
 	Page4   Page4    `xml:"Page4"`

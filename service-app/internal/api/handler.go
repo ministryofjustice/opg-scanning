@@ -29,8 +29,8 @@ func NewIndexController() *IndexController {
 
 func (c *IndexController) HandleRequests() {
 	http.HandleFunc("/ingest", c.IngestHandler)
-	c.logger.Info("Starting server on :8080")
-	http.ListenAndServe(":8080", nil)
+	c.logger.Info("Starting server on :" + c.config.HTTP.Port)
+	http.ListenAndServe(":"+c.config.HTTP.Port, nil)
 }
 
 func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) {

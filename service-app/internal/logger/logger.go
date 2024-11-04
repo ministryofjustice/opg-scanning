@@ -27,7 +27,7 @@ func (l *Logger) Logger(fileName, message string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	l.WriteToFile(fileName, message, projectRoot+"/"+l.cfg.ProjectPath+"/logs/")
+	l.WriteToFile(fileName, message, projectRoot+"/"+l.cfg.ProjectPath+"/log/")
 }
 
 func (l *Logger) Info(message string, args ...interface{}) {
