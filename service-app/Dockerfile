@@ -22,6 +22,7 @@ WORKDIR /go/bin
 
 COPY --from=build-env /go/bin/opg-scanning main
 COPY config/config.yml /go/config/config.yml
+COPY xsd /go/xsd
 
 RUN addgroup -S app && \
     adduser -S -g app app && \

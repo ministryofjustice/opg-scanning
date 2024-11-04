@@ -24,8 +24,9 @@ type JobQueue struct {
 
 func NewJobQueue() *JobQueue {
 	queue := &JobQueue{
-		Jobs: make(chan Job, 10), // Buffer size can be adjusted based on needs
-		wg:   &sync.WaitGroup{},
+		Jobs:   make(chan Job, 10), // Buffer size can be adjusted based on needs
+		wg:     &sync.WaitGroup{},
+		logger: logger.NewLogger(),
 	}
 	return queue
 }
