@@ -19,18 +19,17 @@ permissions:
   repository-projects: none
   statuses: none
 
-
 jobs:
-  # generate a branch name  
+  # generate a branch name
   branch_name:
     name: "Generate a safe branch name"
     uses: ministryofjustice/opg-github-workflows/.github/workflows/data-parse-branch-name.yml@v1.36.0
-  
+
   # generate workspace name
   workspace_name:
     name: "Generate the workspace name"
     uses: ministryofjustice/opg-github-workflows/.github/workflows/data-parse-workspace.yml@v1.36.0
-  
+
   tf_version:
     needs: [branch_name, workspace_name]
     name: "Get terraform version"
@@ -48,21 +47,21 @@ jobs:
       directory: "./terraform"
       terraform_version: "${{ needs.tf_version.outputs.version}}"
       terraform_wrapper: false
-  
-  # tfsec for terraform 
+
+  # tfsec for terraform
   tfsec_analysis:
     needs: [tf_lint]
     name: "Run TFSec against the code base"
     uses: ministryofjustice/opg-github-workflows/.github/workflows/analysis-infrastructure-tfsec-to-github-security.yml@v1.36.0
 
   # SAST
-  # codeql for pythong
+  # codeql for go
   codeql_analysis:
     name: "Run CodeQL against the code base"
     uses: ministryofjustice/opg-github-workflows/.github/workflows/analysis-application-codeql-sast-to-github-security.yml@v1.36.0
     with:
-      application_languages: '["python"]'
-  
+      application_languages: '["go"]'
+
   # generate tag
   semver_tag:
     needs: [branch_name, tfsec_analysis, codeql_analysis]
@@ -71,7 +70,6 @@ jobs:
     with:
       branch_name: ${{ needs.branch_name.outputs.parsed }}
     secrets: inherit
-
 
   # Docker build, trivy scan, ECR push as a matrix
   # The matrix loops over each app to build in a complicated
@@ -88,8 +86,8 @@ jobs:
         # services to scan over
         data:
           - docker_build_directory: "./service-app"
-            image_app_name: "helloworld"    
-            test_command: "ls -l"
+            image_app_name: "helloworld"
+            test_command: "go test ./..."
     # we use these a few times, so its easier to generate them once and env
     # vars are visible in the output, so helps with debug
     env:
@@ -107,29 +105,7 @@ jobs:
         working-directory: ${{ matrix.data.docker_build_directory }}
         run: |
           docker build -t ${{ env.local_docker_image }} .
-      # to check if things worked, output docker image list
-      - name: Docker image list
-        run: |
-          docker images
-      - name: Trivy scan
-        uses: aquasecurity/trivy-action@0.11.2
-        with:
-          image-ref: ${{ env.local_docker_image }}
-          severity: "HIGH,CRITICAL"
-          format: 'sarif'
-          output: ${{ env.sarif_file }}
-      - name: Trivy scan upload to github
-        uses: github/codeql-action/upload-sarif@v2
-        if: always()
-        with:
-          sarif_file: ${{ env.sarif_file }}
-      # for a lot of our services, there could be a test process here 
-      - name: Run Tests
-        run: |
-          ${{ matrix.data.test_command }}
-      ######
-      ## Push to ECR
-      ######
+      # log in to ECR
       - uses: unfor19/install-aws-cli-action@v1
       - name: Configure AWS Credentials With Assumed Role to Management
         uses: aws-actions/configure-aws-credentials@v3.0.1
@@ -140,22 +116,51 @@ jobs:
           # management account role
           role-to-assume: arn:aws:iam::311462405659:role/gh-template-repo-ci
           role-duration-seconds: 900
-          role-session-name: OPGExampleWorkflowGithubAction
+          role-session-name: OPGScanningWorkflowGithubAction
       - name: ECR Login
         id: login_ecr
         uses: aws-actions/amazon-ecr-login@v1.7.0
         with:
           registries: 311462405659
+      # to check if things worked, output docker image list
+      - name: Docker image list
+        run: |
+          docker images
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@0.28.0
+        env:
+          TRIVY_DB_REPOSITORY: ${{ steps.login_ecr.outputs.registry }}/trivy-db-public-ecr/aquasecurity/trivy-db:2
+          TRIVY_JAVA_DB_REPOSITORY: ${{ steps.login_ecr.outputs.registry }}/trivy-db-public-ecr/aquasecurity/trivy-java-db:1
+        with:
+          image-ref: ${{ env.local_docker_image }}
+          severity: "HIGH,CRITICAL"
+          format: "sarif"
+          output: ${{ env.sarif_file }}
+      - name: Trivy scan upload to github
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: ${{ env.sarif_file }}
+      # for a lot of our services, there could be a test process here
+      - name: Run Tests
+        working-directory: ${{ matrix.data.docker_build_directory }}
+        env:
+          PROJECT_PATH: service-app
+        run: |
+          ${{ matrix.data.test_command }}
+      ######
+      ## Push to ECR
+      ######
       - name: Push Container
         env:
           SEMVER_TAG: ${{ needs.semver_tag.outputs.tag }}
           ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
-          ECR_REPOSITORY: github-template-repository/helloworld
+          ECR_REPOSITORY: sirius/scanning/app
         run: |
           docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.SEMVER_TAG }}
           docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
-          
+
   # example terraform build stage
   terraform_account_build:
     name: "Terraform Account [Apply: ${{ github.ref == 'refs/heads/main'}}]"
@@ -167,9 +172,9 @@ jobs:
       terraform_apply: ${{ github.ref == 'refs/heads/main' && true || false }}
       # this would be replaced with the dynamic value from needs.workspace_name.output.name
       # but we're just using sandbox account and single env, so use default
-      terraform_workspace: "default" 
+      terraform_workspace: "default"
       # normally would need some logic to decide this based on branch name etc
-      # - if its true we would then need to pass workspace_manager_aws_account_id & 
+      # - if its true we would then need to pass workspace_manager_aws_account_id &
       #   workspace_manager_aws_iam_role as well
       is_ephemeral: false
     secrets:
@@ -179,9 +184,16 @@ jobs:
       GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   end:
-    name: 'End of workflow'
-    runs-on: 'ubuntu-latest'
-    needs: [branch_name, workspace_name, semver_tag, build_scan_push, terraform_account_build]
+    name: "End of workflow"
+    runs-on: "ubuntu-latest"
+    needs:
+      [
+        branch_name,
+        workspace_name,
+        semver_tag,
+        build_scan_push,
+        terraform_account_build,
+      ]
     steps:
       - name: "End"
         run: |

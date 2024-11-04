@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
+           elementFormDefault="qualified" attributeFormDefault="unqualified" vc:minVersion="1.1">
+    <xs:element name="Payment">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="PaymentReference" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                <xs:element name="PaymentDate" type="xs:string"/>
+                <xs:element name="PaymentAmount" type="xs:float"  minOccurs="1" maxOccurs="1"/>
+                <xs:element name="FeeNumber" type="xs:string"/>
+                <xs:element name="FeeAmount" type="xs:float"/>
+                <xs:element name="BatchNumber" type="xs:string"/>
+                <xs:element name="PaymentType" type="xs:string"/>
+                <xs:element name="BURN" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>
