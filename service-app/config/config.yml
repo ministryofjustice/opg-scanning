@@ -1,0 +1,9 @@
+app:
+  name: 'opg-scanning'
+  version: '1.0.0'
+
+http:
+  port: '8080'
+
+logger:
+  log_level: 'debug'
