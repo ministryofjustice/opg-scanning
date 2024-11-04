@@ -2,7 +2,6 @@ package api
 
 import (
 	"bytes"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -24,17 +23,10 @@ var xmlPayload = `
 </Set>
 `
 
-func init() {
-	_, err := config.LoadConfig()
-	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
-	}
-}
-
 // Helper to create an IndexController instance for testing
 func setupController() *IndexController {
 	return &IndexController{
-		config:    config.GetConfig(),
+		config:    config.NewConfig(),
 		validator: ingestion.NewValidator(),
 		Queue:     ingestion.NewJobQueue(),
 		logger:    logger.NewLogger(),

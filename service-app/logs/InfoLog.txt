@@ -1,0 +1,29 @@
+Received ingestion request
+Validating against XSD
+Received ingestion request
+Validating against XSD
+Received ingestion request
+Validating against XSD
+Received ingestion request
+Validating against XSD
+Received ingestion request
+Validating against XSD
+Received ingestion request
+Validating against XSD
+Validating and sanitizing XML
+Queueing documents for processing
+Job added to queue for document
+Ingestion request processed successfully
+Received ingestion request
+Validating against XSD
+Validating and sanitizing XML
+Queueing documents for processing
+Job added to queue for document
+Ingestion request processed successfully
+Received ingestion request
+Validating against XSD
+Validating and sanitizing XML
+Queueing documents for processing
+Job added to queue for document
+Ingestion request processed successfully
+Received ingestion request

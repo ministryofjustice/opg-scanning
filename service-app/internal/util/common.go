@@ -2,6 +2,8 @@ package util
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"path/filepath"
 	"runtime"
 )
@@ -24,4 +26,15 @@ func GetProjectRoot() (string, error) {
 	}
 
 	return absPath, nil
+}
+
+func WriteToFile(fileName string, message string, path string) {
+	f, err := os.OpenFile(path+fileName+".txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if _, err := f.Write([]byte(message + "\n")); err != nil {
+		log.Fatal(err)
+	}
 }

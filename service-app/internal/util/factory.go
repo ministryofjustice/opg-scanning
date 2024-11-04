@@ -30,7 +30,7 @@ func ProcessDocument(data *types.Document, docType string, format string) (inter
 		return nil, fmt.Errorf("failed to sanitize data: %w", err)
 	}
 
-	fmt.Printf("Parsed Document: %+v\n", sanitizedData)
+	//fmt.Printf("Parsed Document: %+v\n", sanitizedData)
 	return sanitizedData, nil
 }
 

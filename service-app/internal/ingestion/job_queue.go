@@ -53,13 +53,13 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 					defer close(done)
 					_, err := util.ProcessDocument(job.Data, job.Data.Type, job.format)
 					if err != nil {
-						q.logger.ErrorFormated("Worker %d failed to process job: %v, error: %v\n", workerID, job.Data, err)
+						q.logger.Error("Worker %d failed to process job: %v, error: %v\n", workerID, job.Data, err)
 					}
 				}()
 
 				select {
 				case <-processCtx.Done():
-					q.logger.ErrorFormated("Worker %d timed out processing job: %v\n", workerID, job.Data)
+					q.logger.Error("Worker %d timed out processing job: %v\n", workerID, job.Data)
 				case <-done:
 					if job.onComplete != nil {
 						job.onComplete()

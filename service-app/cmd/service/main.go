@@ -7,16 +7,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/api"
 )
 
 func main() {
-	_, err := config.LoadConfig()
-	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
-	}
-
 	controller := api.NewIndexController()
 	log.Println("Service started...")
 

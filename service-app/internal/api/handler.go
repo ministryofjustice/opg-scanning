@@ -20,7 +20,7 @@ type IndexController struct {
 
 func NewIndexController() *IndexController {
 	return &IndexController{
-		config:    config.GetConfig(),
+		config:    config.NewConfig(),
 		validator: ingestion.NewValidator(),
 		Queue:     ingestion.NewJobQueue(),
 		logger:    logger.NewLogger(),
@@ -104,7 +104,7 @@ func (c *IndexController) validateAndSanitizeXML(bodyStr string) (*types.Set, er
 
 	// Validate against XSD
 	c.logger.Info("Validating against XSD")
-	xsdValidator, err := ingestion.NewXSDValidator(c.config.XSDDirectory+"/"+schemaLocation, bodyStr)
+	xsdValidator, err := ingestion.NewXSDValidator(c.config.ProjectFullPath+"/xsd/"+schemaLocation, bodyStr)
 	if err != nil {
 		return nil, err
 	}
