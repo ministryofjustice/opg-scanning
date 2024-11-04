@@ -1,0 +1,746 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2014 rel. 2 (x64) (http://www.altova.com) by Elaine Matthews (Banctec Limited) -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning" elementFormDefault="qualified" attributeFormDefault="unqualified" vc:minVersion="1.1">
+    <xs:element name="LP1H">
+        <xs:annotation>
+            <xs:documentation>Lasting power of attorney form LP1H</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Page1">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Section1">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element ref="Title"/>
+                                        <xs:element ref="FirstName"/>
+                                        <xs:element ref="LastName"/>
+                                        <xs:element ref="OtherNames"/>
+                                        <xs:element ref="DOB"/>
+                                        <xs:element ref="Address"/>
+                                        <xs:element ref="EmailAddress"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Page2">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Section2">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="Attorney" minOccurs="2" maxOccurs="2">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element ref="Title"/>
+                                                    <xs:element ref="FirstName"/>
+                                                    <xs:element ref="LastName"/>
+                                                    <xs:element ref="DOB"/>
+                                                    <xs:element ref="Address"/>
+                                                    <xs:element ref="EmailAddress"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Page3">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Section2">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="Attorney" minOccurs="2" maxOccurs="2">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element ref="Title"/>
+                                                    <xs:element ref="FirstName"/>
+                                                    <xs:element ref="LastName"/>
+                                                    <xs:element ref="DOB"/>
+                                                    <xs:element ref="Address"/>
+                                                    <xs:element ref="EmailAddress"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                        <xs:element name="MoreAttorneys" type="xs:boolean"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Page4">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Section3">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="AppointedOneAttorney" type="xs:boolean"/>
+                                        <xs:element name="JointlyAndSeverally" type="xs:boolean"/>
+                                        <xs:element name="Jointly" type="xs:boolean"/>
+                                        <xs:element name="JointlyForSome" type="xs:boolean"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Page5">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Section4">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="Attorney" minOccurs="2" maxOccurs="2">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element ref="Title"/>
+                                                    <xs:element ref="FirstName"/>
+                                                    <xs:element ref="LastName"/>
+                                                    <xs:element ref="DOB"/>
+                                                    <xs:element ref="Address"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                        <xs:element name="MoreReplacements" type="xs:boolean"/>
+                                        <xs:element name="ChangeHowAttorneysAct" type="xs:boolean"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Page6">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Section5">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="OptionA">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element ref="Signature"/>
+                                                    <xs:element ref="DOB"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                        <xs:element name="OptionB">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element ref="Signature"/>
+                                                    <xs:element ref="DOB"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                        <xs:element name="Witness">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element ref="Signature"/>
+                                                    <xs:element ref="FullName"/>
+                                                    <xs:element ref="Address"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Page7">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Section6">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="PeopleToNotify" minOccurs="4" maxOccurs="4">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element ref="Title"/>
+                                                    <xs:element ref="FirstName"/>
+                                                    <xs:element ref="LastName"/>
+                                                    <xs:element ref="Address"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                        <xs:element name="AppointAnother" type="xs:boolean"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Page8">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Section7">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="Preferences" type="xs:boolean"/>
+                                        <xs:element name="PreferencesMoreSpace" type="xs:boolean"/>
+                                        <xs:element name="Instructions" type="xs:boolean"/>
+                                        <xs:element name="InstructionsMoreSpace" type="xs:boolean"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Page9">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Section8"/>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Page10">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Section9">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="Donor">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element ref="Signature"/>
+                                                    <xs:element ref="DOB"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                        <xs:element name="Witness">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element ref="Signature"/>
+                                                    <xs:element ref="FullName"/>
+                                                    <xs:element ref="Address"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Page11">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Section10">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element ref="Title"/>
+                                        <xs:element ref="FirstName"/>
+                                        <xs:element ref="LastName"/>
+                                        <xs:element ref="Address"/>
+                                        <xs:element ref="Signature"/>
+                                        <xs:element ref="Date"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Page12" maxOccurs="unbounded">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Section11">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="Attorney">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element ref="Signature"/>
+                                                    <xs:element ref="Date"/>
+                                                    <xs:element ref="Title"/>
+                                                    <xs:element ref="FirstName"/>
+                                                    <xs:element ref="LastName"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                        <xs:element name="Witness">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element ref="Signature"/>
+                                                    <xs:element ref="FullName"/>
+                                                    <xs:element ref="Address"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Page16" minOccurs="0">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Section16">
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Page17">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Section12">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="DonorApply" type="xs:boolean"/>
+                                        <xs:element name="AttorneyApply" type="xs:boolean"/>
+                                        <xs:element name="Attorney" minOccurs="4" maxOccurs="4">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element ref="Title"/>
+                                                    <xs:element ref="FirstName"/>
+                                                    <xs:element ref="LastName"/>
+                                                    <xs:element ref="DOB"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Page18">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Section13">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="TheDonor" type="xs:boolean"/>
+                                        <xs:element name="AnAttorney" type="xs:boolean"/>
+                                        <xs:element name="Other" type="xs:boolean"/>
+                                        <xs:element ref="Title"/>
+                                        <xs:element ref="FirstName"/>
+                                        <xs:element ref="LastName"/>
+                                        <xs:element ref="CompanyName"/>
+                                        <xs:element ref="Address"/>
+                                        <xs:element ref="Post"/>
+                                        <xs:element ref="Phone"/>
+                                        <xs:element ref="PhoneNumber"/>
+                                        <xs:element ref="Email"/>
+                                        <xs:element ref="EmailAddress"/>
+                                        <xs:element name="Welsh" type="xs:boolean"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Page19">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Section14">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="Cheque" type="xs:boolean"/>
+                                        <xs:element name="Card" type="xs:boolean"/>
+                                        <xs:element ref="PhoneNumber"/>
+                                        <xs:element name="ReducedApplicationFee" type="xs:boolean"/>
+                                        <xs:element name="RepeatApplication" type="xs:boolean"/>
+                                        <xs:element name="CaseNumber" type="xs:string"/>
+                                        <xs:element name="OnlineLPA" type="xs:boolean" minOccurs="0"/>
+                                        <xs:element name="OnlineLPAID" type="xs:string" minOccurs="0"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Page20" maxOccurs="unbounded">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Section15">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="Applicant" minOccurs="4" maxOccurs="4">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element ref="Signature"/>
+                                                    <xs:element ref="Date"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="ContinuationPage1" minOccurs="0" maxOccurs="unbounded">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="ContinuationSheet1">
+                                <xs:annotation>
+                                    <xs:documentation>AdditionalPeople</xs:documentation>
+                                </xs:annotation>
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="Attorney" minOccurs="2" maxOccurs="2">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element name="Attorney" type="xs:boolean"/>
+                                                    <xs:element name="ReplacementAttorney" type="xs:boolean"/>
+                                                    <xs:element name="PersonToNotify" type="xs:boolean"/>
+                                                    <xs:element name="Title" type="xs:string"/>
+                                                    <xs:element ref="FirstName"/>
+                                                    <xs:element ref="LastName"/>
+                                                    <xs:element ref="DOB"/>
+                                                    <xs:element ref="Address"/>
+                                                    <xs:element ref="EmailAddress"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                        <xs:element name="Donor">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element ref="FullName"/>
+                                                    <xs:element ref="Signature"/>
+                                                    <xs:element ref="Date"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="ContinuationPage2" minOccurs="0" maxOccurs="unbounded">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="ContinuationSheet2">
+                                <xs:annotation>
+                                    <xs:documentation>Additional Information</xs:documentation>
+                                </xs:annotation>
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="AdditionalInformation">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element name="Notes" type="xs:boolean"/>
+                                                    <xs:element name="Instructions" type="xs:boolean"/>
+                                                    <xs:element name="Preferences" type="xs:boolean"/>
+                                                    <xs:element name="ReplacementAttorneys" type="xs:boolean"/>
+                                                    <xs:element name="Jointly" type="xs:boolean"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                        <xs:element name="Donor">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element ref="FullName"/>
+                                                    <xs:element ref="Signature"/>
+                                                    <xs:element ref="Date"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="ContinuationPage3" minOccurs="0" maxOccurs="unbounded">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="ContinuationSheet3">
+                                <xs:annotation>
+                                    <xs:documentation>If the donor cannot sign or mark</xs:documentation>
+                                </xs:annotation>
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="Donor">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element ref="FullName"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                        <xs:element name="Signatory">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element ref="Signature"/>
+                                                    <xs:element ref="FullName"/>
+                                                    <xs:element ref="Date"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                        <xs:element name="Witnesses" minOccurs="2" maxOccurs="2">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element ref="Signature"/>
+                                                    <xs:element ref="FullName"/>
+                                                    <xs:element ref="Address"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="ContinuationPage4" minOccurs="0" maxOccurs="unbounded">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="ContinuationSheet4">
+                                <xs:annotation>
+                                    <xs:documentation>Trust corporation appointed as an attorney</xs:documentation>
+                                </xs:annotation>
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="CompanyRegistration" type="xs:string"/>
+                                        <xs:element name="AuthorisedPerson" minOccurs="2" maxOccurs="2">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element ref="Signature"/>
+                                                    <xs:element ref="FullName"/>
+                                                    <xs:element ref="Date"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="InfoPage" minOccurs="0" maxOccurs="unbounded">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element ref="BURN"/>
+                            <xs:element ref="PhysicalPage"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="Name">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="Salutation"/>
+                <xs:element ref="LastName"/>
+                <xs:element ref="Forename"/>
+                <xs:element ref="OtherForenames"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="Salutation">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Mr" type="xs:boolean"/>
+                <xs:element name="Mrs" type="xs:boolean"/>
+                <xs:element name="Ms" type="xs:boolean"/>
+                <xs:element name="Miss" type="xs:boolean"/>
+                <xs:element name="Other" type="xs:boolean"/>
+                <xs:element name="OtherName" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="Address">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Address1" type="xs:string"/>
+                <xs:element name="Address2" type="xs:string"/>
+                <xs:element name="Address3" type="xs:string"/>
+                <xs:element name="Postcode" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="Telephone" type="xs:string"/>
+    <xs:element name="DOB" type="xs:string"/>
+    <xs:element name="Email" type="xs:boolean"/>
+    <xs:element name="Attorney">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="Name"/>
+                <xs:element ref="CompanyName"/>
+                <xs:element ref="Address"/>
+                <xs:element ref="DXDetails"/>
+                <xs:element ref="DOB"/>
+                <xs:element ref="Telephone"/>
+                <xs:element ref="Email"/>
+                <xs:element ref="Occupation"/>
+                <xs:element ref="Relationship"/>
+                <xs:element name="Appointment">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Jointly" type="xs:boolean"/>
+                            <xs:element name="JointlyAndSeverally" type="xs:boolean"/>
+                            <xs:element name="Alone" type="xs:boolean"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="DXDetails">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="DXNumber" type="xs:string"/>
+                <xs:element name="DXExchange" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="Relationship">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="CivilPartnerSpouse" type="xs:boolean"/>
+                <xs:element name="Child" type="xs:boolean"/>
+                <xs:element name="OtherRelation" type="xs:boolean"/>
+                <xs:element name="NoRelation" type="xs:boolean"/>
+                <xs:element name="Solicitor" type="xs:boolean"/>
+                <xs:element name="OtherProfessional" type="xs:boolean"/>
+                <xs:element name="OtherName" type="xs:string">
+                    <xs:annotation>
+                        <xs:documentation>If other or other professional, please specify</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="Notification">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="NoticeDate" type="xs:string"/>
+                <xs:element name="LastName" type="xs:string"/>
+                <xs:element name="FirstName" type="xs:string"/>
+                <xs:element ref="Address"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="IorWe">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="I" type="xs:boolean"/>
+                <xs:element name="We" type="xs:boolean"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="Date" type="xs:string"/>
+    <xs:element name="YesorNo">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Yes" type="xs:boolean"/>
+                <xs:element name="No" type="xs:boolean"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="LastName" type="xs:string"/>
+    <xs:element name="Forename" type="xs:string"/>
+    <xs:element name="Declaration">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Signed" type="xs:boolean"/>
+                <xs:element ref="Date"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="CompanyName" type="xs:string"/>
+    <xs:element name="Occupation" type="xs:string"/>
+    <xs:element name="OtherForenames" type="xs:string"/>
+    <xs:element name="Relative">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="FullName" type="xs:string"/>
+                <xs:element name="Relationship" type="xs:string"/>
+                <xs:element name="Address1" type="xs:string"/>
+                <xs:element name="Address2" type="xs:string"/>
+                <xs:element name="Address3" type="xs:string"/>
+                <xs:element ref="Date"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="BURN" type="xs:string"/>
+    <xs:element name="PhysicalPage" type="xs:int"/>
+    <xs:element name="MiddleName" type="xs:string"/>
+    <xs:element name="FullAddress" type="xs:string"/>
+    <xs:element name="OtherNames" type="xs:string"/>
+    <xs:element name="Mobile" type="xs:string"/>
+    <xs:element name="NamedOthers">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="Salutation"/>
+                <xs:element ref="FullName"/>
+                <xs:element ref="FullAddress"/>
+                <xs:element name="Postcode" type="xs:string"/>
+                <xs:element ref="Telephone"/>
+                <xs:element ref="Email"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="Signature" type="xs:boolean"/>
+    <xs:element name="FullName" type="xs:string"/>
+    <xs:element name="Postcode" type="xs:string"/>
+    <xs:element name="SkillCertification">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="RegisteredProfessional" type="xs:boolean"/>
+                <xs:element name="BarristerSolicitorAdvocate" type="xs:boolean"/>
+                <xs:element name="SocialWorker" type="xs:boolean"/>
+                <xs:element name="IMCA" type="xs:boolean"/>
+                <xs:element name="NoneOfTheAbove" type="xs:boolean"/>
+                <xs:element name="SkillsAndExpertise" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="FirstName" type="xs:string"/>
+    <xs:element name="Title" type="xs:string"/>
+    <xs:element name="EmailAddress" type="xs:string"/>
+    <xs:element name="Phone" type="xs:boolean"/>
+    <xs:element name="PhoneNumber" type="xs:string"/>
+    <xs:element name="Post" type="xs:boolean"/>
+</xs:schema>
