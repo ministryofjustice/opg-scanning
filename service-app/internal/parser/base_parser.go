@@ -13,8 +13,8 @@ type BaseParser interface {
 	ParseImage(data []byte) (interface{}, error)
 }
 
-func BaseParserXml(data []byte) (*types.Set, error) {
-	var parsed types.Set
+func BaseParserXml(data []byte) (*types.BaseSet, error) {
+	var parsed types.BaseSet
 	if err := xml.Unmarshal(data, &parsed); err != nil {
 		return nil, fmt.Errorf("invalid base XML format: %w", err)
 	}
@@ -36,6 +36,14 @@ func ValidateStruct(s interface{}) error {
 		field := val.Field(i)
 		fieldType := typeOfS.Field(i)
 		requiredTag := fieldType.Tag.Get("required")
+
+		// Handle nested structs by recursively validating them
+		if field.Kind() == reflect.Struct {
+			if err := ValidateStruct(field.Addr().Interface()); err != nil {
+				return err
+			}
+			continue
+		}
 
 		// If the field has a required tag and it's true, validate presence
 		if requiredTag == "true" {

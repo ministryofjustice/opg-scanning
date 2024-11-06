@@ -21,7 +21,7 @@ func NewXmlValidator(config config.Config) *XmlValidator {
 	}
 }
 
-func (v *XmlValidator) XmlValidateSanitize(xmlData string) (*types.Set, error) {
+func (v *XmlValidator) XmlValidateSanitize(xmlData string) (*types.BaseSet, error) {
 	if xmlData == "" {
 		return nil, fmt.Errorf("empty XML data provided")
 	}

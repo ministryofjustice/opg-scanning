@@ -2,13 +2,13 @@ package types
 
 import "encoding/xml"
 
-type Set struct {
-	XMLName xml.Name `xml:"Set"`
-	Header  *Header  `xml:"Header"`
-	Body    Body     `xml:"Body"`
+type BaseSet struct {
+	XMLName xml.Name    `xml:"Set"`
+	Header  *BaseHeader `xml:"Header"`
+	Body    BaseBody    `xml:"Body"`
 }
 
-type Header struct {
+type BaseHeader struct {
 	CaseNo          string `xml:"CaseNo,attr"`
 	Scanner         string `xml:"Scanner,attr"`
 	ScanTime        string `xml:"ScanTime,attr"`
@@ -17,11 +17,11 @@ type Header struct {
 	FeeNumber       string `xml:"FeeNumber,attr"`
 }
 
-type Body struct {
-	Documents []Document `xml:"Document"`
+type BaseBody struct {
+	Documents []BaseDocument `xml:"Document"`
 }
 
-type Document struct {
+type BaseDocument struct {
 	Type          string `xml:"Type,attr"`
 	Encoding      string `xml:"Encoding,attr"`
 	NoPages       int    `xml:"NoPages,attr"`

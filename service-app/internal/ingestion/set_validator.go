@@ -19,7 +19,7 @@ func NewValidator() *Validator {
 	return &Validator{}
 }
 
-func (v *Validator) ValidateSet(parsedSet *types.Set) error {
+func (v *Validator) ValidateSet(parsedSet *types.BaseSet) error {
 	if parsedSet == nil {
 		return errors.New("parsedSet is nil")
 	}
@@ -109,7 +109,7 @@ func (v *Validator) validateInstrumentApplications(instruments []string, applica
 	return nil
 }
 
-func (v *Validator) getEmbeddedDocumentTypes(parsedSet *types.Set, validTypes []string) []string {
+func (v *Validator) getEmbeddedDocumentTypes(parsedSet *types.BaseSet, validTypes []string) []string {
 	typesDiscovered := []string{}
 	for _, doc := range parsedSet.Body.Documents {
 		for _, validType := range validTypes {

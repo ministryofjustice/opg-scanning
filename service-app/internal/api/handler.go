@@ -97,7 +97,7 @@ func (c *IndexController) readRequestBody(r *http.Request) (string, error) {
 }
 
 // Helper Method: Validate and Sanitize XML
-func (c *IndexController) validateAndSanitizeXML(bodyStr string) (*types.Set, error) {
+func (c *IndexController) validateAndSanitizeXML(bodyStr string) (*types.BaseSet, error) {
 	// Extract the document type from the XML
 	schemaLocation, err := ingestion.ExtractSchemaLocation(bodyStr)
 	if err != nil {

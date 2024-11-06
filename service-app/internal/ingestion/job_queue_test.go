@@ -16,7 +16,7 @@ var sampleXMLArray = []string{
 	<LP1F>
 		<Page1>
 			<Section1>
-				<Title>Mr.</Title>
+				<Title></Title>
 				<FirstName>John</FirstName>
 				<LastName>Doe</LastName>
 			</Section1>
@@ -52,7 +52,7 @@ func TestJobQueue(t *testing.T) {
 	for _, xml := range sampleXMLArray {
 		encodedXML := base64.StdEncoding.EncodeToString([]byte(xml))
 
-		doc := &types.Document{
+		doc := &types.BaseDocument{
 			Type:        "LP1F",
 			Encoding:    "base64",
 			NoPages:     1,

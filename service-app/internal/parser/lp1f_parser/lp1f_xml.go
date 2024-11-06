@@ -1,14 +1,14 @@
-package lp1f
+package lpf1_parser
 
 import (
 	"encoding/xml"
 
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
-	"github.com/ministryofjustice/opg-scanning/internal/types"
+	lp1f_types "github.com/ministryofjustice/opg-scanning/internal/types/lpf1_types"
 )
 
-func ParseLP1FXml(data []byte) (*types.LP1FDocument, error) {
-	doc := &types.LP1FDocument{}
+func ParseLP1FXml(data []byte) (*lp1f_types.LP1FDocument, error) {
+	doc := &lp1f_types.LP1FDocument{}
 
 	err := xml.Unmarshal(data, doc)
 	if err != nil {

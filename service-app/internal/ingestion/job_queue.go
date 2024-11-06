@@ -11,7 +11,7 @@ import (
 )
 
 type Job struct {
-	Data       *types.Document
+	Data       *types.BaseDocument
 	format     string
 	onComplete func()
 }
@@ -31,7 +31,7 @@ func NewJobQueue() *JobQueue {
 	return queue
 }
 
-func (q *JobQueue) AddToQueue(data *types.Document, format string, onComplete func()) {
+func (q *JobQueue) AddToQueue(data *types.BaseDocument, format string, onComplete func()) {
 	job := Job{Data: data, format: format, onComplete: onComplete}
 	q.wg.Add(1)
 	q.Jobs <- job
