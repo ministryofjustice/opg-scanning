@@ -1,27 +1,31 @@
-package lpf1_parser
+package lp1f_parser
 
 import (
 	"encoding/xml"
-	"fmt"
 
+	"github.com/ministryofjustice/opg-scanning/internal/parser"
+	"github.com/ministryofjustice/opg-scanning/internal/types"
 	lp1f_types "github.com/ministryofjustice/opg-scanning/internal/types/lpf1_types"
 )
 
-type LP1FParser struct {
-	Doc *lp1f_types.LP1FDocument
+type Parser struct{}
+
+func NewParser() types.Parser {
+	return &Parser{}
 }
 
-func (lp *LP1FParser) ParseDocument(data []byte) (interface{}, error) {
-	if lp.Doc == nil {
-		return nil, fmt.Errorf("document is not populated")
+func (p *Parser) Parse(data []byte) (interface{}, error) {
+	doc := &lp1f_types.LP1FDocument{}
+
+	err := xml.Unmarshal(data, doc)
+	if err != nil {
+		return nil, err
 	}
 
-	// Assuming the input data is XML, we parse it into the LP1FDocument struct
-	if err := xml.Unmarshal(data, lp.Doc); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal XML: %v", err)
+	// Validate required fields based on struct tags
+	if err := parser.ValidateStruct(doc); err != nil {
+		return nil, err
 	}
 
-	// TODO: Perform necessary data transformations
-
-	return lp.Doc, nil
+	return doc, nil
 }

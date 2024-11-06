@@ -22,7 +22,7 @@ type Salutation struct {
 }
 
 type Signatory struct {
-	Signature string `xml:"Signature"`
+	Signature bool   `xml:"Signature"`
 	FullName  string `xml:"FullName"`
 	Date      string `xml:"Date"`
 }
@@ -35,8 +35,8 @@ type PersonName struct {
 }
 
 type Declaration struct {
-	Signed bool   `xml:"Signed"`
-	Date   string `xml:"Date"`
+	Signature bool   `xml:"Signature,omitempty"`
+	Date      string `xml:"Date,omitempty"`
 }
 
 type Notification struct {
@@ -56,10 +56,11 @@ type Attorney struct {
 	Title            string  `xml:"Title"`
 	FirstName        string  `xml:"FirstName"`
 	LastName         string  `xml:"LastName"`
-	DOB              string  `xml:"DOB"`
-	Address          Address `xml:"Address"`
-	EmailAddress     string  `xml:"EmailAddress"`
+	DOB              string  `xml:"DOB,omitempty"`
+	Address          Address `xml:"Address,omitempty"`
+	EmailAddress     string  `xml:"EmailAddress,omitempty"`
 	TrustCorporation *bool   `xml:"TrustCorporation,omitempty"`
+	Declaration
 }
 
 type PeopleToNotify struct {
@@ -79,7 +80,7 @@ type SkillCertification struct {
 }
 
 type Witness struct {
-	Signature string  `xml:"Signature"`
+	Signature bool    `xml:"Signature"`
 	FullName  string  `xml:"FullName"`
 	Address   Address `xml:"Address"`
 }
@@ -87,11 +88,6 @@ type Witness struct {
 type YesOrNo struct {
 	Yes bool `xml:"Yes"`
 	No  bool `xml:"No"`
-}
-
-type Applicant struct {
-	Signature string `xml:"Signature"`
-	Date      string `xml:"Date"`
 }
 
 type Section1 struct {
@@ -150,8 +146,13 @@ type Section10 struct {
 	FirstName string  `xml:"FirstName"`
 	LastName  string  `xml:"LastName"`
 	Address   Address `xml:"Address"`
-	Signature string  `xml:"Signature"`
+	Signature bool    `xml:"Signature"`
 	Date      string  `xml:"Date"`
+}
+
+type Section11 struct {
+	Attorney Attorney `xml:"Attorney"`
+	Witness  Witness  `xml:"Witness"`
 }
 
 type Section12 struct {
@@ -189,7 +190,7 @@ type Section14 struct {
 }
 
 type Section15 struct {
-	Applicant []Applicant `xml:"Applicant"`
+	Applicant []Declaration `xml:"Applicant"`
 }
 
 type Page1 struct {
@@ -249,7 +250,7 @@ type Page11 struct {
 
 type Page12 struct {
 	BasePage
-	Section9 Section9 `xml:"Section11"`
+	Section11 Section11 `xml:"Section11"`
 }
 
 type Page16 struct {
@@ -319,7 +320,7 @@ type ContinuationSheet4 struct {
 }
 
 type AuthorisedPerson struct {
-	Signature string `xml:"Signature"`
+	Signature bool   `xml:"Signature"`
 	FullName  string `xml:"FullName"`
 	Date      string `xml:"Date"`
 }

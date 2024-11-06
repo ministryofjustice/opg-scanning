@@ -8,11 +8,6 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 )
 
-type BaseParser interface {
-	ParseDocument(data []byte) (interface{}, error)
-	ParseImage(data []byte) (interface{}, error)
-}
-
 func BaseParserXml(data []byte) (*types.BaseSet, error) {
 	var parsed types.BaseSet
 	if err := xml.Unmarshal(data, &parsed); err != nil {
@@ -22,7 +17,7 @@ func BaseParserXml(data []byte) (*types.BaseSet, error) {
 	return &parsed, nil
 }
 
-// ValidateStruct checks for required fields based on `required:"true"` tags
+// Checks for required fields based on `required:"true"` tags
 func ValidateStruct(s interface{}) error {
 	val := reflect.ValueOf(s)
 
@@ -55,7 +50,7 @@ func ValidateStruct(s interface{}) error {
 	return nil
 }
 
-// isZeroOfUnderlyingType checks if a field is set to its zero value
+// Checks if a field is set to its zero value
 func isZeroOfUnderlyingType(field reflect.Value) bool {
 	return field.Interface() == reflect.Zero(field.Type()).Interface()
 }

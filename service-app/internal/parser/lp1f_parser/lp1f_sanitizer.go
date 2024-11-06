@@ -1,20 +1,33 @@
-package lpf1_parser
+package lp1f_parser
 
 import (
 	"errors"
 	"reflect"
 	"strings"
 
-	lp1f_types "github.com/ministryofjustice/opg-scanning/internal/types/lpf1_types"
+	"github.com/ministryofjustice/opg-scanning/internal/types"
 )
 
 type Sanitizer struct{}
 
-func NewSanitizer() *Sanitizer {
+func NewSanitizer() types.Sanitizer {
 	return &Sanitizer{}
 }
 
-func (s *Sanitizer) SanitizeStruct(input interface{}) error {
+func (s *Sanitizer) Sanitize(doc interface{}) (interface{}, error) {
+	if doc == nil {
+		return nil, errors.New("cannot sanitize nil data")
+	}
+
+	// Sanitize the entire struct dynamically
+	if err := s.sanitizeStruct(doc); err != nil {
+		return nil, err
+	}
+
+	return doc, nil
+}
+
+func (s *Sanitizer) sanitizeStruct(input interface{}) error {
 	val := reflect.ValueOf(input)
 
 	// Check if val is a pointer and dereference it
@@ -44,7 +57,7 @@ func (s *Sanitizer) SanitizeStruct(input interface{}) error {
 
 		// Handle nested structs by recursively sanitizing them
 		if field.Kind() == reflect.Struct {
-			if err := s.SanitizeStruct(field.Addr().Interface()); err != nil {
+			if err := s.sanitizeStruct(field.Addr().Interface()); err != nil {
 				return err
 			}
 			continue
@@ -58,19 +71,6 @@ func (s *Sanitizer) SanitizeStruct(input interface{}) error {
 	}
 
 	return nil
-}
-
-func (s *Sanitizer) Sanitize(data *lp1f_types.LP1FDocument) (*lp1f_types.LP1FDocument, error) {
-	if data == nil {
-		return nil, errors.New("cannot sanitize nil data")
-	}
-
-	// Sanitize the entire struct dynamically
-	if err := s.SanitizeStruct(data); err != nil {
-		return nil, err
-	}
-
-	return data, nil
 }
 
 func sanitizeString(input string) string {

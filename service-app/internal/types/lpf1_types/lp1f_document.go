@@ -16,12 +16,12 @@ type LP1FDocument struct {
 	Page9             Page9               `xml:"Page9"`
 	Page10            Page10              `xml:"Page10"`
 	Page11            Page11              `xml:"Page11"`
-	Page12            []Page12            `xml:"Page12"`
+	Page12            Page12              `xml:"Page12"`
 	Page16            Page16              `xml:"Page16,omitempty"`
 	Page17            Page17              `xml:"Page17"`
 	Page18            Page18              `xml:"Page18"`
 	Page19            Page19              `xml:"Page19"`
-	Page20            []Page20            `xml:"Page20"`
+	Page20            Page20              `xml:"Page20"`
 	ContinuationPage1 []ContinuationPage1 `xml:"ContinuationPage1,omitempty"`
 	ContinuationPage2 []ContinuationPage2 `xml:"ContinuationPage2,omitempty"`
 	ContinuationPage3 []ContinuationPage3 `xml:"ContinuationPage3,omitempty"`

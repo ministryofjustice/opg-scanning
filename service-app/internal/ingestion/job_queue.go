@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ministryofjustice/opg-scanning/internal/factory"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
 type Job struct {
@@ -40,38 +40,52 @@ func (q *JobQueue) AddToQueue(data *types.BaseDocument, format string, onComplet
 func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 	for i := 0; i < numWorkers; i++ {
 		go func(workerID int) {
-			select {
-			case job, ok := <-q.Jobs:
-				if !ok {
+			for {
+				select {
+				case job, ok := <-q.Jobs:
+					if !ok {
+						return // Exit if the job channel is closed
+					}
+
+					processCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+					defer cancel()
+
+					done := make(chan struct{})
+					go func() {
+						defer close(done)
+
+						// Initialize document processor
+						processor, err := factory.NewDocumentProcessor(job.Data, job.Data.Type, job.format)
+						if err != nil {
+							q.logger.Error("Worker %d failed to initialize processor for job: %v, error: %v\n", workerID, job.Data, err)
+							return
+						}
+
+						// Process the document
+						_, err = processor.Process()
+						if err != nil {
+							q.logger.Error("Worker %d failed to process job: %v, error: %v\n", workerID, job.Data, err)
+							return
+						}
+
+						if job.onComplete != nil {
+							job.onComplete()
+						}
+					}()
+
+					select {
+					case <-processCtx.Done():
+						q.logger.Error("Worker %d timed out processing job: %v\n", workerID, job.Data)
+					case <-done:
+						// Job completed without timing out
+					}
+
+					q.wg.Done()
+
+				case <-ctx.Done():
+					q.logger.Info("Worker pool stopped")
 					return
 				}
-
-				processCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-				defer cancel()
-
-				done := make(chan struct{})
-				go func() {
-					defer close(done)
-					_, err := util.ProcessDocument(job.Data, job.Data.Type, job.format)
-					if err != nil {
-						q.logger.Error("Worker %d failed to process job: %v, error: %v\n", workerID, job.Data, err)
-					}
-				}()
-
-				select {
-				case <-processCtx.Done():
-					q.logger.Error("Worker %d timed out processing job: %v\n", workerID, job.Data)
-				case <-done:
-					if job.onComplete != nil {
-						job.onComplete()
-					}
-				}
-
-				q.wg.Done()
-
-			case <-ctx.Done():
-				q.logger.Info("Worker pool stopped")
-				return
 			}
 		}(i)
 	}
