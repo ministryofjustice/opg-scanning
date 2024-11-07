@@ -1,11 +1,15 @@
 package util
 
 import (
+	"encoding/base64"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func GetProjectRoot() (string, error) {
@@ -37,4 +41,10 @@ func WriteToFile(fileName string, message string, path string) {
 	if _, err := f.Write([]byte(message + "\n")); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func LoadXMLFile(t *testing.T, filepath string) string {
+	data, err := os.ReadFile(filepath)
+	require.NoError(t, err, "failed to read XML file")
+	return base64.StdEncoding.EncodeToString(data)
 }
