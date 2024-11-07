@@ -1,18 +1,19 @@
 package factory
 
 import (
+	"encoding/base64"
+	"os"
 	"testing"
 
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/types/lpf1_types"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestProcessDocument_LP1F(t *testing.T) {
 	// Load the sample XML from the xml directory
-	encodedXML := util.LoadXMLFile(t, "../../xml/LP1F-valid.xml")
+	encodedXML := loadXMLFile(t, "../../xml/LP1F-valid.xml")
 	if encodedXML == "" {
 		t.Fatal("failed to load sample XML")
 	}
@@ -38,4 +39,10 @@ func TestProcessDocument_LP1F(t *testing.T) {
 
 	assert.Equal(t, "John", lp1fDoc.Page1.Section1.FirstName, "FirstName mismatch")
 	assert.Equal(t, "Doe", lp1fDoc.Page1.Section1.LastName, "LastName mismatch")
+}
+
+func loadXMLFile(t *testing.T, filepath string) string {
+	data, err := os.ReadFile(filepath)
+	require.NoError(t, err, "failed to read XML file")
+	return base64.StdEncoding.EncodeToString(data)
 }
