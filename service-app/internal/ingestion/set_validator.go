@@ -66,8 +66,6 @@ func (v *Validator) ValidateSet(parsedSet *types.BaseSet) error {
 		if doc.NoPages <= 0 {
 			return fmt.Errorf("document NoPages attribute is missing or invalid")
 		}
-
-		// TODO: Check if validate Embedded XML is needed at this stage
 	}
 
 	return nil
