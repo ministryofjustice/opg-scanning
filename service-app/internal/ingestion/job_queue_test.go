@@ -3,40 +3,14 @@ package ingestion
 import (
 	"context"
 	"encoding/base64"
+	"os"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/ministryofjustice/opg-scanning/internal/types"
+	"github.com/stretchr/testify/require"
 )
-
-// Define an array of sample XML documents for testing
-var sampleXMLArray = []string{
-	`
-	<LP1F>
-		<Page1>
-			<Section1>
-				<Title></Title>
-				<FirstName>John</FirstName>
-				<LastName>Doe</LastName>
-			</Section1>
-			<BURN>123456789</BURN>
-		</Page1>
-	</LP1F>
-	`,
-	`
-	<LP1F>
-		<Page1>
-			<Section1>
-				<Title>Ms.</Title>
-				<FirstName>Jane</FirstName>
-				<LastName>Doe</LastName>
-			</Section1>
-			<BURN>987654321</BURN>
-		</Page1>
-	</LP1F>
-	`,
-}
 
 func TestJobQueue(t *testing.T) {
 	queue := NewJobQueue()
@@ -47,16 +21,21 @@ func TestJobQueue(t *testing.T) {
 	queue.StartWorkerPool(ctx, 3)
 
 	var processedJobs int32
+
+	sampleXMLArray := []string{
+		loadXMLFile(t, "../../xml/LP1F-valid.xml"),
+		loadXMLFile(t, "../../xml/LP1F-alternate.xml"),
+	}
+
 	numJobs := len(sampleXMLArray)
 
+	// Add each XML as a job in the queue
 	for _, xml := range sampleXMLArray {
-		encodedXML := base64.StdEncoding.EncodeToString([]byte(xml))
-
 		doc := &types.BaseDocument{
 			Type:        "LP1F",
 			Encoding:    "base64",
 			NoPages:     1,
-			EmbeddedXML: encodedXML,
+			EmbeddedXML: xml,
 		}
 
 		queue.AddToQueue(doc, "xml", func() {
@@ -64,7 +43,6 @@ func TestJobQueue(t *testing.T) {
 		})
 	}
 
-	// Wait for all jobs to be processed with a timeout
 	done := make(chan struct{})
 	go func() {
 		queue.Wait()
@@ -73,7 +51,6 @@ func TestJobQueue(t *testing.T) {
 
 	select {
 	case <-done:
-		// Ensure the number of processed jobs matches the number of added jobs
 		if atomic.LoadInt32(&processedJobs) != int32(numJobs) {
 			t.Errorf("Expected %d jobs to be processed, but got %d", numJobs, atomic.LoadInt32(&processedJobs))
 		}
@@ -81,6 +58,13 @@ func TestJobQueue(t *testing.T) {
 		t.Error("Test timed out waiting for jobs to be processed")
 	}
 
-	// Close the queue and cancel the context to stop workers
 	queue.Close()
+}
+
+func loadXMLFile(t *testing.T, filepath string) string {
+	data, err := os.ReadFile(filepath)
+	if err != nil {
+		require.FailNow(t, "Failed to read XML file", err.Error())
+	}
+	return base64.StdEncoding.EncodeToString(data)
 }
