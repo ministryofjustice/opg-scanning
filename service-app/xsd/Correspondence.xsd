@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2014 sp1 (http://www.altova.com) by Andrew Roberts (Blue Rhino) -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning" elementFormDefault="qualified" attributeFormDefault="unqualified" vc:minVersion="1.1">
+	<xs:element name="Correspondence">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="SubType" type="xs:string"/>
+				<xs:element name="CaseNumber" type="xs:string" maxOccurs="unbounded"/>
+				<xs:element name="Page" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="BURN" type="xs:string"/>
+							<xs:element name="PhysicalPage" type="xs:int"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
