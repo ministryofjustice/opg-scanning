@@ -37,8 +37,8 @@ func TestProcessDocument_LP1F(t *testing.T) {
 	lp1fDoc, ok := processedDoc.(*lpf1_types.LP1FDocument)
 	require.True(t, ok, "expected processedDoc to be of type *lp1f_types.LP1FDocument")
 
-	assert.Equal(t, "John", lp1fDoc.Page1.Section1.FirstName, "FirstName mismatch")
-	assert.Equal(t, "Doe", lp1fDoc.Page1.Section1.LastName, "LastName mismatch")
+	assert.Equal(t, "ANDREW ROBERT", lp1fDoc.Page1.Section1.FirstName, "FirstName mismatch")
+	assert.Equal(t, "HEPBURN", lp1fDoc.Page1.Section1.LastName, "LastName mismatch")
 }
 
 func loadXMLFile(t *testing.T, filepath string) string {

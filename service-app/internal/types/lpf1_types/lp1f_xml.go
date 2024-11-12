@@ -22,9 +22,8 @@ type Salutation struct {
 }
 
 type Signatory struct {
-	Signature bool   `xml:"Signature"`
-	FullName  string `xml:"FullName"`
-	Date      string `xml:"Date"`
+	FullName string `xml:"FullName"`
+	Declaration
 }
 
 type PersonName struct {
@@ -146,8 +145,7 @@ type Section10 struct {
 	FirstName string  `xml:"FirstName"`
 	LastName  string  `xml:"LastName"`
 	Address   Address `xml:"Address"`
-	Signature bool    `xml:"Signature"`
-	Date      string  `xml:"Date"`
+	Declaration
 }
 
 type Section11 struct {
@@ -320,9 +318,8 @@ type ContinuationSheet4 struct {
 }
 
 type AuthorisedPerson struct {
-	Signature bool   `xml:"Signature"`
-	FullName  string `xml:"FullName"`
-	Date      string `xml:"Date"`
+	FullName string `xml:"FullName"`
+	Declaration
 }
 
 type InfoPage struct {
