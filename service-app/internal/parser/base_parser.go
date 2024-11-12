@@ -18,6 +18,7 @@ func BaseParserXml(data []byte) (*types.BaseSet, error) {
 }
 
 // Checks for required fields based on `required:"true"` tags
+// TODO: Check if this is needed due to manual validation overrides.
 func ValidateStruct(s interface{}) error {
 	val := reflect.ValueOf(s)
 

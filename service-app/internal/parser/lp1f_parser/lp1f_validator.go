@@ -33,10 +33,17 @@ func (v *Validator) Validate() error {
 	// Section validations
 	v.validateSection("Page10", "Section9", "Donor")
 	v.validateSection("Page11", "Section10", "")
-	v.validateSection("Page12", "Section11", "Attorney")
 
-	// Applicant validations
-	v.applicantSignatureValidator()
+	// Iterate over each instance of Page12 (since its an array)
+	// and validate them individually
+	for i, _ := range v.doc.Page12 {
+		v.validateSection(fmt.Sprintf("Page12[%d]", i), "Section11", "Attorney")
+	}
+
+	// Applicant validation iterations
+	for i, _ := range v.doc.Page20 {
+		v.applicantSignatureValidator(fmt.Sprintf("Page20[%d]", i))
+	}
 
 	// Return errors if any
 	if messages := v.commonValidator.GetValidatorErrorMessages(); len(messages) > 0 {
@@ -47,7 +54,7 @@ func (v *Validator) Validate() error {
 
 // Validates the presence and format of a signature date for a specific section
 func (v *Validator) validateSection(page, section, field string) {
-	_, dateStr, err := v.getFieldValues(page, section, field)
+	dateStr, err := v.getFieldValues(page, section, field)
 	if err != nil {
 		v.commonValidator.AddValidatorErrorMessage(err.Error())
 		return
@@ -61,23 +68,19 @@ func (v *Validator) validateSection(page, section, field string) {
 }
 
 // Retrieves and validates the signature and date fields for a section
-func (v *Validator) getFieldValues(page, section, field string) (bool, string, error) {
+func (v *Validator) getFieldValues(page, section, field string) (string, error) {
 	signatureVal, err := v.commonValidator.GetFieldByPath(page, section, field, "Signature")
-	if err != nil || len(signatureVal) == 0 || !signatureVal[0].(bool) {
-		return false, "", fmt.Errorf("%s signature not set or invalid", field)
+	if err != nil || !signatureVal[0].(bool) {
+		return "", fmt.Errorf("%s %s %s signature not set or invalid", page, section, field)
 	}
 
 	dateVal, err := v.commonValidator.GetFieldByPath(page, section, field, "Date")
-	if err != nil || len(dateVal) == 0 {
-		return true, "", fmt.Errorf("missing %s date", field)
+	dateStr := dateVal[0].(string)
+	if err != nil || dateStr == "" {
+		return "", fmt.Errorf("missing %s %s %s date", page, section, field)
 	}
 
-	dateStr, ok := dateVal[0].(string)
-	if !ok {
-		return true, "", fmt.Errorf("invalid %s date format", field)
-	}
-
-	return true, dateStr, nil
+	return dateStr, nil
 }
 
 // Checks if the date string is valid and not in the future
@@ -95,9 +98,9 @@ func validateSignatureDate(dateStr, label string) (time.Time, error) {
 }
 
 // Gathers applicant signature dates and validates them
-func (v *Validator) applicantSignatureValidator() {
+func (v *Validator) applicantSignatureValidator(page string) {
 	// Retrieve and validate applicant signature dates
-	applicants, err := v.commonValidator.GetFieldByPath("Page20", "Section15", "Applicant")
+	applicants, err := v.commonValidator.GetFieldByPath(page, "Section15", "Applicant")
 	if err != nil {
 		v.commonValidator.AddValidatorErrorMessage(fmt.Sprintf("failed to retrieve applicant data: %v", err))
 		return
