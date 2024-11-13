@@ -1,7 +1,31 @@
-FROM python:3.11.9-alpine3.20
+FROM golang:1.23-alpine3.20 AS build-env
 
-RUN mkdir /app
+RUN apk add gcc libc-dev libxml2-dev
+
 WORKDIR /app
-ADD hello-world.py .
 
-CMD ["python", "-u", "hello-world.py"]
+COPY go.mod .
+COPY go.sum .
+
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=1 go build -a -installsuffix cgo -o /go/bin/opg-scanning /app/cmd/service
+
+FROM alpine:3
+
+RUN apk add libxml2-dev
+ENV PROJECT_PATH=/go
+
+WORKDIR /go/bin
+
+COPY --from=build-env /go/bin/opg-scanning main
+COPY config/config.yml /go/config/config.yml
+COPY xsd /go/xsd
+
+RUN addgroup -S app && \
+    adduser -S -g app app && \
+    chown -R app:app main
+USER app
+ENTRYPOINT ["./main"]
