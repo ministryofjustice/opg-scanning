@@ -17,6 +17,7 @@ func NewParser() types.Parser {
 func (p *Parser) Parse(data []byte) (interface{}, error) {
 	doc := &lp1f_types.LP1FDocument{}
 
+	// We assume XML for now
 	err := xml.Unmarshal(data, doc)
 	if err != nil {
 		return nil, err

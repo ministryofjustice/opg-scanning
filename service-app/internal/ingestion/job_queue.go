@@ -57,14 +57,14 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 						// Initialize document processor
 						processor, err := factory.NewDocumentProcessor(job.Data, job.Data.Type, job.format)
 						if err != nil {
-							q.logger.Error("Worker %d failed to initialize processor for job: %v, error: %v\n", workerID, job.Data, err)
+							q.logger.Error("Worker %d failed to initialize processor for job: %v\n", workerID, err)
 							return
 						}
 
 						// Process the document
 						_, err = processor.Process()
 						if err != nil {
-							q.logger.Error("Worker %d failed to process job: %v, error: %v\n", workerID, job.Data, err)
+							q.logger.Error("Worker %d failed to process job: %v\n", workerID, err)
 							return
 						}
 
@@ -75,7 +75,7 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 
 					select {
 					case <-processCtx.Done():
-						q.logger.Error("Worker %d timed out processing job: %v\n", workerID, job.Data)
+						q.logger.Error("Worker %d timed out processing job: %v\n", workerID)
 					case <-done:
 						// Job completed without timing out
 					}

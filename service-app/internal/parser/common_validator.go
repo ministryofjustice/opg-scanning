@@ -38,7 +38,7 @@ func (v *CommonValidator) WitnessSignatureFullNameAddressValidator(page string, 
 
 func (v *CommonValidator) formHasWitnessSignature(page, section string) bool {
 	signature, err := v.GetFieldByPath(page, section, "Witness", "Signature")
-	if err == nil && signature[0] != "" {
+	if err == nil && signature[0].(bool) {
 		return true
 	}
 	return false
@@ -100,12 +100,7 @@ func (v *CommonValidator) GetFieldByPath(page, section string, fields ...string)
 		// Handle slices/arrays with optional index
 		if current.Kind() == reflect.Slice || current.Kind() == reflect.Array {
 			if index == nil {
-				// If no index is provided, return all elements in the slice
-				var result []interface{}
-				for i := 0; i < current.Len(); i++ {
-					result = append(result, current.Index(i).Interface())
-				}
-				return result, nil
+				continue
 			}
 
 			// If index is provided, access the specific element

@@ -28,7 +28,6 @@ func NewValidator(doc *lp1f_types.LP1FDocument) types.Validator {
 func (v *Validator) Validate() error {
 	// Common witness validations
 	v.commonValidator.WitnessSignatureFullNameAddressValidator("Page10", "Section9")
-	v.commonValidator.WitnessSignatureFullNameAddressValidator("Page12", "Section11")
 
 	// Section validations
 	v.validateSection("Page10", "Section9", "Donor")
@@ -37,6 +36,7 @@ func (v *Validator) Validate() error {
 	// Iterate over each instance of Page12 (since its an array)
 	// and validate them individually
 	for i, _ := range v.doc.Page12 {
+		v.commonValidator.WitnessSignatureFullNameAddressValidator(fmt.Sprintf("Page12[%d]", i), "Section11")
 		v.validateSection(fmt.Sprintf("Page12[%d]", i), "Section11", "Attorney")
 	}
 

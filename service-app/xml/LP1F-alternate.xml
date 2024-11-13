@@ -208,13 +208,13 @@
                 <Date>14122014</Date>
             </Donor>
             <Witness>
-                <Signature>false</Signature>
-                <FullName/>
+                <Signature>true</Signature>
+                <FullName>Test Name</FullName>
                 <Address>
-                    <Address1/>
-                    <Address2/>
+                    <Address1>10 HOLLIDAY STREET</Address1>
+                    <Address2>BIRMINGHAM</Address2>
                     <Address3/>
-                    <Postcode/>
+                    <Postcode>B1 1TF</Postcode>
                 </Address>
             </Witness>
         </Section9>
@@ -294,7 +294,7 @@
                 <LastName>RAY</LastName>
             </Attorney>
             <Witness>
-                <Signature>false</Signature>
+                <Signature>true</Signature>
                 <FullName>COLIN JAMES</FullName>
                 <Address>
                     <Address1>102 DURANTS ROAD</Address1>
@@ -428,19 +428,7 @@
             <Applicant>
                 <Signature>true</Signature>
                 <Date>17122014</Date>
-            </Applicant>
-            <Applicant>
-                <Signature>false</Signature>
-                <Date/>
-            </Applicant>
-            <Applicant>
-                <Signature>false</Signature>
-                <Date/>
-            </Applicant>
-            <Applicant>
-                <Signature>false</Signature>
-                <Date/>
-            </Applicant>
+            </Applicant>            
         </Section15>
         <BURN/>
         <PhysicalPage>20</PhysicalPage>

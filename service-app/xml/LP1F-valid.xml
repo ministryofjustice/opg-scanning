@@ -208,7 +208,7 @@
                 <Date>14122014</Date>
             </Donor>
             <Witness>
-                <Signature>false</Signature>
+                <Signature>true</Signature>
                 <FullName>Joe Bloggs</FullName>
                 <Address>
                 <Address1>10 HOLLIDAY STREET</Address1>
@@ -294,7 +294,7 @@
                 <LastName>RAY</LastName>
             </Attorney>
             <Witness>
-                <Signature>false</Signature>
+                <Signature>true</Signature>
                 <FullName>COLIN JAMES</FullName>
                 <Address>
                     <Address1>102 DURANTS ROAD</Address1>
