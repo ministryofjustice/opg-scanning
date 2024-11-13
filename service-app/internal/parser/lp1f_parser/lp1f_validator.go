@@ -135,7 +135,7 @@ func (v *Validator) applicantSignatureValidator(page string) {
 
 	// Ensure applicant dates follow corerct ordering rules
 	if len(v.applicantSignatureDates) == 0 {
-		v.commonValidator.AddValidatorErrorMessage("no valid applicant signature dates found")
+		v.commonValidator.AddValidatorErrorMessage("no valid applicant signature/dates found")
 	} else {
 		v.checkDatesAgainstEarliestApplicantDate()
 	}

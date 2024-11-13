@@ -2,6 +2,7 @@ package lp1f_parser
 
 import (
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -16,6 +17,44 @@ func TestValidXML(t *testing.T) {
 	validator := getValidator(t, "LP1F-valid.xml")
 	err = validator.Validate()
 	require.NoError(t, err, "Expected no errors")
+}
+
+func TestInvalidXML(t *testing.T) {
+	validator := getValidator(t, "LP1F-invalid.xml")
+	err := validator.Validate()
+	require.Error(t, err, "Expected validation errors due to date ordering but got none")
+
+	messages := validator.(*Validator).commonValidator.GetValidatorErrorMessages()
+
+	expectedErrMsgs := []string{
+		"(?i)^Page10 Section9 Witness Signature not set",
+		"(?i)^Page10 Section9 Donor Signature not set",
+		"(?i)^Page10 Section9 Witness Full Name not set",
+		"(?i)^Page10 Section9 Witness Address not valid",
+		"(?i)^Page10 Section9 Donor signature not set or invalid",
+		"(?i)^Page12\\[2\\] Section11 Witness Signature not set",
+		"(?i)^no valid applicant signature/dates found",
+	}
+
+	t.Log("Actual messages from validation:")
+	t.Log(messages)
+
+	// Match each expected pattern against actual messages using regex
+	for _, pattern := range expectedErrMsgs {
+		regex, err := regexp.Compile(pattern)
+		require.NoError(t, err, "Failed to compile regex for pattern: %s", pattern)
+
+		// Check if any actual message matches the current regex pattern
+		found := false
+		for _, msg := range messages {
+			if regex.MatchString(msg) {
+				found = true
+				break
+			}
+		}
+
+		require.True(t, found, "Expected error message pattern not found: %s", pattern)
+	}
 }
 
 func TestInvalidDateOrderXML(t *testing.T) {
