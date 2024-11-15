@@ -17,14 +17,14 @@ type (
 
 	// App configuration fields.
 	App struct {
-		SiriusBaseURL   string `required:"true" envconfig:"SIRIUS_BASE_URL"`
-		ProjectPath     string `required:"true" envconfig:"PROJECT_PATH"`
+		SiriusBaseURL   string `required:"true" envconfig:"SIRIUS_BASE_URL" default:".."`
+		ProjectPath     string `required:"true" envconfig:"PROJECT_PATH" default:".."`
 		ProjectFullPath string
 	}
 
 	// HTTP server configuration fields.
 	HTTP struct {
-		Port string `required:"true" envconfig:"HTTP_PORT"`
+		Port string `required:"true" envconfig:"HTTP_PORT" default:"8081"`
 	}
 )
 
