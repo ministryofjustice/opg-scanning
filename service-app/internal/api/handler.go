@@ -92,7 +92,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(scannedCaseResponse)
-	c.logger.Info("Ingestion request processed successfully, UUID: " + scannedCaseResponse.UUID)
+	c.logger.Info("Ingestion request processed successfully, UID: " + scannedCaseResponse.UID)
 
 }
 

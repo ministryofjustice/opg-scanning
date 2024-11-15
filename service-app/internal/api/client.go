@@ -71,5 +71,5 @@ func requestCreateScannedCase(url string, reqData types.ScannedCaseRequest) (*ty
 	// Placeholder for actual HTTP call
 	// resp, err := http.DefaultClient.Do(req)
 	// Instead return a dummy UUID for now
-	return &types.ScannedCaseResponse{UUID: "dummy-uuid-1234"}, nil
+	return &types.ScannedCaseResponse{UID: "dummy-uuid-1234"}, nil
 }
