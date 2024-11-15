@@ -1,0 +1,577 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2014 sp1 (http://www.altova.com) by Andrew Roberts (Blue Rhino) -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning" elementFormDefault="qualified" attributeFormDefault="unqualified" vc:minVersion="1.1">
+	<xs:element name="LPA002">
+		<xs:annotation>
+			<xs:documentation>Application to register a lasting Power of Attorney</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Page1">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Part1">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element ref="Name"/>
+										<xs:element ref="Address"/>
+										<xs:element ref="Telephone"/>
+										<xs:element ref="DOB"/>
+										<xs:element ref="Email"/>
+										<xs:element name="PaymentStamp" type="xs:boolean"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page2">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Part2">
+								<xs:annotation>
+									<xs:documentation>The person making the application.</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="DonorLastingPower" type="xs:boolean">
+											<xs:annotation>
+												<xs:documentation>Is the donor applying to register the Lasting Power of Attorney?</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="AttorneyLastingPower" type="xs:boolean">
+											<xs:annotation>
+												<xs:documentation>Is the attorney(s) applying to register the Lasting Power of Attorney?</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="Part3">
+								<xs:annotation>
+									<xs:documentation>How have the attorney(s) been appointed?</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="OneAttorney" type="xs:boolean">
+											<xs:annotation>
+												<xs:documentation>There is only attorney appointed.</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="AttorneyJointlySeverally" type="xs:boolean">
+											<xs:annotation>
+												<xs:documentation>There are attorneys apointed jointly and severally.</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="AttorneyJointly" type="xs:boolean">
+											<xs:annotation>
+												<xs:documentation>There are attorneys appointed jointly.</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="AttorneyJointlyJointlySeverally" type="xs:boolean">
+											<xs:annotation>
+												<xs:documentation>There are attorneys apointed jointly in some matters and jointly and severally in others.</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page3">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Part4">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element ref="Attorney"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page4">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Part4">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element ref="Attorney"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page5">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Part4">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element ref="Attorney"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page6">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Part4">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element ref="Attorney"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page7">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Part5">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="NoneSpecified" type="xs:boolean">
+											<xs:annotation>
+												<xs:documentation>The donor did not specify any people to be told in the LPA</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element ref="IorWe"/>
+										<xs:element ref="Notification"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page8">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Part5">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element ref="Notification" minOccurs="2" maxOccurs="2"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page9">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Part5">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element ref="Notification" minOccurs="2" maxOccurs="2"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page10">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Part6">
+								<xs:annotation>
+									<xs:documentation>Fees</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="PayCC">
+											<xs:annotation>
+												<xs:documentation>Do you wish to pay the fee by credit or debit card?</xs:documentation>
+											</xs:annotation>
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="YesorNo"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="PayCheque">
+											<xs:annotation>
+												<xs:documentation>Have you enclosed a cheque for the application to register fee?</xs:documentation>
+											</xs:annotation>
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="YesorNo">
+														<xs:complexType>
+															<xs:sequence>
+																<xs:element name="Yes" type="xs:boolean"/>
+																<xs:element name="No" type="xs:boolean"/>
+															</xs:sequence>
+														</xs:complexType>
+													</xs:element>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="PayExemption">
+											<xs:annotation>
+												<xs:documentation>Do you wish to apply for exeption of the fee?</xs:documentation>
+											</xs:annotation>
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="YesorNo">
+														<xs:complexType>
+															<xs:sequence>
+																<xs:element name="Yes" type="xs:boolean"/>
+																<xs:element name="No" type="xs:boolean"/>
+															</xs:sequence>
+														</xs:complexType>
+													</xs:element>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="PayRemission">
+											<xs:annotation>
+												<xs:documentation>Do you wiish to apply for remission of the fee?</xs:documentation>
+											</xs:annotation>
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="YesorNo">
+														<xs:complexType>
+															<xs:sequence>
+																<xs:element name="Yes" type="xs:boolean"/>
+																<xs:element name="No" type="xs:boolean"/>
+															</xs:sequence>
+														</xs:complexType>
+													</xs:element>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="ContactDetails" type="xs:string">
+											<xs:annotation>
+												<xs:documentation>If you wish to pay by credit card, please proved details of telephone etc. </xs:documentation>
+											</xs:annotation>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="Part7">
+								<xs:annotation>
+									<xs:documentation>Type of Power</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="ApplyToLPA">
+											<xs:annotation>
+												<xs:documentation>Apply to register the LPA made by the donor under the provisions of the Mental Capacity Act 2005</xs:documentation>
+											</xs:annotation>
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="IorWe"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="PropertyFinancial" type="xs:boolean"/>
+										<xs:element name="HealthWelfare" type="xs:boolean"/>
+										<xs:element ref="Date"/>
+										<xs:element name="OtherEPAorLPA">
+											<xs:annotation>
+												<xs:documentation>To your knowledge, has the donor made any other Enduring Powers of Attorney or Lasting Power of Attorney?</xs:documentation>
+											</xs:annotation>
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="YesorNo"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="EPALPADetails" type="xs:string">
+											<xs:annotation>
+												<xs:documentation>If yes, please give details below including registration date if applicatble.</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page11">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Part8">
+								<xs:annotation>
+									<xs:documentation>Donor Declaration</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element ref="Declaration"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="Part9">
+								<xs:annotation>
+									<xs:documentation>Attorney(s) declaration</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="ApplyToRegister">
+											<xs:annotation>
+												<xs:documentation>Apply to register the Lasting Power of Attorney</xs:documentation>
+											</xs:annotation>
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="IorWe"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="CertifyCorrect">
+											<xs:annotation>
+												<xs:documentation>Certify thta the above information is correct to the best of my knowledge and belief</xs:documentation>
+											</xs:annotation>
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="IorWe"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="CompletedApplication">
+											<xs:annotation>
+												<xs:documentation>Have completed the application within the provisions of the Mental Capacity Act 2005 and all statutory instruments made under it.</xs:documentation>
+											</xs:annotation>
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="IorWe"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element ref="Declaration" minOccurs="2" maxOccurs="2"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page12">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Part9">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element ref="Declaration" minOccurs="3" maxOccurs="3"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="Part10">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element ref="IorWe"/>
+										<xs:element ref="CompanyName"/>
+										<xs:element name="SigPerson1" type="xs:boolean"/>
+										<xs:element name="SigPerson2" type="xs:boolean"/>
+										<xs:element name="CompanySeal" type="xs:boolean"/>
+										<xs:element ref="LastName"/>
+										<xs:element ref="FirstName"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page13">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Part11">
+								<xs:annotation>
+									<xs:documentation>Correspondence Address</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element ref="Name"/>
+										<xs:element ref="CompanyName"/>
+										<xs:element name="CompanyReference" type="xs:string"/>
+										<xs:element ref="Address"/>
+										<xs:element ref="DXDetails"/>
+										<xs:element ref="Telephone"/>
+										<xs:element ref="Email"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Page14">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Part12">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="AdditionalInfo" type="xs:string"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="InfoPage" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="BURN"/>
+							<xs:element ref="PhysicalPage"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Name">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Salutation"/>
+				<xs:element ref="LastName"/>
+				<xs:element ref="FirstName"/>
+				<xs:element name="MiddleName" type="xs:string" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Salutation">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Mr" type="xs:boolean"/>
+				<xs:element name="Mrs" type="xs:boolean"/>
+				<xs:element name="Ms" type="xs:boolean"/>
+				<xs:element name="Miss" type="xs:boolean"/>
+				<xs:element name="Other" type="xs:boolean"/>
+				<xs:element name="OtherName" type="xs:string"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Address">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Address1" type="xs:string"/>
+				<xs:element name="Address2" type="xs:string"/>
+				<xs:element name="Address3" type="xs:string"/>
+				<xs:element name="TownCity" type="xs:string"/>
+				<xs:element name="County" type="xs:string"/>
+				<xs:element name="Postcode" type="xs:string"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Telephone" type="xs:string"/>
+	<xs:element name="DOB" type="xs:string"/>
+	<xs:element name="Email" type="xs:string"/>
+	<xs:element name="Attorney">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="AttorneyRegistering" type="xs:boolean">
+					<xs:annotation>
+						<xs:documentation>Place a cross in box if attorney one is applying to register.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element ref="Name"/>
+				<xs:element ref="CompanyName"/>
+				<xs:element ref="Address"/>
+				<xs:element ref="DXDetails"/>
+				<xs:element ref="DOB"/>
+				<xs:element ref="Telephone"/>
+				<xs:element ref="Occupation"/>
+				<xs:element ref="Email"/>
+				<xs:element ref="Relationship"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="DXDetails">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="DXNumber" type="xs:string"/>
+				<xs:element name="DXExchange" type="xs:string"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Relationship">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="CivilPartnerSpouse" type="xs:boolean"/>
+				<xs:element name="Child" type="xs:boolean"/>
+				<xs:element name="Solicitor" type="xs:boolean"/>
+				<xs:element name="Other" type="xs:boolean"/>
+				<xs:element name="OtherProfessional" type="xs:boolean"/>
+				<xs:element name="OtherName" type="xs:string">
+					<xs:annotation>
+						<xs:documentation>If other or other professional, please specify</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Notification">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="NoticeDate" type="xs:string"/>
+				<xs:element name="LastName" type="xs:string"/>
+				<xs:element name="FirstName" type="xs:string"/>
+				<xs:element ref="Address"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="IorWe">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="I" type="xs:boolean"/>
+				<xs:element name="We" type="xs:boolean"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Date" type="xs:string"/>
+	<xs:element name="YesorNo">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Yes" type="xs:boolean"/>
+				<xs:element name="No" type="xs:boolean"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="LastName" type="xs:string"/>
+	<xs:element name="FirstName" type="xs:string"/>
+	<xs:element name="Declaration">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Signed" type="xs:boolean"/>
+				<xs:element ref="Date"/>
+				<xs:element ref="LastName"/>
+				<xs:element ref="FirstName"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="CompanyName" type="xs:string"/>
+	<xs:element name="Occupation" type="xs:string"/>
+	<xs:element name="BURN" type="xs:string"/>
+	<xs:element name="PhysicalPage" type="xs:int"/>
+</xs:schema>
