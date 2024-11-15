@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2014 sp1 (x64) (http://www.altova.com) by Andrew Roberts (BancTec) -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning" elementFormDefault="qualified" attributeFormDefault="unqualified" vc:minVersion="1.1">
+	<xs:element name="Cheque">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="FeeNumber" type="xs:string"/>
+				<xs:element name="SortCode" type="xs:string"/>
+				<xs:element name="AccountNumber" type="xs:string"/>
+				<xs:element name="Amount" type="xs:string"/>
+				<xs:element name="BURN" type="xs:string"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
