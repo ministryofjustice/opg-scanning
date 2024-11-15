@@ -3,10 +3,12 @@ package factory
 import (
 	"fmt"
 
+	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 )
 
 type DocumentProcessor struct {
+	logger    logger.Logger
 	doc       interface{}
 	validator types.Validator
 	sanitizer types.Sanitizer
@@ -14,7 +16,9 @@ type DocumentProcessor struct {
 
 func (p *DocumentProcessor) Process() (interface{}, error) {
 	if err := p.validator.Validate(); err != nil {
-		return nil, fmt.Errorf("validation failed: %w", err)
+		// TODO: processors can choose to mark docs that have validation issues
+		// for someone to manually review, for now log the issue and continue.
+		p.logger.Error("Document validation failed: " + err.Error())
 	}
 
 	sanitizedDoc, err := p.sanitizer.Sanitize(p.doc)

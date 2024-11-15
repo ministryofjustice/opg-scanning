@@ -23,11 +23,11 @@ func NewLogger() *Logger {
 }
 
 func (l *Logger) Info(message string, args ...interface{}) {
-	logMessage := fmt.Sprintf("INFO: "+message, args...)
+	logMessage := fmt.Sprintf(message, args...)
 	l.SlogLogger.Info(logMessage)
 }
 
 func (l *Logger) Error(message string, args ...interface{}) {
-	logMessage := fmt.Sprintf("ERROR: "+message, args...)
+	logMessage := fmt.Sprintf(message, args...)
 	l.SlogLogger.Error(logMessage)
 }
