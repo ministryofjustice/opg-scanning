@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -68,18 +69,31 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Step 4: Queue each document for further processing
+	// Step 4: Create a case stub in Sirius if we have a case to create
+	scannedCaseResponse, err := CreateStubCase(c.config.App.SiriusBaseURL, *parsedBaseXml)
+	if err != nil {
+		c.logger.Error("Failed to create case stub in Sirius: " + err.Error())
+		http.Error(w, "Failed to create case stub in Sirius", http.StatusInternalServerError)
+		return
+	}
+
+	// Step 5: Queue each document for further processing
 	c.logger.Info("Queueing documents for processing")
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
-		c.Queue.AddToQueue(doc, "xml", func() {
+		c.Queue.AddToQueue(doc, "xml", func(processedDocument interface{}) {
+			c.logger.Info(fmt.Sprintf("%v", processedDocument))
 			c.logger.Info("Job processing completed for document")
 		})
 		c.logger.Info("Job added to queue for document")
 	}
 
+	// Step 6: Send the UUID response
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
-	c.logger.Info("Ingestion request processed successfully")
+	json.NewEncoder(w).Encode(scannedCaseResponse)
+	c.logger.Info("Ingestion request processed successfully, UUID: " + scannedCaseResponse.UUID)
+
 }
 
 func (c *IndexController) CloseQueue() {
@@ -106,7 +120,7 @@ func (c *IndexController) validateAndSanitizeXML(bodyStr string) (*types.BaseSet
 
 	// Validate against XSD
 	c.logger.Info("Validating against XSD")
-	xsdValidator, err := ingestion.NewXSDValidator(c.config.ProjectFullPath+"/xsd/"+schemaLocation, bodyStr)
+	xsdValidator, err := ingestion.NewXSDValidator(c.config.App.ProjectFullPath+"/xsd/"+schemaLocation, bodyStr)
 	if err != nil {
 		return nil, err
 	}

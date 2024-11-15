@@ -43,7 +43,7 @@ func TestIngestHandler_SetValid(t *testing.T) {
 	controller.IngestHandler(w, req)
 
 	resp := w.Result()
-	if resp.StatusCode != http.StatusAccepted {
+	if resp.StatusCode != http.StatusAccepted { // Expecting 202 for async processing
 		t.Errorf("expected status %d; got %d", http.StatusAccepted, resp.StatusCode)
 	}
 }

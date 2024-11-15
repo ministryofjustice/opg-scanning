@@ -28,6 +28,7 @@ func (v *Validator) ValidateSet(parsedSet *types.BaseSet) error {
 	if parsedSet.Header == nil {
 		return errors.New("missing required Header element")
 	}
+
 	// if parsedSet.Header.CaseNo == "" {
 	// 	return errors.New("missing CaseNo in Header")
 	// }
