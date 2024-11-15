@@ -30,12 +30,6 @@ jobs:
     name: "Generate the workspace name"
     uses: ministryofjustice/opg-github-workflows/.github/workflows/data-parse-workspace.yml@v1.36.0
 
-  # tfsec for terraform
-  tfsec_analysis:
-    needs: [tf_lint]
-    name: "Run TFSec against the code base"
-    uses: ministryofjustice/opg-github-workflows/.github/workflows/analysis-infrastructure-tfsec-to-github-security.yml@v1.36.0
-
   # SAST
   # codeql for go
   codeql_analysis:
@@ -46,7 +40,7 @@ jobs:
 
   # generate tag
   semver_tag:
-    needs: [branch_name, tfsec_analysis, codeql_analysis]
+    needs: [branch_name, codeql_analysis]
     name: "Generate the semver tag value"
     uses: ministryofjustice/opg-github-workflows/.github/workflows/data-parse-semver-tag.yml@v1.36.0
     with:
@@ -61,7 +55,7 @@ jobs:
     name: "Docker build, trivy scan, ECR push"
     runs-on: ubuntu-latest
     # require all steps before this matrix to have passed
-    needs: [tf_version, branch_name, workspace_name, semver_tag]
+    needs: [branch_name, workspace_name, semver_tag]
     strategy:
       fail-fast: true
       matrix:
@@ -151,7 +145,6 @@ jobs:
         workspace_name,
         semver_tag,
         build_scan_push,
-        terraform_account_build,
       ]
     steps:
       - name: "End"
