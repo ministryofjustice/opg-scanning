@@ -21,7 +21,7 @@ func CreateStubCase(url string, set types.BaseSet) (*types.ScannedCaseResponse, 
 				// Create a new LPA case
 				scannedCaseRequest = types.ScannedCaseRequest{
 					BatchID:     set.Header.Schedule,
-					CaseType:    "LPA",
+					CaseType:    "lpa",
 					ReceiptDate: set.Header.ScanTime,
 					CreatedDate: now,
 				}
@@ -47,7 +47,6 @@ func CreateStubCase(url string, set types.BaseSet) (*types.ScannedCaseResponse, 
 					CaseType:       "order",
 					ReceiptDate:    set.Header.ScanTime,
 				}
-				// Trigger events as per Order::createFromDdc (requires additional implementation)
 				break
 			}
 		}

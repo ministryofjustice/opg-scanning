@@ -23,7 +23,6 @@ var xmlPayload = `
 </Set>
 `
 
-// Helper to create an IndexController instance for testing
 func setupController() *IndexController {
 	return &IndexController{
 		config:    config.NewConfig(),
@@ -43,7 +42,7 @@ func TestIngestHandler_SetValid(t *testing.T) {
 	controller.IngestHandler(w, req)
 
 	resp := w.Result()
-	if resp.StatusCode != http.StatusAccepted { // Expecting 202 for async processing
+	if resp.StatusCode != http.StatusAccepted {
 		t.Errorf("expected status %d; got %d", http.StatusAccepted, resp.StatusCode)
 	}
 }
@@ -52,7 +51,7 @@ func TestIngestHandler_InvalidContentType(t *testing.T) {
 	controller := setupController()
 
 	req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayload)))
-	// Invalid Content-Type
+
 	req.Header.Set("Content-Type", "text/plain")
 	w := httptest.NewRecorder()
 

@@ -9,7 +9,7 @@ type ScannedCaseRequest struct {
 }
 
 type ScannedCaseResponse struct {
-	UUID string `json:"uuid"`
+	UID string `json:"uid"`
 }
 
 // For handling error responses according to the OpenAPI spec
