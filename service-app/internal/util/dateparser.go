@@ -22,12 +22,15 @@ var dateFormats = []string{
 
 // Attempts to parse a date string against multiple formats.
 // It returns a parsed time.Time if successful, or an error if no format matches.
-func ParseDate(input string) (time.Time, error) {
+func ParseDate(input string, format string) (time.Time, error) {
+	if format != "" {
+		return time.Parse(format, input)
+	}
+
 	input = strings.TrimSpace(input)
 
 	for _, format := range dateFormats {
 		if date, err := time.Parse(format, input); err == nil {
-			// Return successfully parsed date
 			return date, nil
 		}
 	}

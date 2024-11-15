@@ -2,67 +2,52 @@ package config
 
 import (
 	"log"
-	"os"
 	"path/filepath"
 
-	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
+	"github.com/kelseyhightower/envconfig"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
 type (
-	// Config holds application configuration data.
 	Config struct {
-		App  `yaml:"app"`
-		HTTP `yaml:"http"`
+		App  App
+		HTTP HTTP
 	}
 
 	// App configuration fields.
 	App struct {
-		Name            string `env-required:"true" yaml:"name"    env:"APP_NAME"`
-		Version         string `env-required:"true" yaml:"version" env:"APP_VERSION"`
-		ProjectFullPath string `env-required:"true" env:"PROJECT_FULL_PATH"`
-		ProjectPath     string `env-required:"true" yaml:"project_path" env:"PROJECT_PATH"`
+		SiriusBaseURL   string `required:"true" envconfig:"SIRIUS_BASE_URL"`
+		ProjectPath     string `required:"true" envconfig:"PROJECT_PATH"`
+		ProjectFullPath string
 	}
 
 	// HTTP server configuration fields.
 	HTTP struct {
-		Port string `env-required:"true" yaml:"port" env:"HTTP_PORT"`
+		Port string `required:"true" envconfig:"HTTP_PORT"`
 	}
 )
 
-// NewConfig loads configuration from .env, config.yml, and environment variables.
+// Loads configuration from .env and environment variables.
 func NewConfig() *Config {
-	// Determine project root
 	projectRoot, err := util.GetProjectRoot()
 	if err != nil {
 		log.Fatalf("failed to get project root: %v", err)
 	}
 
-	// Load environment variables from .env if present
-	if err := godotenv.Load(filepath.Join(projectRoot, ".env")); err != nil {
+	envPath := filepath.Join(projectRoot, ".env")
+	if err := godotenv.Load(envPath); err != nil {
 		log.Println("No .env file found or could not be loaded. Falling back to OS environment variables.")
 	}
 
-	// Ensure PROJECT_PATH is set before using it to set PROJECT_FULL_PATH
-	projectPath := os.Getenv("PROJECT_PATH")
-	if projectPath == "" {
-		log.Fatal("PROJECT_PATH environment variable is required but not set")
+	var cfg Config
+	if err := envconfig.Process("", &cfg); err != nil {
+		log.Fatalf("failed to load environment variables into config: %v", err)
 	}
 
-	// Set PROJECT_FULL_PATH using projectRoot and PROJECT_PATH
-	projectFullPath := filepath.Join(projectRoot, projectPath)
-	if err := os.Setenv("PROJECT_FULL_PATH", projectFullPath); err != nil {
-		log.Fatalf("failed to set PROJECT_FULL_PATH: %v", err)
-	}
+	cfg.App.ProjectFullPath = filepath.Join(projectRoot, cfg.App.ProjectPath)
 
-	cfg := &Config{}
+	log.Println("Configuration loaded successfully.")
 
-	// Load configuration from config.yml and environment variables, with env vars taking precedence
-	configPath := filepath.Join(projectFullPath, "config/config.yml")
-	if err := cleanenv.ReadConfig(configPath, cfg); err != nil {
-		log.Fatalf("failed to load config from %s: %v", configPath, err)
-	}
-
-	return cfg
+	return &cfg
 }

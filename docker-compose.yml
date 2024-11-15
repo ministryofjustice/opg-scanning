@@ -3,9 +3,9 @@ version: '3.8'
 services:
   app:
     build:
-      context: .
+      context: ./service-app
     ports:
       - "8081:8081"     
     environment:
       - PORT=8081      
-    command: ./app     
+    command: ./app

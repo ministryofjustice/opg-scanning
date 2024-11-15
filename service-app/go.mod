@@ -15,6 +15,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0 // indirect
+	github.com/kelseyhightower/envconfig v1.4.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	go.opentelemetry.io/contrib/detectors/aws/ecs v1.30.0 // indirect
 	go.opentelemetry.io/contrib/propagators/aws v1.30.0 // indirect
