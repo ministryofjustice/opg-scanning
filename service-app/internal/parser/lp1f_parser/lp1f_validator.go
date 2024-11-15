@@ -85,7 +85,7 @@ func (v *Validator) getFieldValues(page, section, field string) (string, error) 
 
 // Checks if the date string is valid and not in the future
 func validateSignatureDate(dateStr, label string) (time.Time, error) {
-	parsedDate, err := util.ParseDate(dateStr)
+	parsedDate, err := util.ParseDate(dateStr, "")
 	if err != nil {
 		return time.Time{}, fmt.Errorf("invalid %s date format: %w", label, err)
 	}
@@ -124,7 +124,7 @@ func (v *Validator) applicantSignatureValidator(page string) {
 		}
 
 		dateStr := dateField.String()
-		signatureDate, err := util.ParseDate(dateStr)
+		signatureDate, err := util.ParseDate(dateStr, "")
 		if err != nil {
 			v.commonValidator.AddValidatorErrorMessage("applicant date is invalid")
 			continue
