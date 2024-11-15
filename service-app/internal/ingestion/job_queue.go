@@ -75,7 +75,7 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 
 					select {
 					case <-processCtx.Done():
-						q.logger.Error("Worker %d timed out processing job: %v\n", workerID)
+						q.logger.Error("Worker %d timed out processing job\n", workerID)
 					case <-done:
 						// Job completed without timing out
 					}
