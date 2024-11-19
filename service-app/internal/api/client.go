@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -52,6 +53,10 @@ func CreateStubCase(url string, set types.BaseSet) (*types.ScannedCaseResponse, 
 		}
 	}
 
+	if scannedCaseRequest == (types.ScannedCaseRequest{}) {
+		return nil, fmt.Errorf("could not determine case type")
+	}
+
 	return requestCreateScannedCase(url, scannedCaseRequest)
 }
 
@@ -61,15 +66,48 @@ func requestCreateScannedCase(url string, reqData types.ScannedCaseRequest) (*ty
 		return nil, fmt.Errorf("failed to marshal request data: %w", err)
 	}
 
-	req, err := http.NewRequest("POST", url+"/scanned-cases", bytes.NewBuffer(body))
+	responseBody, err := httpRequest(url+"/scanned-case", "POST", string(body))
+	if err != nil {
+		return nil, err
+	}
+
+	scannedResponse := types.ScannedCaseResponse{}
+	err = json.Unmarshal(responseBody, &scannedResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return &scannedResponse, nil
+	//return &types.ScannedCaseResponse{UID: "dummy-uid-1234"}, nil
+}
+
+func httpRequest(url string, method string, payload string) ([]byte, error) {
+	req, err := http.NewRequest(method, url, bytes.NewBufferString(payload))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	// Make the request (dummy for testing purposes)
-	// Placeholder for actual HTTP call
-	// resp, err := http.DefaultClient.Do(req)
-	// Instead return a dummy UUID for now
-	return &types.ScannedCaseResponse{UID: "dummy-uuid-1234"}, nil
+	httpClient := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check for non 2xx status codes
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	return body, nil
+
 }
