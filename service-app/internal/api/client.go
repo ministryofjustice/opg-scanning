@@ -54,6 +54,7 @@ func CreateStubCase(url string, set types.BaseSet) (*types.ScannedCaseResponse, 
 	}
 
 	if scannedCaseRequest == (types.ScannedCaseRequest{}) {
+		// TODO: check if unhandled cases should be pushed to old service
 		return nil, fmt.Errorf("could not determine case type")
 	}
 
