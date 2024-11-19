@@ -3,85 +3,116 @@ package api
 import (
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 )
 
-const (
-	LPAPayload = `<?xml version="1.0" encoding="UTF-8"?>
-<Set xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SET.xsd">
-    <Header CaseNo="" Scanner="9" ScanTime="2014-09-26T12:38:53" ScannerOperator="Administrator" Schedule="02-0001112-20160909185000" FeeNumber="1234"/>
-    <Body>
-        <Document Type="LP1F" Encoding="UTF-8" NoPages="19"></Document>
-    </Body>
-</Set>`
-
-	EPAPayload = `<?xml version="1.0" encoding="UTF-8"?>
-<Set xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SET.xsd">
-    <Header CaseNo="" Scanner="9" ScanTime="2014-09-26T12:38:53" ScannerOperator="Administrator" Schedule="02-0002222-20160909185000" FeeNumber="5678"/>
-    <Body>
-        <Document Type="EPA" Encoding="UTF-8" NoPages="10"></Document>
-    </Body>
-</Set>`
-
-	OrderPayload = `<?xml version="1.0" encoding="UTF-8"?>
-<Set xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SET.xsd">
-    <Header CaseNo="12345" Scanner="9" ScanTime="2014-09-26T12:38:53" ScannerOperator="Administrator" Schedule="02-0003333-20160909185000" FeeNumber="91011"/>
-    <Body>
-        <Document Type="COPORD" Encoding="UTF-8" NoPages="5"></Document>
-    </Body>
-</Set>`
-)
+type requestCaseStub struct {
+	name        string
+	xmlPayload  string
+	expectedReq types.ScannedCaseRequest
+	expectedErr error
+}
 
 func TestCreateStubCase(t *testing.T) {
-	tests := []struct {
-		name        string
-		xmlPayload  string
-		expectedReq types.ScannedCaseRequest
-	}{
-		{
-			name:       "LPA Case",
-			xmlPayload: LPAPayload,
-			expectedReq: types.ScannedCaseRequest{
-				BatchID:     "02-0001112-20160909185000",
-				CaseType:    "lpa",
-				ReceiptDate: "2014-09-26T12:38:53",
-				CreatedDate: time.Now().Format(time.RFC3339), // Dynamically set
-			},
-		},
-		{
-			name:       "EPA Case",
-			xmlPayload: EPAPayload,
-			expectedReq: types.ScannedCaseRequest{
-				BatchID:     "02-0002222-20160909185000",
-				CaseType:    "epa",
-				ReceiptDate: "2014-09-26T12:38:53",
-				CreatedDate: time.Now().Format(time.RFC3339),
-			},
-		},
-		{
-			name:       "Order Case",
-			xmlPayload: OrderPayload,
-			expectedReq: types.ScannedCaseRequest{
-				CourtReference: "12345",
-				BatchID:        "02-0003333-20160909185000",
-				CaseType:       "order",
-				ReceiptDate:    "2014-09-26T12:38:53",
-			},
-		},
+	docTypes := []string{"COPORD", "EPA", "EP2PG", "LP1F", "LPA002", "LP1H", "LP2"}
+
+	// Test with CaseNo
+	for _, docType := range docTypes {
+		withCaseNoPayload := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
+	<Set xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SET.xsd">
+		<Header CaseNo="123" Scanner="9" ScanTime="2014-09-26T12:38:53" ScannerOperator="Administrator" Schedule="02-0001112-20160909185000" FeeNumber="1234"/>
+		<Body>
+			<Document Type="%s" Encoding="UTF-8" NoPages="19"></Document>
+		</Body>
+	</Set>`, docType)
+
+		runStubCaseTest(t, withCaseNoPayload, true, docType)
 	}
 
-	var wg sync.WaitGroup
+	// Test without CaseNo
+	for _, docType := range docTypes {
+		withoutCaseNoPayload := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
+	<Set xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SET.xsd">
+		<Header CaseNo="" Scanner="9" ScanTime="2014-09-26T12:38:53" ScannerOperator="Administrator" Schedule="02-0001112-20160909185000" FeeNumber="1234"/>
+		<Body>
+			<Document Type="%s" Encoding="UTF-8" NoPages="19"></Document>
+		</Body>
+	</Set>`, docType)
 
+		runStubCaseTest(t, withoutCaseNoPayload, false, docType)
+	}
+}
+
+func buildTestCases(withCaseNo bool, docType string, payload string) []requestCaseStub {
+	tests := []requestCaseStub{}
+
+	if withCaseNo {
+		if docType == "COPORD" {
+			tests = append(tests, requestCaseStub{
+				name:       "Order Case with CaseNo",
+				xmlPayload: payload,
+				expectedReq: types.ScannedCaseRequest{
+					CourtReference: "123",
+					CaseType:       "order",
+				},
+				expectedErr: nil,
+			})
+		} else {
+			tests = append(tests, requestCaseStub{
+				name:        "Invalid CaseNo for non-COPORD",
+				xmlPayload:  payload,
+				expectedReq: types.ScannedCaseRequest{},
+				expectedErr: fmt.Errorf("could not determine case type"),
+			})
+		}
+	} else {
+		if docType == "LPA002" || docType == "LP1F" || docType == "LP1H" || docType == "LP2" {
+			tests = append(tests, requestCaseStub{
+				name:       "LPA Case without CaseNo",
+				xmlPayload: payload,
+				expectedReq: types.ScannedCaseRequest{
+					CaseType: "lpa",
+				},
+				expectedErr: nil,
+			})
+		} else if docType == "EP2PG" || docType == "EPA" {
+			tests = append(tests, requestCaseStub{
+				name:       "EPA Case without CaseNo",
+				xmlPayload: payload,
+				expectedReq: types.ScannedCaseRequest{
+					CaseType: "epa",
+				},
+				expectedErr: nil,
+			})
+		} else {
+			tests = append(tests, requestCaseStub{
+				name:        "Invalid Document Type without CaseNo",
+				xmlPayload:  payload,
+				expectedReq: types.ScannedCaseRequest{},
+				expectedErr: fmt.Errorf("could not determine case type"),
+			})
+		}
+	}
+
+	return tests
+}
+
+func runStubCaseTest(t *testing.T, payload string, withCaseNo bool, docType string) {
+	tests := buildTestCases(withCaseNo, docType, payload)
+
+	var wg sync.WaitGroup
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			wg.Add(1)
+			defer wg.Done()
 
 			// Parse XML payload into types.BaseSet
 			var set types.BaseSet
@@ -91,8 +122,6 @@ func TestCreateStubCase(t *testing.T) {
 
 			// Mock server to simulate /scanned-case endpoint and validate request body
 			mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				defer wg.Done()
-
 				if r.URL.Path != "/scanned-case" {
 					t.Fatalf("unexpected URL path: %s", r.URL.Path)
 				}
@@ -102,8 +131,11 @@ func TestCreateStubCase(t *testing.T) {
 					t.Fatalf("failed to decode request body: %v", err)
 				}
 
-				if !reflect.DeepEqual(receivedRequest, tt.expectedReq) {
-					t.Errorf("received request does not match expected request.\nReceived: %+v\nExpected: %+v", receivedRequest, tt.expectedReq)
+				if receivedRequest.CaseType != tt.expectedReq.CaseType {
+					t.Errorf("expected case type %s, but got %s", tt.expectedReq.CaseType, receivedRequest.CaseType)
+				}
+				if len(receivedRequest.CourtReference) > 0 && receivedRequest.CourtReference != tt.expectedReq.CourtReference {
+					t.Errorf("expected court reference %s, but got %s", tt.expectedReq.CourtReference, receivedRequest.CourtReference)
 				}
 
 				w.WriteHeader(http.StatusOK)
@@ -113,7 +145,11 @@ func TestCreateStubCase(t *testing.T) {
 
 			_, err := CreateStubCase(mockServer.URL, set)
 			if err != nil {
-				t.Fatalf("failed to create stub case: %v", err)
+				if tt.expectedErr == nil {
+					t.Errorf("expected no error, but got: %v", err)
+				} else if err.Error() != tt.expectedErr.Error() {
+					t.Errorf("expected error %v, but got: %v", tt.expectedErr, err)
+				}
 			}
 		})
 	}

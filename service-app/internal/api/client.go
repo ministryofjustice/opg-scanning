@@ -53,6 +53,10 @@ func CreateStubCase(url string, set types.BaseSet) (*types.ScannedCaseResponse, 
 		}
 	}
 
+	if scannedCaseRequest == (types.ScannedCaseRequest{}) {
+		return nil, fmt.Errorf("could not determine case type")
+	}
+
 	return requestCreateScannedCase(url, scannedCaseRequest)
 }
 
