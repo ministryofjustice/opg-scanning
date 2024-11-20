@@ -17,14 +17,16 @@ type (
 
 	// App configuration fields.
 	App struct {
-		SiriusBaseURL   string `required:"true" envconfig:"SIRIUS_BASE_URL" default:".."`
-		ProjectPath     string `required:"true" envconfig:"PROJECT_PATH" default:".."`
+		SiriusBaseURL   string `envconfig:"SIRIUS_BASE_URL" default:"http://localhost:8080"`
+		SiriusScanURL   string `envconfig:"SIRIUS_SCAN_URL" default:"api/public/v1/scanned-cases"`
+		ProjectPath     string `envconfig:"PROJECT_PATH" default:"service-app"`
 		ProjectFullPath string
 	}
 
 	// HTTP server configuration fields.
 	HTTP struct {
-		Port string `required:"true" envconfig:"HTTP_PORT" default:"8081"`
+		Port    string `envconfig:"HTTP_PORT" default:"8082"`
+		Timeout int    `envconfig:"HTTP_TIMEOUT" default:"10"`
 	}
 )
 
