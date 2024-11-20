@@ -12,46 +12,55 @@ import (
 )
 
 type HttpClient struct {
-	Config config.Config
-	Logger logger.Logger
+	HttpClient *http.Client
+	Config     config.Config
+	Logger     logger.Logger
 }
 
 func NewHttpClient(config config.Config, logger logger.Logger) *HttpClient {
 	return &HttpClient{
+		HttpClient: &http.Client{
+			Timeout: time.Duration(config.HTTP.Timeout) * time.Second,
+		},
 		Config: config,
 		Logger: logger,
 	}
 }
 
-func (r *HttpClient) HTTPRequest(url string, method string, payload []byte) ([]byte, error) {
+func (r *HttpClient) HTTPRequest(url, method string, payload []byte, headers map[string]string) ([]byte, error) {
+	// Log the request details before sending it
+	r.Logger.Info(fmt.Sprintf("Sending request to URL: %s - Payload:\n%s", url, payload))
+
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(payload))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{
-		Timeout: time.Duration(r.Config.HTTP.Timeout),
+	for key, value := range headers {
+		req.Header.Set(key, value)
 	}
 
-	resp, err := client.Do(req)
+	// Use the shared HTTP client
+	resp, err := r.HttpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make request: %w", err)
 	}
 	defer resp.Body.Close()
 
+	// Handle non-2xx responses
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
+		body, readErr := io.ReadAll(resp.Body)
+		if readErr != nil {
+			return nil, fmt.Errorf("unexpected status code: %d - failed to read error response body: %w", resp.StatusCode, readErr)
+		}
 		return nil, fmt.Errorf("unexpected status code: %d - Response: %s", resp.StatusCode, string(body))
 	}
 
+	// Handle successful responses
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
-
-	// Log request details
-	r.Logger.Info(fmt.Sprintf("new request to Sirius API: %s - Payload:\n%s", url, payload))
 
 	return body, nil
 }

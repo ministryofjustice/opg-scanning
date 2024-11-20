@@ -25,7 +25,7 @@ type (
 
 	// HTTP server configuration fields.
 	HTTP struct {
-		Port    string `required:"true" envconfig:"HTTP_PORT" default:"8081"`
+		Port    string `required:"true" envconfig:"HTTP_PORT" default:"8082"`
 		Timeout int    `envconfig:"HTTP_TIMEOUT" default:"10"`
 	}
 )

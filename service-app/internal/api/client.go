@@ -81,7 +81,9 @@ func (s CreateStubCase) requestCreateScannedCase(reqData *types.ScannedCaseReque
 
 	url := fmt.Sprintf("%s/%s", s.config.App.SiriusBaseURL, s.config.App.SiriusScanURL)
 
-	responseBody, err := s.httpClient.HTTPRequest(url, "POST", body)
+	// TODO: we need to include auth / middleware to handle token inclusion
+
+	responseBody, err := s.httpClient.HTTPRequest(url, "POST", body, nil)
 	if err != nil {
 		return nil, fmt.Errorf("request to Sirius API failed: %w", err)
 	}
