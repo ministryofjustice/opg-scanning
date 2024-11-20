@@ -123,52 +123,53 @@ func runStubCaseTest(t *testing.T, payload string, withCaseNo bool, docType stri
 func buildTestCases(withCaseNo bool, docType string, payload string) []requestCaseStub {
 	tests := []requestCaseStub{}
 
-	if withCaseNo {
-		if docType == "COPORD" {
-			tests = append(tests, requestCaseStub{
-				name:       "Order Case with CaseNo",
-				xmlPayload: payload,
-				expectedReq: &types.ScannedCaseRequest{
-					CourtReference: "123",
-					CaseType:       "order",
-				},
-				expectedErr: nil,
-			})
-		} else {
-			tests = append(tests, requestCaseStub{
-				name:        "Invalid CaseNo for non-COPORD",
-				xmlPayload:  payload,
-				expectedReq: nil,
-				expectedErr: fmt.Errorf("expected error"),
-			})
-		}
-	} else {
-		if docType == "LPA002" || docType == "LP1F" || docType == "LP1H" || docType == "LP2" {
-			tests = append(tests, requestCaseStub{
-				name:       "LPA Case without CaseNo",
-				xmlPayload: payload,
-				expectedReq: &types.ScannedCaseRequest{
-					CaseType: "lpa",
-				},
-				expectedErr: nil,
-			})
-		} else if docType == "EP2PG" || docType == "EPA" {
-			tests = append(tests, requestCaseStub{
-				name:       "EPA Case without CaseNo",
-				xmlPayload: payload,
-				expectedReq: &types.ScannedCaseRequest{
-					CaseType: "epa",
-				},
-				expectedErr: nil,
-			})
-		} else {
-			tests = append(tests, requestCaseStub{
-				name:        "Invalid Document Type without CaseNo",
-				xmlPayload:  payload,
-				expectedReq: &types.ScannedCaseRequest{},
-				expectedErr: fmt.Errorf("expected error"),
-			})
-		}
+	switch {
+	case withCaseNo && docType == "COPORD":
+		tests = append(tests, requestCaseStub{
+			name:       "Order Case with CaseNo",
+			xmlPayload: payload,
+			expectedReq: &types.ScannedCaseRequest{
+				CourtReference: "123",
+				CaseType:       "order",
+			},
+			expectedErr: nil,
+		})
+
+	case withCaseNo:
+		tests = append(tests, requestCaseStub{
+			name:        "Invalid CaseNo for non-COPORD",
+			xmlPayload:  payload,
+			expectedReq: nil,
+			expectedErr: fmt.Errorf("expected error"),
+		})
+
+	case !withCaseNo && (docType == "LPA002" || docType == "LP1F" || docType == "LP1H" || docType == "LP2"):
+		tests = append(tests, requestCaseStub{
+			name:       "LPA Case without CaseNo",
+			xmlPayload: payload,
+			expectedReq: &types.ScannedCaseRequest{
+				CaseType: "lpa",
+			},
+			expectedErr: nil,
+		})
+
+	case !withCaseNo && (docType == "EP2PG" || docType == "EPA"):
+		tests = append(tests, requestCaseStub{
+			name:       "EPA Case without CaseNo",
+			xmlPayload: payload,
+			expectedReq: &types.ScannedCaseRequest{
+				CaseType: "epa",
+			},
+			expectedErr: nil,
+		})
+
+	case !withCaseNo:
+		tests = append(tests, requestCaseStub{
+			name:        "Invalid Document Type without CaseNo",
+			xmlPayload:  payload,
+			expectedReq: &types.ScannedCaseRequest{},
+			expectedErr: fmt.Errorf("expected error"),
+		})
 	}
 
 	return tests
