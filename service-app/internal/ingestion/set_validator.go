@@ -29,9 +29,6 @@ func (v *Validator) ValidateSet(parsedSet *types.BaseSet) error {
 		return errors.New("missing required Header element")
 	}
 
-	// if parsedSet.Header.CaseNo == "" {
-	// 	return errors.New("missing CaseNo in Header")
-	// }
 	// if parsedSet.Header.ScanTime == "" {
 	// 	return errors.New("missing ScanTime in Header")
 	// }
