@@ -17,9 +17,9 @@ type (
 
 	// App configuration fields.
 	App struct {
-		SiriusBaseURL   string `required:"true" envconfig:"SIRIUS_BASE_URL" default:".."`
+		SiriusBaseURL   string `envconfig:"SIRIUS_BASE_URL" default:"http://localhost:8080"`
 		SiriusScanURL   string `envconfig:"SIRIUS_SCAN_URL" default:"api/public/v1/scanned-cases"`
-		ProjectPath     string `required:"true" envconfig:"PROJECT_PATH" default:".."`
+		ProjectPath     string `required:"true" envconfig:"PROJECT_PATH" default:"service-app"`
 		ProjectFullPath string
 	}
 
