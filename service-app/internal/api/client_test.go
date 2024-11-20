@@ -6,16 +6,18 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"sync"
 	"testing"
 
+	"github.com/ministryofjustice/opg-scanning/config"
+	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
+	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 )
 
 type requestCaseStub struct {
 	name        string
 	xmlPayload  string
-	expectedReq types.ScannedCaseRequest
+	expectedReq *types.ScannedCaseRequest
 	expectedErr error
 }
 
@@ -49,70 +51,12 @@ func TestCreateStubCase(t *testing.T) {
 	}
 }
 
-func buildTestCases(withCaseNo bool, docType string, payload string) []requestCaseStub {
-	tests := []requestCaseStub{}
-
-	if withCaseNo {
-		if docType == "COPORD" {
-			tests = append(tests, requestCaseStub{
-				name:       "Order Case with CaseNo",
-				xmlPayload: payload,
-				expectedReq: types.ScannedCaseRequest{
-					CourtReference: "123",
-					CaseType:       "order",
-				},
-				expectedErr: nil,
-			})
-		} else {
-			tests = append(tests, requestCaseStub{
-				name:        "Invalid CaseNo for non-COPORD",
-				xmlPayload:  payload,
-				expectedReq: types.ScannedCaseRequest{},
-				expectedErr: fmt.Errorf("could not determine case type"),
-			})
-		}
-	} else {
-		if docType == "LPA002" || docType == "LP1F" || docType == "LP1H" || docType == "LP2" {
-			tests = append(tests, requestCaseStub{
-				name:       "LPA Case without CaseNo",
-				xmlPayload: payload,
-				expectedReq: types.ScannedCaseRequest{
-					CaseType: "lpa",
-				},
-				expectedErr: nil,
-			})
-		} else if docType == "EP2PG" || docType == "EPA" {
-			tests = append(tests, requestCaseStub{
-				name:       "EPA Case without CaseNo",
-				xmlPayload: payload,
-				expectedReq: types.ScannedCaseRequest{
-					CaseType: "epa",
-				},
-				expectedErr: nil,
-			})
-		} else {
-			tests = append(tests, requestCaseStub{
-				name:        "Invalid Document Type without CaseNo",
-				xmlPayload:  payload,
-				expectedReq: types.ScannedCaseRequest{},
-				expectedErr: fmt.Errorf("could not determine case type"),
-			})
-		}
-	}
-
-	return tests
-}
-
 func runStubCaseTest(t *testing.T, payload string, withCaseNo bool, docType string) {
 	tests := buildTestCases(withCaseNo, docType, payload)
 
-	var wg sync.WaitGroup
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			wg.Add(1)
-			defer wg.Done()
 
 			// Parse XML payload into types.BaseSet
 			var set types.BaseSet
@@ -122,8 +66,13 @@ func runStubCaseTest(t *testing.T, payload string, withCaseNo bool, docType stri
 
 			// Mock server to simulate /scanned-case endpoint and validate request body
 			mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.URL.Path != "/scanned-case" {
-					t.Fatalf("unexpected URL path: %s", r.URL.Path)
+				defer r.Body.Close()
+
+				if r.Method != http.MethodPost {
+					t.Errorf("expected POST method, got %s", r.Method)
+				}
+				if r.URL.Path != "/api/public/v1/scanned-cases" {
+					t.Errorf("unexpected URL path: %s", r.URL.Path)
 				}
 
 				var receivedRequest types.ScannedCaseRequest
@@ -134,7 +83,7 @@ func runStubCaseTest(t *testing.T, payload string, withCaseNo bool, docType stri
 				if receivedRequest.CaseType != tt.expectedReq.CaseType {
 					t.Errorf("expected case type %s, but got %s", tt.expectedReq.CaseType, receivedRequest.CaseType)
 				}
-				if len(receivedRequest.CourtReference) > 0 && receivedRequest.CourtReference != tt.expectedReq.CourtReference {
+				if tt.expectedReq.CourtReference != "" && receivedRequest.CourtReference != tt.expectedReq.CourtReference {
 					t.Errorf("expected court reference %s, but got %s", tt.expectedReq.CourtReference, receivedRequest.CourtReference)
 				}
 
@@ -143,16 +92,84 @@ func runStubCaseTest(t *testing.T, payload string, withCaseNo bool, docType stri
 			}))
 			defer mockServer.Close()
 
-			_, err := CreateStubCase(mockServer.URL, set)
-			if err != nil {
-				if tt.expectedErr == nil {
+			// Mock logger
+			logger := *logger.NewLogger()
+			mockConfig := config.Config{
+				App: config.App{
+					SiriusBaseURL: mockServer.URL,
+					SiriusScanURL: "api/public/v1/scanned-cases",
+				},
+			}
+
+			// Instantiate dependencies and call the method
+			httpClient := httpclient.NewHttpClient(mockConfig, logger)
+			stubCase := NewCreateStubCase(httpClient)
+			_, err := stubCase.CreateStubCase(set)
+
+			// Validate error behavior
+			if tt.expectedErr != nil {
+				if err == nil {
+					t.Errorf("expected an error, but got none")
+				}
+			} else {
+				if err != nil {
 					t.Errorf("expected no error, but got: %v", err)
-				} else if err.Error() != tt.expectedErr.Error() {
-					t.Errorf("expected error %v, but got: %v", tt.expectedErr, err)
 				}
 			}
 		})
 	}
+}
 
-	wg.Wait()
+func buildTestCases(withCaseNo bool, docType string, payload string) []requestCaseStub {
+	tests := []requestCaseStub{}
+
+	if withCaseNo {
+		if docType == "COPORD" {
+			tests = append(tests, requestCaseStub{
+				name:       "Order Case with CaseNo",
+				xmlPayload: payload,
+				expectedReq: &types.ScannedCaseRequest{
+					CourtReference: "123",
+					CaseType:       "order",
+				},
+				expectedErr: nil,
+			})
+		} else {
+			tests = append(tests, requestCaseStub{
+				name:        "Invalid CaseNo for non-COPORD",
+				xmlPayload:  payload,
+				expectedReq: nil,
+				expectedErr: fmt.Errorf("expected error"),
+			})
+		}
+	} else {
+		if docType == "LPA002" || docType == "LP1F" || docType == "LP1H" || docType == "LP2" {
+			tests = append(tests, requestCaseStub{
+				name:       "LPA Case without CaseNo",
+				xmlPayload: payload,
+				expectedReq: &types.ScannedCaseRequest{
+					CaseType: "lpa",
+				},
+				expectedErr: nil,
+			})
+		} else if docType == "EP2PG" || docType == "EPA" {
+			tests = append(tests, requestCaseStub{
+				name:       "EPA Case without CaseNo",
+				xmlPayload: payload,
+				expectedReq: &types.ScannedCaseRequest{
+					CaseType: "epa",
+				},
+				expectedErr: nil,
+			})
+		} else {
+			tests = append(tests, requestCaseStub{
+				name:        "Invalid Document Type without CaseNo",
+				xmlPayload:  payload,
+				expectedReq: &types.ScannedCaseRequest{},
+				expectedErr: fmt.Errorf("expected error"),
+			})
+		}
+	}
+
+	return tests
 }
