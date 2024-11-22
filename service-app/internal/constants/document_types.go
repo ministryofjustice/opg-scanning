@@ -28,4 +28,17 @@ var (
 		DocumentTypeEP2PG,
 		DocumentTypeEPA,
 	}
+
+	CourtOrderDocuments = []string{
+		DocumentTypeCOPORD,
+	}
+
+	StandaloneInstruments = []string{
+		DocumentTypeLP1F,
+		DocumentTypeLP1H,
+	}
+
+	ExemptApplications = []string{
+		"LPA002R",
+	}
 )
