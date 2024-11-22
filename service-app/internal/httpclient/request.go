@@ -29,7 +29,7 @@ func NewHttpClient(config config.Config, logger logger.Logger) *HttpClient {
 
 func (r *HttpClient) HTTPRequest(url, method string, payload []byte, headers map[string]string) ([]byte, error) {
 	// Log the request details before sending it
-	r.Logger.Info(fmt.Sprintf("Sending request to URL: %s - Payload:\n%s", url, payload))
+	r.Logger.Info(fmt.Sprintf("Sending request to URL: %s", url))
 
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(payload))
 	if err != nil {

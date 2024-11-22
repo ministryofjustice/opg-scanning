@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
+	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
 type Client struct {
@@ -40,30 +42,27 @@ func determineCaseRequest(set types.BaseSet) (*types.ScannedCaseRequest, error) 
 	formattedScanTime := parsedScanTime.UTC().Format(time.RFC3339)
 
 	for _, doc := range set.Body.Documents {
-		switch doc.Type {
-		case "LPA002", "LP1F", "LP1H", "LP2":
+		if util.Contains(constants.LPATypeDocuments, doc.Type) {
 			return &types.ScannedCaseRequest{
 				BatchID:     set.Header.Schedule,
 				CaseType:    "lpa",
 				ReceiptDate: formattedScanTime,
 				CreatedDate: now,
 			}, nil
-		case "EP2PG", "EPA":
+		} else if util.Contains(constants.EPATypeDocuments, doc.Type) {
 			return &types.ScannedCaseRequest{
 				BatchID:     set.Header.Schedule,
 				CaseType:    "epa",
 				ReceiptDate: formattedScanTime,
 				CreatedDate: now,
 			}, nil
-		case "COPORD":
-			if set.Header.CaseNo != "" {
-				return &types.ScannedCaseRequest{
-					CourtReference: set.Header.CaseNo,
-					BatchID:        set.Header.Schedule,
-					CaseType:       "order",
-					ReceiptDate:    formattedScanTime,
-				}, nil
-			}
+		} else if doc.Type == constants.DocumentTypeCOPORD && set.Header.CaseNo != "" {
+			return &types.ScannedCaseRequest{
+				CourtReference: set.Header.CaseNo,
+				BatchID:        set.Header.Schedule,
+				CaseType:       "order",
+				ReceiptDate:    formattedScanTime,
+			}, nil
 		}
 	}
 
