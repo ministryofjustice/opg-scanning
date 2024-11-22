@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
@@ -68,6 +69,18 @@ func runStubCaseTest(t *testing.T, payload string, withCaseNo bool, docType stri
 			mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				defer r.Body.Close()
 
+				if r.URL.Path == "/auth/sessions" {
+					// Simulate an authentication endpoint
+					if r.Method != http.MethodPost {
+						t.Errorf("expected POST method for /auth/sessions, got %s", r.Method)
+					}
+					w.WriteHeader(http.StatusOK)
+					w.Write([]byte(`{
+						"authentication_token": "mocked-token"
+					}`))
+					return
+				}
+
 				if r.Method != http.MethodPost {
 					t.Errorf("expected POST method, got %s", r.Method)
 				}
@@ -92,19 +105,22 @@ func runStubCaseTest(t *testing.T, payload string, withCaseNo bool, docType stri
 			}))
 			defer mockServer.Close()
 
-			// Mock logger
 			logger := *logger.NewLogger()
 			mockConfig := config.Config{
 				App: config.App{
 					SiriusBaseURL: mockServer.URL,
 					SiriusScanURL: "api/public/v1/scanned-cases",
 				},
+				Auth: config.Auth{
+					RefreshThreshold: 5 * time.Minute,
+				},
 			}
 
 			// Instantiate dependencies and call the method
 			httpClient := httpclient.NewHttpClient(mockConfig, logger)
-			stubCase := NewCreateStubCase(httpClient)
-			_, err := stubCase.CreateStubCase(set)
+			middleware := httpclient.NewMiddleware(httpClient, mockConfig.Auth.RefreshThreshold)
+			client := NewClient(middleware)
+			_, err := client.CreateCaseStub(set)
 
 			// Validate error behavior
 			if tt.expectedErr != nil {

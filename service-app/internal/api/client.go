@@ -5,38 +5,39 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
-	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 )
 
-type CreateStubCase struct {
-	config     config.Config
-	logger     logger.Logger
-	httpClient *httpclient.HttpClient
+type Client struct {
+	Middleware *httpclient.Middleware
 }
 
-func NewCreateStubCase(httpClient *httpclient.HttpClient) *CreateStubCase {
-	return &CreateStubCase{
-		config:     httpClient.Config,
-		logger:     httpClient.Logger,
-		httpClient: httpClient,
+func NewClient(middleware *httpclient.Middleware) *Client {
+	return &Client{
+		Middleware: middleware,
 	}
 }
 
 // Determines case type and sends the request to Sirius
-func (s CreateStubCase) CreateStubCase(set types.BaseSet) (*types.ScannedCaseResponse, error) {
-	scannedCaseRequest, err := s.determineCaseRequest(set)
+func (c *Client) CreateCaseStub(set types.BaseSet) (*types.ScannedCaseResponse, error) {
+	scannedCaseRequest, err := determineCaseRequest(set)
 	if err != nil {
 		return nil, fmt.Errorf("failed to determine case type: %w", err)
 	}
 
-	return s.requestCreateScannedCase(scannedCaseRequest)
+	return c.requestCreateScannedCase(scannedCaseRequest)
 }
 
-func (s CreateStubCase) determineCaseRequest(set types.BaseSet) (*types.ScannedCaseRequest, error) {
+func determineCaseRequest(set types.BaseSet) (*types.ScannedCaseRequest, error) {
 	now := time.Now().Format(time.RFC3339)
+
+	parsedScanTime, err := time.Parse("2006-01-02T15:04:05", set.Header.ScanTime)
+	if err != nil {
+		return nil, fmt.Errorf("invalid ScanTime format: %w", err)
+	}
+	// Add timezone (UTC) and format as ISO 8601
+	formattedScanTime := parsedScanTime.UTC().Format(time.RFC3339)
 
 	for _, doc := range set.Body.Documents {
 		switch doc.Type {
@@ -44,14 +45,14 @@ func (s CreateStubCase) determineCaseRequest(set types.BaseSet) (*types.ScannedC
 			return &types.ScannedCaseRequest{
 				BatchID:     set.Header.Schedule,
 				CaseType:    "lpa",
-				ReceiptDate: set.Header.ScanTime,
+				ReceiptDate: formattedScanTime,
 				CreatedDate: now,
 			}, nil
 		case "EP2PG", "EPA":
 			return &types.ScannedCaseRequest{
 				BatchID:     set.Header.Schedule,
 				CaseType:    "epa",
-				ReceiptDate: set.Header.ScanTime,
+				ReceiptDate: formattedScanTime,
 				CreatedDate: now,
 			}, nil
 		case "COPORD":
@@ -60,7 +61,7 @@ func (s CreateStubCase) determineCaseRequest(set types.BaseSet) (*types.ScannedC
 					CourtReference: set.Header.CaseNo,
 					BatchID:        set.Header.Schedule,
 					CaseType:       "order",
-					ReceiptDate:    set.Header.ScanTime,
+					ReceiptDate:    formattedScanTime,
 				}, nil
 			}
 		}
@@ -69,7 +70,7 @@ func (s CreateStubCase) determineCaseRequest(set types.BaseSet) (*types.ScannedC
 	return nil, fmt.Errorf("could not determine case type")
 }
 
-func (s CreateStubCase) requestCreateScannedCase(reqData *types.ScannedCaseRequest) (*types.ScannedCaseResponse, error) {
+func (c *Client) requestCreateScannedCase(reqData *types.ScannedCaseRequest) (*types.ScannedCaseResponse, error) {
 	if reqData == nil {
 		return nil, fmt.Errorf("request data is nil")
 	}
@@ -79,11 +80,9 @@ func (s CreateStubCase) requestCreateScannedCase(reqData *types.ScannedCaseReque
 		return nil, fmt.Errorf("failed to marshal request data: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/%s", s.config.App.SiriusBaseURL, s.config.App.SiriusScanURL)
+	url := fmt.Sprintf("%s/%s", c.Middleware.Client.Config.App.SiriusBaseURL, c.Middleware.Client.Config.App.SiriusScanURL)
 
-	// TODO: we need to include auth / middleware to handle token inclusion
-
-	responseBody, err := s.httpClient.HTTPRequest(url, "POST", body, nil)
+	responseBody, err := c.Middleware.HTTPRequest(url, "POST", body, nil)
 	if err != nil {
 		return nil, fmt.Errorf("request to Sirius API failed: %w", err)
 	}

@@ -70,10 +70,13 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Step 4: Create a case stub in Sirius if we have a case to create
+	// Step 4: Sirius API integration
+	// Step 4.1: Create a case stub in Sirius if we have a case to create
 	httpClient := httpclient.NewHttpClient(*c.config, *c.logger)
-	stubCase := NewCreateStubCase(httpClient)
-	scannedCaseResponse, err := stubCase.CreateStubCase(*parsedBaseXml)
+	middleware := httpclient.NewMiddleware(httpClient, c.config.Auth.RefreshThreshold)
+	// Step 4.2: Create a new client and case stub
+	client := NewClient(middleware)
+	scannedCaseResponse, err := client.CreateCaseStub(*parsedBaseXml)
 	if err != nil {
 		c.logger.Error("Failed to create case stub in Sirius: " + err.Error())
 		http.Error(w, "Failed to create case stub in Sirius", http.StatusInternalServerError)
