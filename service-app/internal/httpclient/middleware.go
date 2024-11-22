@@ -23,7 +23,7 @@ func NewMiddleware(client *HttpClient, refreshThreshold time.Duration) *Middlewa
 	}
 }
 
-// FetchToken fetches the authentication token and builds the cookie
+// Fetches the authentication token and builds the cookie
 func (m *Middleware) FetchToken() error {
 	m.Client.Logger.Info("Fetching authentication token...")
 
