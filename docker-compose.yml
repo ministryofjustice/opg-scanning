@@ -11,9 +11,9 @@ services:
       - PORT=${HTTP_PORT}  
       - PROJECT_PATH=${PROJECT_PATH}
     command: ./app
-#     networks:
-#       - opg-sirius_default
+    networks:
+      - opg-sirius_default
 
-# networks:
-#   opg-sirius_default:
-#     external: true
+networks:
+  opg-sirius_default:
+    external: true

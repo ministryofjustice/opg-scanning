@@ -28,7 +28,6 @@ type (
 		Email            string        `envconfig:"AUTH_EMAIL" default:"opg_document_and_d@publicguardian.gsi.gov.uk"`
 		Password         string        `envconfig:"AUTH_PASSWORD" default:"password"`
 		RefreshThreshold time.Duration `envconfig:"AUTH_REFRESH_THRESHOLD" default:"5m"`
-		TokenExpiry      time.Duration `envconfig:"AUTH_TOKEN_EXPIRY" default:"30m"`
 	}
 
 	HTTP struct {
