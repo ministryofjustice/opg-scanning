@@ -1,11 +1,19 @@
 version: '3.8'
 
 services:
-  app:
+  service-app:
     build:
       context: ./service-app
     ports:
-      - "8081:8081"     
+      - "${HTTP_PORT}:${HTTP_PORT}"     
     environment:
-      - PORT=8081      
+      - SIRIUS_BASE_URL=${SIRIUS_BASE_URL}
+      - PORT=${HTTP_PORT}  
+      - PROJECT_PATH=${PROJECT_PATH}
     command: ./app
+#     networks:
+#       - opg-sirius_default
+
+# networks:
+#   opg-sirius_default:
+#     external: true
