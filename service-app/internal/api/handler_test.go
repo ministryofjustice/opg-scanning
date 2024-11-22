@@ -1,6 +1,6 @@
 package api
 
-// TODO: Update tests based on evolution of API
+// TODO: finalise auth implementation before completing handler tests
 
 // var xmlPayload = `
 // <Set xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SET.xsd">

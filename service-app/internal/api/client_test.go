@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
@@ -93,18 +92,6 @@ func setupMockServer(t *testing.T, expectedReq *types.ScannedCaseRequest) *httpt
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		if r.URL.Path == "/auth/sessions" {
-			// Simulate an authentication endpoint
-			if r.Method != http.MethodPost {
-				t.Errorf("expected POST method for /auth/sessions, got %s", r.Method)
-			}
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{
-				"authentication_token": "mocked-token"
-			}`))
-			return
-		}
-
 		if r.Method != http.MethodPost {
 			t.Errorf("expected POST method, got %s", r.Method)
 		}
@@ -143,13 +130,10 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 				SiriusBaseURL: mockServer.URL,
 				SiriusScanURL: endpoint,
 			},
-			Auth: config.Auth{
-				RefreshThreshold: 5 * time.Minute,
-			},
 		}
 
 		httpClient := httpclient.NewHttpClient(mockConfig, logger)
-		middleware := httpclient.NewMiddleware(httpClient, mockConfig.Auth.RefreshThreshold)
+		middleware := httpclient.NewMiddleware(httpClient)
 		client := NewClient(middleware)
 
 		_, err := client.CreateCaseStub(set)

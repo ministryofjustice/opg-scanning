@@ -3,7 +3,6 @@ package config
 import (
 	"log"
 	"path/filepath"
-	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -14,7 +13,6 @@ type (
 	Config struct {
 		App  App
 		HTTP HTTP
-		Auth Auth
 	}
 
 	App struct {
@@ -22,12 +20,6 @@ type (
 		SiriusScanURL   string `envconfig:"SIRIUS_SCAN_URL" default:"api/public/v1/scanned-cases"`
 		ProjectPath     string `envconfig:"PROJECT_PATH" default:"service-app"`
 		ProjectFullPath string
-	}
-
-	Auth struct {
-		Email            string        `envconfig:"AUTH_EMAIL" default:"opg_document_and_d@publicguardian.gsi.gov.uk"`
-		Password         string        `envconfig:"AUTH_PASSWORD" default:"password"`
-		RefreshThreshold time.Duration `envconfig:"AUTH_REFRESH_THRESHOLD" default:"5m"`
 	}
 
 	HTTP struct {
