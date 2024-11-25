@@ -38,3 +38,12 @@ func WriteToFile(fileName string, message string, path string) {
 		log.Fatal(err)
 	}
 }
+
+func Contains(slice []string, item string) bool {
+	for _, v := range slice {
+		if v == item {
+			return true
+		}
+	}
+	return false
+}
