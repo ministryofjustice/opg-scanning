@@ -77,7 +77,7 @@ func (v *Validator) validateDocCombosWithCaseNo(instruments []string, applicatio
 
 func (v *Validator) validateInstrumentCountWithoutCaseNo(instruments []string) error {
 	if len(instruments) == 0 {
-		return fmt.Errorf("no instrument found. Valid instruments are %s", constants.LPATypeDocuments)
+		return fmt.Errorf("no instrument found. Valid instruments are %s", constants.Instruments)
 	}
 	if len(instruments) > 1 {
 		return fmt.Errorf("too many instruments found. You may only supply one instrument. Set contained %s", instruments)
