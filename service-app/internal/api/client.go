@@ -1,75 +1,96 @@
 package api
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"time"
 
+	"github.com/ministryofjustice/opg-scanning/internal/constants"
+	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
+	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
-func CreateStubCase(url string, set types.BaseSet) (*types.ScannedCaseResponse, error) {
-	var scannedCaseRequest types.ScannedCaseRequest
+type Client struct {
+	Middleware *httpclient.Middleware
+}
+
+func NewClient(middleware *httpclient.Middleware) *Client {
+	return &Client{
+		Middleware: middleware,
+	}
+}
+
+// Determines case type and sends the request to Sirius
+func (c *Client) CreateCaseStub(set types.BaseSet) (*types.ScannedCaseResponse, error) {
+	scannedCaseRequest, err := determineCaseRequest(set)
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine case type: %w", err)
+	}
+
+	return c.requestCreateScannedCase(scannedCaseRequest)
+}
+
+func determineCaseRequest(set types.BaseSet) (*types.ScannedCaseRequest, error) {
 	now := time.Now().Format(time.RFC3339)
 
-	if set.Header.CaseNo == "" {
-		// Check for LPA cases
-		for _, doc := range set.Body.Documents {
-			if doc.Type == "LPA002" || doc.Type == "LP1F" || doc.Type == "LP1H" || doc.Type == "LP2" {
-				// Create a new LPA case
-				scannedCaseRequest = types.ScannedCaseRequest{
-					BatchID:     set.Header.Schedule,
-					CaseType:    "lpa",
-					ReceiptDate: set.Header.ScanTime,
-					CreatedDate: now,
-				}
-				break
-			} else if doc.Type == "EP2PG" || doc.Type == "EPA" {
-				// Create a new EPA case
-				scannedCaseRequest = types.ScannedCaseRequest{
-					BatchID:     set.Header.Schedule,
-					CaseType:    "epa",
-					ReceiptDate: set.Header.ScanTime,
-					CreatedDate: now,
-				}
-				break
-			}
-		}
-	} else if set.Header.CaseNo != "" {
-		// Check for COPORD case with CaseNo
-		for _, doc := range set.Body.Documents {
-			if doc.Type == "COPORD" {
-				scannedCaseRequest = types.ScannedCaseRequest{
-					CourtReference: set.Header.CaseNo,
-					BatchID:        set.Header.Schedule,
-					CaseType:       "order",
-					ReceiptDate:    set.Header.ScanTime,
-				}
-				break
-			}
+	parsedScanTime, err := time.Parse("2006-01-02T15:04:05", set.Header.ScanTime)
+	if err != nil {
+		return nil, fmt.Errorf("invalid ScanTime format: %w", err)
+	}
+	// Add timezone (UTC) and format as ISO 8601
+	formattedScanTime := parsedScanTime.UTC().Format(time.RFC3339)
+
+	for _, doc := range set.Body.Documents {
+		if util.Contains(constants.LPATypeDocuments, doc.Type) {
+			return &types.ScannedCaseRequest{
+				BatchID:     set.Header.Schedule,
+				CaseType:    "lpa",
+				ReceiptDate: formattedScanTime,
+				CreatedDate: now,
+			}, nil
+		} else if util.Contains(constants.EPATypeDocuments, doc.Type) {
+			return &types.ScannedCaseRequest{
+				BatchID:     set.Header.Schedule,
+				CaseType:    "epa",
+				ReceiptDate: formattedScanTime,
+				CreatedDate: now,
+			}, nil
+		} else if doc.Type == constants.DocumentTypeCOPORD && set.Header.CaseNo != "" {
+			return &types.ScannedCaseRequest{
+				CourtReference: set.Header.CaseNo,
+				BatchID:        set.Header.Schedule,
+				CaseType:       "order",
+				ReceiptDate:    formattedScanTime,
+			}, nil
 		}
 	}
 
-	return requestCreateScannedCase(url, scannedCaseRequest)
+	return nil, fmt.Errorf("could not determine case type")
 }
 
-func requestCreateScannedCase(url string, reqData types.ScannedCaseRequest) (*types.ScannedCaseResponse, error) {
+func (c *Client) requestCreateScannedCase(reqData *types.ScannedCaseRequest) (*types.ScannedCaseResponse, error) {
+	if reqData == nil {
+		return nil, fmt.Errorf("request data is nil")
+	}
+
 	body, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request data: %w", err)
 	}
 
-	req, err := http.NewRequest("POST", url+"/scanned-cases", bytes.NewBuffer(body))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
+	url := fmt.Sprintf("%s/%s", c.Middleware.Client.Config.App.SiriusBaseURL, c.Middleware.Client.Config.App.SiriusScanURL)
 
-	// Make the request (dummy for testing purposes)
-	// Placeholder for actual HTTP call
-	// resp, err := http.DefaultClient.Do(req)
-	// Instead return a dummy UUID for now
-	return &types.ScannedCaseResponse{UID: "dummy-uuid-1234"}, nil
+	responseBody, err := c.Middleware.HTTPRequest(url, "POST", body, nil)
+	if err != nil {
+		return nil, fmt.Errorf("request to Sirius API failed: %w", err)
+	}
+
+	var scannedResponse types.ScannedCaseResponse
+	err = json.Unmarshal(responseBody, &scannedResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return &scannedResponse, nil
 }
