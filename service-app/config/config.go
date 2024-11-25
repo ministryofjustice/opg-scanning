@@ -23,7 +23,7 @@ type (
 	}
 
 	HTTP struct {
-		Port    string `envconfig:"HTTP_PORT" default:"8082"`
+		Port    string `envconfig:"HTTP_PORT" default:"8081"`
 		Timeout int    `envconfig:"HTTP_TIMEOUT" default:"10"`
 	}
 )
