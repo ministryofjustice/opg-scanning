@@ -4,13 +4,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
+	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
-
-var Instruments = []string{"EPA", "LPA-PA", "LPA-PW", "LPA114", "LPA117", "LP1F", "LP1H"}
-var Applications = []string{"EP2PG", "LPA002", "LPA002R", "LP2"}
-var StandaloneInstruments = []string{"LP1F", "LP1H"}
-var ExemptApplications = []string{"LPA002R"}
 
 type Validator struct {
 }
@@ -29,16 +26,9 @@ func (v *Validator) ValidateSet(parsedSet *types.BaseSet) error {
 		return errors.New("missing required Header element")
 	}
 
-	// if parsedSet.Header.CaseNo == "" {
-	// 	return errors.New("missing CaseNo in Header")
-	// }
-	// if parsedSet.Header.ScanTime == "" {
-	// 	return errors.New("missing ScanTime in Header")
-	// }
-
 	// Validate combinations of instruments and applications
-	instrumentsDiscovered := v.getEmbeddedDocumentTypes(parsedSet, Instruments)
-	applicationsDiscovered := v.getEmbeddedDocumentTypes(parsedSet, Applications)
+	instrumentsDiscovered := v.getEmbeddedDocumentTypes(parsedSet, constants.LPATypeDocuments)
+	applicationsDiscovered := v.getEmbeddedDocumentTypes(parsedSet, constants.EPATypeDocuments)
 
 	if parsedSet.Header.CaseNo != "" {
 		// Validate document combinations if CaseNo exists
@@ -87,7 +77,7 @@ func (v *Validator) validateDocCombosWithCaseNo(instruments []string, applicatio
 
 func (v *Validator) validateInstrumentCountWithoutCaseNo(instruments []string) error {
 	if len(instruments) == 0 {
-		return fmt.Errorf("no instrument found. Valid instruments are %s", Instruments)
+		return fmt.Errorf("no instrument found. Valid instruments are %s", constants.LPATypeDocuments)
 	}
 	if len(instruments) > 1 {
 		return fmt.Errorf("too many instruments found. You may only supply one instrument. Set contained %s", instruments)
@@ -122,19 +112,9 @@ func (v *Validator) getEmbeddedDocumentTypes(parsedSet *types.BaseSet, validType
 }
 
 func (v *Validator) isExemptApplication(application string) bool {
-	for _, exempt := range ExemptApplications {
-		if application == exempt {
-			return true
-		}
-	}
-	return false
+	return util.Contains(constants.ExemptApplications, application)
 }
 
 func (v *Validator) isStandaloneInstrument(instrument string) bool {
-	for _, standalone := range StandaloneInstruments {
-		if instrument == standalone {
-			return true
-		}
-	}
-	return false
+	return util.Contains(constants.StandaloneInstruments, instrument)
 }
