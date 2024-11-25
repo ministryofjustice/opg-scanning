@@ -9,9 +9,3 @@ services:
     environment:
       - PORT=8081
     command: ./app
-    networks:
-      - opg-sirius_default
-
-networks:
-  opg-sirius_default:
-    external: true
