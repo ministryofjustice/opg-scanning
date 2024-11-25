@@ -25,7 +25,13 @@ func NewClient(middleware *httpclient.Middleware) *Client {
 func (c *Client) CreateCaseStub(set types.BaseSet) (*types.ScannedCaseResponse, error) {
 	scannedCaseRequest, err := determineCaseRequest(set)
 	if err != nil {
-		return nil, fmt.Errorf("failed to determine case type: %w", err)
+		return nil, err
+	}
+
+	if scannedCaseRequest == nil && set.Header.CaseNo != "" {
+		return &types.ScannedCaseResponse{
+			UID: set.Header.CaseNo,
+		}, nil
 	}
 
 	return c.requestCreateScannedCase(scannedCaseRequest)
@@ -34,7 +40,7 @@ func (c *Client) CreateCaseStub(set types.BaseSet) (*types.ScannedCaseResponse, 
 func determineCaseRequest(set types.BaseSet) (*types.ScannedCaseRequest, error) {
 	now := time.Now().Format(time.RFC3339)
 
-	parsedScanTime, err := time.Parse("2006-01-02T15:04:05", set.Header.ScanTime)
+	parsedScanTime, err := time.Parse("2006-01-02 15:04:05", set.Header.ScanTime)
 	if err != nil {
 		return nil, fmt.Errorf("invalid ScanTime format: %w", err)
 	}
@@ -66,7 +72,7 @@ func determineCaseRequest(set types.BaseSet) (*types.ScannedCaseRequest, error) 
 		}
 	}
 
-	return nil, fmt.Errorf("could not determine case type")
+	return nil, nil
 }
 
 func (c *Client) requestCreateScannedCase(reqData *types.ScannedCaseRequest) (*types.ScannedCaseResponse, error) {

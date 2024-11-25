@@ -24,14 +24,14 @@ type requestCaseStub struct {
 const (
 	withCaseNoPayload = `<?xml version="1.0" encoding="UTF-8"?>
 	<Set xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SET.xsd">
-		<Header CaseNo="123" Scanner="9" ScanTime="2014-09-26T12:38:53" ScannerOperator="Administrator" Schedule="02-0001112-20160909185000" FeeNumber="1234"/>
+		<Header CaseNo="123" Scanner="9" ScanTime="2014-09-26 12:38:53" ScannerOperator="Administrator" Schedule="02-0001112-20160909185000" FeeNumber="1234"/>
 		<Body>
 			<Document Type="%s" Encoding="UTF-8" NoPages="19"></Document>
 		</Body>
 	</Set>`
 	withoutCaseNoPayload = `<?xml version="1.0" encoding="UTF-8"?>
 	<Set xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SET.xsd">
-		<Header CaseNo="" Scanner="9" ScanTime="2014-09-26T12:38:53" ScannerOperator="Administrator" Schedule="02-0001112-20160909185000" FeeNumber="1234"/>
+		<Header CaseNo="" Scanner="9" ScanTime="2014-09-26 12:38:53" ScannerOperator="Administrator" Schedule="02-0001112-20160909185000" FeeNumber="1234"/>
 		<Body>
 			<Document Type="%s" Encoding="UTF-8" NoPages="19"></Document>
 		</Body>
