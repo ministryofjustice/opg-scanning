@@ -27,8 +27,8 @@ func (v *Validator) ValidateSet(parsedSet *types.BaseSet) error {
 	}
 
 	// Validate combinations of instruments and applications
-	instrumentsDiscovered := v.getEmbeddedDocumentTypes(parsedSet, constants.LPATypeDocuments)
-	applicationsDiscovered := v.getEmbeddedDocumentTypes(parsedSet, constants.EPATypeDocuments)
+	instrumentsDiscovered := v.getEmbeddedDocumentTypes(parsedSet, constants.Instruments)
+	applicationsDiscovered := v.getEmbeddedDocumentTypes(parsedSet, constants.Applications)
 
 	if parsedSet.Header.CaseNo != "" {
 		// Validate document combinations if CaseNo exists
