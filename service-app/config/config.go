@@ -12,14 +12,21 @@ import (
 type (
 	Config struct {
 		App  App
+		Auth Auth
 		HTTP HTTP
 	}
 
 	App struct {
+		AwsEndpoint     string `envconfig:"AWS_ENDPOINT" default:"http://localhost:4566"`
 		SiriusBaseURL   string `envconfig:"SIRIUS_BASE_URL" default:"http://localhost:8080"`
 		SiriusScanURL   string `envconfig:"SIRIUS_SCAN_URL" default:"api/public/v1/scanned-cases"`
 		ProjectPath     string `envconfig:"PROJECT_PATH" default:"service-app"`
 		ProjectFullPath string
+	}
+
+	Auth struct {
+		JWTSecretARN  string `envconfig:"JWT_SECRET_ARN" default:"local/jwt-key"`
+		JWTExpiration int    `envconfig:"JWT_EXPIRATION" default:"300"`
 	}
 
 	HTTP struct {

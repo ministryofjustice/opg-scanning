@@ -8,4 +8,40 @@ services:
       - "8081:8081"     
     environment:
       - PORT=8081
+      - AWS_REGION=eu-west-1
+      - SECRETS_MANAGER_PREFIX=local/
     command: ./app
+    depends_on:
+      - localstack
+    networks:
+      - app_network
+
+  localstack:
+    image: localstack/localstack:3.0
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./scripts/localstack/init:/etc/localstack/init/ready.d"
+      - "./scripts/localstack/wait:/scripts/wait"
+      - "./localstack-data:/var/lib/localstack/data"
+    environment:
+      AWS_DEFAULT_REGION: eu-west-1
+      SERVICES: "s3,dynamodb,secretsmanager,sqs,ssm,events"
+      DEBUG: 1
+      DATA_DIR: /var/lib/localstack/data
+    networks:
+      app_network:
+        aliases:
+          - sqs.eu-west-1.localhost.localstack.cloud
+    ports:
+      - "4566:4566"
+      - "4571:4571"
+    healthcheck:
+      test: bash /scripts/wait/healthcheck.sh
+      interval: 20s
+      timeout: 30s
+      retries: 50
+    restart: unless-stopped
+
+networks:
+  app_network:
+    driver: bridge

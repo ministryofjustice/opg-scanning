@@ -8,6 +8,7 @@ import (
 
 	"github.com/ministryofjustice/opg-go-common/telemetry"
 	"github.com/ministryofjustice/opg-scanning/config"
+	"github.com/ministryofjustice/opg-scanning/internal/aws"
 	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
@@ -16,17 +17,19 @@ import (
 
 type IndexController struct {
 	config    *config.Config
+	logger    *logger.Logger
 	validator *ingestion.Validator
 	Queue     *ingestion.JobQueue
-	logger    *logger.Logger
+	AwsClient *aws.AwsClient
 }
 
-func NewIndexController() *IndexController {
+func NewIndexController(awsClient *aws.AwsClient) *IndexController {
 	return &IndexController{
 		config:    config.NewConfig(),
+		logger:    logger.NewLogger(),
 		validator: ingestion.NewValidator(),
 		Queue:     ingestion.NewJobQueue(),
-		logger:    logger.NewLogger(),
+		AwsClient: awsClient,
 	}
 }
 
@@ -73,10 +76,10 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	// Step 4: Sirius API integration
 	// Step 4.1: Create a case stub in Sirius if we have a case to create
 	httpClient := httpclient.NewHttpClient(*c.config, *c.logger)
-	middleware := httpclient.NewMiddleware(httpClient)
+	middleware := httpclient.NewMiddleware(httpClient, c.AwsClient)
 	// Step 4.2: Create a new client and case stub
 	client := NewClient(middleware)
-	scannedCaseResponse, err := client.CreateCaseStub(*parsedBaseXml)
+	scannedCaseResponse, err := client.CreateCaseStub(r.Context(), *parsedBaseXml)
 	if err != nil {
 		c.logger.Error("Failed to create case stub in Sirius: " + err.Error())
 		http.Error(w, "Failed to create case stub in Sirius", http.StatusInternalServerError)

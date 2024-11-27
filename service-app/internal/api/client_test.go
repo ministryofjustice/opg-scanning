@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -9,9 +10,11 @@ import (
 	"testing"
 
 	"github.com/ministryofjustice/opg-scanning/config"
+	"github.com/ministryofjustice/opg-scanning/internal/aws"
 	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
+	"github.com/stretchr/testify/mock"
 )
 
 type requestCaseStub struct {
@@ -132,11 +135,17 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 			},
 		}
 
+		// Mock SecretsManager
+		mockAwsClient := new(aws.MockAwsClient)
+		mockAwsClient.On("GetSecretValue", mock.Anything, mock.AnythingOfType("string")).
+			Return("mock-signing-secret", nil)
+
 		httpClient := httpclient.NewHttpClient(mockConfig, logger)
-		middleware := httpclient.NewMiddleware(httpClient)
+		middleware := httpclient.NewMiddleware(httpClient, mockAwsClient)
 		client := NewClient(middleware)
 
-		_, err := client.CreateCaseStub(set)
+		ctx := context.Background()
+		_, err := client.CreateCaseStub(ctx, set)
 
 		if tt.expectedErr {
 			if len(err.Error()) == 0 {
