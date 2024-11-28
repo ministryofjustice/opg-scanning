@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -22,7 +23,7 @@ func NewClient(middleware *httpclient.Middleware) *Client {
 }
 
 // Determines case type and sends the request to Sirius
-func (c *Client) CreateCaseStub(set types.BaseSet) (*types.ScannedCaseResponse, error) {
+func (c *Client) CreateCaseStub(ctx context.Context, set types.BaseSet) (*types.ScannedCaseResponse, error) {
 	scannedCaseRequest, err := determineCaseRequest(set)
 	if err != nil {
 		return nil, err
@@ -34,7 +35,7 @@ func (c *Client) CreateCaseStub(set types.BaseSet) (*types.ScannedCaseResponse, 
 		}, nil
 	}
 
-	return c.requestCreateScannedCase(scannedCaseRequest)
+	return c.requestCreateScannedCase(ctx, scannedCaseRequest)
 }
 
 func determineCaseRequest(set types.BaseSet) (*types.ScannedCaseRequest, error) {
@@ -75,7 +76,7 @@ func determineCaseRequest(set types.BaseSet) (*types.ScannedCaseRequest, error) 
 	return nil, nil
 }
 
-func (c *Client) requestCreateScannedCase(reqData *types.ScannedCaseRequest) (*types.ScannedCaseResponse, error) {
+func (c *Client) requestCreateScannedCase(ctx context.Context, reqData *types.ScannedCaseRequest) (*types.ScannedCaseResponse, error) {
 	if reqData == nil {
 		return nil, fmt.Errorf("request data is nil")
 	}
@@ -85,9 +86,9 @@ func (c *Client) requestCreateScannedCase(reqData *types.ScannedCaseRequest) (*t
 		return nil, fmt.Errorf("failed to marshal request data: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/%s", c.Middleware.Client.Config.App.SiriusBaseURL, c.Middleware.Client.Config.App.SiriusScanURL)
+	url := fmt.Sprintf("%s/%s", c.Middleware.Config.App.SiriusBaseURL, c.Middleware.Config.App.SiriusScanURL)
 
-	responseBody, err := c.Middleware.HTTPRequest(url, "POST", body, nil)
+	responseBody, err := c.Middleware.HTTPRequest(ctx, url, "POST", body, nil)
 	if err != nil {
 		return nil, fmt.Errorf("request to Sirius API failed: %w", err)
 	}
