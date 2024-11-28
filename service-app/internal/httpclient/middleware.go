@@ -56,6 +56,7 @@ func (m *Middleware) GenerateToken(ctx context.Context) (string, error) {
 	}
 
 	claims := jwt.MapClaims{
+		// TODO: identify username
 		"session-data": "username",
 		"exp":          time.Now().Add(time.Duration(m.Config.Auth.JWTExpiration) * time.Second).Unix(),
 	}

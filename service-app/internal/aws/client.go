@@ -2,10 +2,12 @@ package aws
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
+	awsSdk "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	"github.com/ministryofjustice/opg-scanning/config"
 )
 
 type AwsClientInterface interface {
@@ -18,10 +20,20 @@ type AwsClient struct {
 }
 
 // Initializes all required AWS service clients.
-func NewAwsClient(ctx context.Context, cfg aws.Config) (*AwsClient, error) {
-	smClient := secretsmanager.NewFromConfig(cfg)
+func NewAwsClient(ctx context.Context, cfg awsSdk.Config, appConfig *config.Config) (*AwsClient, error) {
+	// Use the same endpoint for all services
+	customEndpoint := appConfig.App.AwsEndpoint
+	if customEndpoint == "" {
+		return nil, fmt.Errorf("AWS_ENDPOINT is not set")
+	}
 
-	s3Client := s3.NewFromConfig(cfg)
+	smClient := secretsmanager.NewFromConfig(cfg, func(o *secretsmanager.Options) {
+		o.BaseEndpoint = &customEndpoint
+	})
+
+	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.BaseEndpoint = &customEndpoint
+	})
 
 	return &AwsClient{
 		SecretsManager: smClient,

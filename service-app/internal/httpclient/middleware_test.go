@@ -19,7 +19,7 @@ func TestEnsureTokenWithAuthorization(t *testing.T) {
 	mockConfig := &config.Config{
 		Auth: config.Auth{
 			JWTSecretARN:  "jwt-secret",
-			JWTExpiration: 3600, // Token expires in 1 hour
+			JWTExpiration: 300,
 		},
 	}
 
@@ -45,11 +45,11 @@ func TestEnsureTokenWithAuthorization(t *testing.T) {
 
 		// Simulate HTTPRequest with the middleware
 		mockHttpClient.On("HTTPRequest",
-			mock.Anything,        // ctx
-			"http://example.com", // url
-			"POST",               // method
-			[]byte{},             // payload
-			mock.MatchedBy(func(h map[string]string) bool { // Match headers
+			mock.Anything,
+			"http://example.com",
+			"POST",
+			[]byte{},
+			mock.MatchedBy(func(h map[string]string) bool {
 				auth, ok := h["Authorization"]
 				return ok && len(auth) > 7 && auth[:7] == "Bearer "
 			}),

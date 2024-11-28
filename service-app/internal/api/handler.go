@@ -23,9 +23,9 @@ type IndexController struct {
 	AwsClient *aws.AwsClient
 }
 
-func NewIndexController(awsClient *aws.AwsClient) *IndexController {
+func NewIndexController(awsClient *aws.AwsClient, appConfig *config.Config) *IndexController {
 	return &IndexController{
-		config:    config.NewConfig(),
+		config:    appConfig,
 		logger:    logger.NewLogger(),
 		validator: ingestion.NewValidator(),
 		Queue:     ingestion.NewJobQueue(),
