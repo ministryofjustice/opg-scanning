@@ -133,6 +133,10 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 				SiriusBaseURL: mockServer.URL,
 				SiriusScanURL: endpoint,
 			},
+			Auth: config.Auth{
+				JWTSecretARN:  "local/jwt-key",
+				JWTExpiration: 3600,
+			},
 		}
 
 		// Mock SecretsManager
@@ -141,11 +145,14 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 			Return("mock-signing-secret", nil)
 
 		httpClient := httpclient.NewHttpClient(mockConfig, logger)
-		middleware := httpclient.NewMiddleware(httpClient, mockAwsClient)
+		middleware, err := httpclient.NewMiddleware(httpClient, mockAwsClient)
+		if err != nil {
+			t.Fatalf("failed to create middleware: %v", err)
+		}
 		client := NewClient(middleware)
 
 		ctx := context.Background()
-		_, err := client.CreateCaseStub(ctx, set)
+		_, err = client.CreateCaseStub(ctx, set)
 
 		if tt.expectedErr {
 			if len(err.Error()) == 0 {

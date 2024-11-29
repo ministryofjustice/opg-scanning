@@ -76,7 +76,12 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	// Step 4: Sirius API integration
 	// Step 4.1: Create a case stub in Sirius if we have a case to create
 	httpClient := httpclient.NewHttpClient(*c.config, *c.logger)
-	middleware := httpclient.NewMiddleware(httpClient, c.AwsClient)
+	middleware, err := httpclient.NewMiddleware(httpClient, c.AwsClient)
+	if err != nil {
+		c.logger.Error("Failed to create middleware: " + err.Error())
+		http.Error(w, "Failed to create middleware", http.StatusInternalServerError)
+		return
+	}
 	// Step 4.2: Create a new client and case stub
 	client := NewClient(middleware)
 	scannedCaseResponse, err := client.CreateCaseStub(r.Context(), *parsedBaseXml)

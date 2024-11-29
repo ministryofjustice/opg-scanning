@@ -12,11 +12,13 @@ services:
       - AWS_ACCESS_KEY_ID=localstack
       - AWS_SECRET_ACCESS_KEY=localstack
       - SECRETS_MANAGER_PREFIX=local/
+      - SIRIUS_BASE_URL=http://api
     command: ./app
     depends_on:
       - localstack
     networks:
-      - app_network
+      - opg-scanning_network
+      - opg-sirius_default
 
   localstack:
     image: localstack/localstack:3.0
@@ -31,7 +33,7 @@ services:
       DEBUG: 1
       DATA_DIR: /var/lib/localstack/data
     networks:
-      app_network:
+      opg-scanning_network:
         aliases:
           - sqs.eu-west-1.localhost.localstack.cloud
     ports:
@@ -45,5 +47,7 @@ services:
     restart: unless-stopped
 
 networks:
-  app_network:
+  opg-scanning_network:
     driver: bridge
+  opg-sirius_default:
+    external: true  

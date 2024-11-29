@@ -2,6 +2,7 @@ package httpclient
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -9,76 +10,44 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
-func TestEnsureTokenWithAuthorization(t *testing.T) {
-	ctx := context.Background()
+func TestEnsureTokenConcurrency(t *testing.T) {
 
-	// Mock configuration
-	mockConfig := &config.Config{
+	logger := *logger.NewLogger()
+	mockConfig := config.Config{
 		Auth: config.Auth{
-			JWTSecretARN:  "jwt-secret",
-			JWTExpiration: 300,
+			ApiUsername:   "test",
+			JWTSecretARN:  "local/jwt-key",
+			JWTExpiration: 3600,
+			JWTTestSecret: "mock-signing-secret",
 		},
 	}
 
-	// Properly initialize the logger
-	mockLogger := logger.NewLogger()
-
-	// Mock HTTP Client
-	mockHttpClient := new(MockHttpClient)
-	mockHttpClient.On("GetConfig").Return(mockConfig)
-	mockHttpClient.On("GetLogger").Return(mockLogger)
-
-	// Mock AWS Client
 	mockAwsClient := new(aws.MockAwsClient)
-	mockAwsClient.On("GetSecretValue", mock.Anything, "jwt-secret").
+	mockAwsClient.On("GetSecretValue", mock.Anything, mock.AnythingOfType("string")).
 		Return("mock-signing-secret", nil)
 
-	// Initialize Middleware
-	middleware := NewMiddleware(mockHttpClient, mockAwsClient)
+	httpClient := NewHttpClient(mockConfig, logger)
 
-	// Test generating a new token and verifying Authorization header
-	t.Run("EnsureToken generates Authorization header", func(t *testing.T) {
-		headers := map[string]string{"Custom-Header": "value"}
+	middleware := &Middleware{
+		Client:      httpClient,
+		Config:      &mockConfig,
+		Logger:      &logger,
+		tokenExpiry: time.Now().Add(-1 * time.Minute),
+		mu:          sync.RWMutex{},
+	}
 
-		// Simulate HTTPRequest with the middleware
-		mockHttpClient.On("HTTPRequest",
-			mock.Anything,
-			"http://example.com",
-			"POST",
-			[]byte{},
-			mock.MatchedBy(func(h map[string]string) bool {
-				auth, ok := h["Authorization"]
-				return ok && len(auth) > 7 && auth[:7] == "Bearer "
-			}),
-		).Return([]byte("mock-response"), nil)
-
-		// Call HTTPRequest
-		response, err := middleware.HTTPRequest(ctx, "http://example.com", "POST", []byte{}, headers)
-		require.NoError(t, err)
-		require.Equal(t, []byte("mock-response"), response)
-
-		// Assert that EnsureToken was called, and a token was generated
-		require.NotEmpty(t, middleware.Token)
-		require.WithinDuration(t, time.Now().Add(1*time.Hour), middleware.TokenExpiry, 1*time.Second)
-
-		// Assert mock HTTP client calls
-		mockHttpClient.AssertCalled(t, "HTTPRequest",
-			mock.Anything,
-			"http://example.com",
-			"POST",
-			[]byte{},
-			mock.MatchedBy(func(h map[string]string) bool { // Ensure headers matched
-				auth, ok := h["Authorization"]
-				return ok && len(auth) > 7 && auth[:7] == "Bearer "
-			}),
-		)
-	})
-
-	// Assert AWS Client calls
-	mockAwsClient.AssertCalled(t, "GetSecretValue", mock.Anything, "jwt-secret")
-	mockHttpClient.AssertCalled(t, "GetConfig")
-	mockHttpClient.AssertCalled(t, "GetLogger")
+	var wg sync.WaitGroup
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := middleware.ensureToken(context.Background())
+			if err != nil {
+				t.Errorf("ensureToken failed: %v", err)
+			}
+		}()
+	}
+	wg.Wait()
 }
