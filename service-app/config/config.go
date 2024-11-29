@@ -12,14 +12,23 @@ import (
 type (
 	Config struct {
 		App  App
+		Auth Auth
 		HTTP HTTP
 	}
 
 	App struct {
+		AwsEndpoint     string `envconfig:"AWS_ENDPOINT" default:"http://localstack:4566"`
 		SiriusBaseURL   string `envconfig:"SIRIUS_BASE_URL" default:"http://localhost:8080"`
 		SiriusScanURL   string `envconfig:"SIRIUS_SCAN_URL" default:"api/public/v1/scanned-cases"`
 		ProjectPath     string `envconfig:"PROJECT_PATH" default:"service-app"`
 		ProjectFullPath string
+	}
+
+	Auth struct {
+		ApiUsername   string `envconfig:"API_USERNAME" default:"opg_document_and_d@publicguardian.gsi.gov.uk"`
+		JWTSecretARN  string `envconfig:"JWT_SECRET_ARN" default:"local/jwt-key"`
+		JWTExpiration int    `envconfig:"JWT_EXPIRATION" default:"3600"`
+		JWTTestSecret string
 	}
 
 	HTTP struct {
