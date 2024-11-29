@@ -134,8 +134,10 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 				SiriusScanURL: endpoint,
 			},
 			Auth: config.Auth{
+				ApiUsername:   "test",
 				JWTSecretARN:  "local/jwt-key",
 				JWTExpiration: 3600,
+				JWTTestSecret: "mock-signing-secret",
 			},
 		}
 
