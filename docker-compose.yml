@@ -1,11 +1,74 @@
-version: '3.8'
-
 services:
   service-app:
     build:
       context: ./service-app
     ports:
-      - "8081:8081"     
+      - "8081:8081"
     environment:
-      - PORT=8081
-    command: ./app
+      - AWS_ACCESS_KEY_ID=localstack
+      - AWS_SECRET_ACCESS_KEY=localstack
+      - SECRETS_MANAGER_PREFIX=local/
+    depends_on:
+      localstack:
+        condition: service_healthy
+    networks:
+      - opg-scanning_network
+      - opg-sirius_default
+
+  service-app-test:
+    build:
+      context: ./service-app
+      target: build-env
+    environment:
+      - AWS_ACCESS_KEY_ID=localstack
+      - AWS_SECRET_ACCESS_KEY=localstack
+      - SECRETS_MANAGER_PREFIX=local/  
+    volumes:
+      - .:/app
+    working_dir: /app/service-app
+    entrypoint:
+      - "sh"
+      - "-c"
+      - |
+        while ! nc -z localstack 4566; do
+          echo "Waiting for Localstack to be ready..."
+          sleep 1
+        done
+        echo "Localstack is ready. Running tests..."
+        go test -v ./...
+    depends_on:
+      localstack:
+        condition: service_healthy
+    networks:
+      - opg-scanning_network
+      - opg-sirius_default
+
+  localstack:
+    image: localstack/localstack:3.0
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./scripts/localstack/init:/etc/localstack/init/ready.d"
+      - "./scripts/localstack/wait:/scripts/wait"
+      - "./localstack-data:/var/lib/localstack/data"
+    environment:
+      AWS_DEFAULT_REGION: eu-west-1
+      SERVICES: "s3,secretsmanager,sqs,ssm"
+      DEBUG: 1
+      DATA_DIR: /var/lib/localstack/data
+    networks:
+      - opg-scanning_network
+    ports:
+      - "4566:4566"
+      - "4571:4571"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/health"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped  
+
+networks:
+  opg-scanning_network:
+    driver: bridge
+  opg-sirius_default:
+    external: true
