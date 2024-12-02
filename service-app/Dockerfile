@@ -1,6 +1,6 @@
 FROM golang:1.23-alpine3.20 AS build-env
 
-RUN apk add gcc libc-dev libxml2-dev curl
+RUN apk add gcc libc-dev libxml2-dev
 
 WORKDIR /app
 
