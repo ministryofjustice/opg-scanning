@@ -34,7 +34,7 @@ func main() {
 
 	// Load AWS configuration
 	cfg, err := awsConfig.LoadDefaultConfig(ctx,
-		awsConfig.WithRegion("eu-west-1"),
+		awsConfig.WithRegion(appConfig.Aws.Region),
 	)
 	if err != nil {
 		logger.Error("Failed to load AWS config", "error", err)

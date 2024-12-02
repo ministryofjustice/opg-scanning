@@ -6,35 +6,51 @@ import (
 	"testing"
 	"time"
 
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestEnsureTokenConcurrency(t *testing.T) {
-
+	ctx := context.Background()
 	logger := *logger.NewLogger()
+	cfg := config.NewConfig()
 	mockConfig := config.Config{
+		HTTP: cfg.HTTP,
+		App:  cfg.App,
+		Aws:  cfg.Aws,
 		Auth: config.Auth{
 			ApiUsername:   "test",
 			JWTSecretARN:  "local/jwt-key",
 			JWTExpiration: 3600,
-			JWTTestSecret: "mock-signing-secret",
 		},
 	}
 
-	mockAwsClient := new(aws.MockAwsClient)
-	mockAwsClient.On("GetSecretValue", mock.Anything, mock.AnythingOfType("string")).
-		Return("mock-signing-secret", nil)
+	// Log mockConfig
+	t.Logf("mockConfig: %+v", mockConfig)
 
+	// Load AWS configuration
+	awsCfg, err := awsConfig.LoadDefaultConfig(ctx,
+		awsConfig.WithRegion(cfg.Aws.Region),
+	)
+	if err != nil {
+		t.Errorf("Failed to load AWS config %v", err)
+		return
+	}
+	// Initialize AwsClient
+	awsClient, err := aws.NewAwsClient(ctx, awsCfg, &mockConfig)
+	if err != nil {
+		t.Errorf("failed to initialize AWS clients: %v", err)
+	}
 	httpClient := NewHttpClient(mockConfig, logger)
 
 	middleware := &Middleware{
 		Client:      httpClient,
 		Config:      &mockConfig,
 		Logger:      &logger,
-		tokenExpiry: time.Now().Add(-1 * time.Minute),
+		awsClient:   awsClient,
+		tokenExpiry: time.Now().Add(time.Hour),
 		mu:          sync.RWMutex{},
 	}
 

@@ -61,11 +61,7 @@ func NewClaims(cfg config.Config) (Claims, error) {
 }
 
 func (m *Middleware) fetchSigningSecret(ctx context.Context) (string, error) {
-	// Check hardcoded signing secret
-	if m.Config.Auth.JWTTestSecret != "" {
-		return m.Config.Auth.JWTTestSecret, nil
-	}
-
+	m.Logger.Info("Fetching signing secret...")
 	secret, err := m.awsClient.GetSecretValue(ctx, m.Config.Auth.JWTSecretARN)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch signing secret: %w", err)
@@ -78,6 +74,8 @@ func (m *Middleware) generateToken(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch signing secret: %w", err)
 	}
+
+	m.Logger.Info("Creating claims...")
 
 	claims, err := NewClaims(*m.Config)
 	if err != nil {
@@ -127,7 +125,7 @@ func (m *Middleware) ensureToken(ctx context.Context) error {
 	// Generate a new token
 	m.Logger.Info("Token invalid or expired. Attempting to generate a new one...")
 
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(m.Config.HTTP.Timeout)*time.Second)
 	defer cancel()
 
 	_, err := m.generateToken(ctx)
