@@ -61,7 +61,6 @@ func NewClaims(cfg config.Config) (Claims, error) {
 }
 
 func (m *Middleware) fetchSigningSecret(ctx context.Context) (string, error) {
-	m.Logger.Info("Fetching signing secret...")
 	secret, err := m.awsClient.GetSecretValue(ctx, m.Config.Auth.JWTSecretARN)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch signing secret: %w", err)
@@ -75,14 +74,10 @@ func (m *Middleware) generateToken(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("failed to fetch signing secret: %w", err)
 	}
 
-	m.Logger.Info("Creating claims...")
-
 	claims, err := NewClaims(*m.Config)
 	if err != nil {
 		return "", fmt.Errorf("failed to create claims: %w", err)
 	}
-
-	m.Logger.Info("Generating JWT token...")
 
 	jwtClaims := jwt.MapClaims{
 		"session-data": claims.SessionData,
@@ -121,9 +116,6 @@ func (m *Middleware) ensureToken(ctx context.Context) error {
 		m.Logger.Info("Another goroutine refreshed the token.")
 		return nil
 	}
-
-	// Generate a new token
-	m.Logger.Info("Token invalid or expired. Attempting to generate a new one...")
 
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(m.Config.HTTP.Timeout)*time.Second)
 	defer cancel()

@@ -28,7 +28,7 @@ func TestEnsureTokenConcurrency(t *testing.T) {
 	}
 
 	// Log mockConfig
-	t.Logf("mockConfig: %+v", mockConfig)
+	// t.Logf("mockConfig: %+v", mockConfig)
 
 	// Load AWS configuration
 	awsCfg, err := awsConfig.LoadDefaultConfig(ctx,
