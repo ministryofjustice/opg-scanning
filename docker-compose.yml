@@ -52,7 +52,7 @@ services:
       - "./localstack-data:/var/lib/localstack/data"
     environment:
       AWS_DEFAULT_REGION: eu-west-1
-      SERVICES: "s3,secretsmanager,sqs"
+      SERVICES: "s3,secretsmanager,sqs,ssm"
       DEBUG: 1
       DATA_DIR: /var/lib/localstack/data
     networks:
