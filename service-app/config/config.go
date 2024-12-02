@@ -17,6 +17,7 @@ type (
 	}
 
 	App struct {
+		RunLocalTests   bool   `envconfig:"RUN_LOCAL_TESTS" default:"false"`
 		SiriusBaseURL   string `envconfig:"SIRIUS_BASE_URL" default:"http://api"`
 		SiriusScanURL   string `envconfig:"SIRIUS_SCAN_URL" default:"api/public/v1/scanned-cases"`
 		ProjectPath     string `envconfig:"PROJECT_PATH" default:"service-app"`
@@ -53,8 +54,6 @@ func NewConfig() *Config {
 	}
 
 	cfg.App.ProjectFullPath = filepath.Join(projectRoot, cfg.App.ProjectPath)
-
-	log.Println("Configuration loaded successfully.")
 
 	return &cfg
 }

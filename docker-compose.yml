@@ -23,6 +23,7 @@ services:
       - AWS_ACCESS_KEY_ID=localstack
       - AWS_SECRET_ACCESS_KEY=localstack
       - SECRETS_MANAGER_PREFIX=local/  
+      - RUN_LOCAL_TESTS=true
     volumes:
       - .:/app
     working_dir: /app/service-app
