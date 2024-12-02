@@ -2,12 +2,16 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/ministryofjustice/opg-go-common/telemetry"
+	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/api"
+	"github.com/ministryofjustice/opg-scanning/internal/aws"
 )
 
 func main() {
@@ -25,7 +29,24 @@ func main() {
 	}
 	defer shutdownTracer()
 
-	controller := api.NewIndexController()
+	// Initialize configuration
+	appConfig := config.NewConfig()
+
+	// Load AWS configuration
+	cfg, err := awsConfig.LoadDefaultConfig(ctx,
+		awsConfig.WithRegion(appConfig.Aws.Region),
+	)
+	if err != nil {
+		logger.Error("Failed to load AWS config", "error", err)
+		return
+	}
+	// Initialize AwsClient
+	awsClient, err := aws.NewAwsClient(ctx, cfg, appConfig)
+	if err != nil {
+		log.Fatalf("failed to initialize AWS clients: %v", err)
+	}
+
+	controller := api.NewIndexController(awsClient, appConfig)
 	controller.Queue.StartWorkerPool(ctx, 3)
 	logger.Info("Service started...")
 
