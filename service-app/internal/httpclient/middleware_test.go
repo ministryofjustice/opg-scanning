@@ -29,7 +29,7 @@ func TestEnsureTokenConcurrency(t *testing.T) {
 
 	// TODO: Check if we can integration AWS client during git actions workflow
 	// For now skip the test
-	if !cfg.App.RunLocalTests {
+	if cfg.App.Environment != "local" {
 		t.Skip("Skipping test as it requires localstack and RUN_LOCAL_TESTS is not set to true")
 	}
 

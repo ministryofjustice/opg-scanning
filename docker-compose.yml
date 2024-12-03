@@ -5,6 +5,7 @@ services:
     ports:
       - "8081:8081"
     environment:
+      - AWS_ENDPOINT=http://localstack:4566
       - AWS_ACCESS_KEY_ID=localstack
       - AWS_SECRET_ACCESS_KEY=localstack
       - SECRETS_MANAGER_PREFIX=local/
@@ -20,10 +21,11 @@ services:
       context: ./service-app
       target: build-env
     environment:
+      - AWS_ENDPOINT=http://localstack:4566
       - AWS_ACCESS_KEY_ID=localstack
       - AWS_SECRET_ACCESS_KEY=localstack
       - SECRETS_MANAGER_PREFIX=local/  
-      - RUN_LOCAL_TESTS=true
+      - ENVIRONMENT=local
     volumes:
       - .:/app
     working_dir: /app/service-app

@@ -17,7 +17,7 @@ type (
 	}
 
 	App struct {
-		RunLocalTests   bool   `envconfig:"RUN_LOCAL_TESTS" default:"false"`
+		Environment     string `envconfig:"ENVIRONMENT"`
 		SiriusBaseURL   string `envconfig:"SIRIUS_BASE_URL" default:"http://api"`
 		SiriusScanURL   string `envconfig:"SIRIUS_SCAN_URL" default:"api/public/v1/scanned-cases"`
 		ProjectPath     string `envconfig:"PROJECT_PATH" default:"service-app"`
@@ -25,7 +25,7 @@ type (
 	}
 
 	Aws struct {
-		Endpoint string `envconfig:"AWS_ENDPOINT" default:"http://localstack:4566"`
+		Endpoint string `envconfig:"AWS_ENDPOINT"`
 		Region   string `envconfig:"AWS_REGION" default:"eu-west-1"`
 	}
 
