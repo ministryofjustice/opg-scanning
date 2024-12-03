@@ -5,6 +5,7 @@ services:
     ports:
       - "8081:8081"
     environment:
+      - SIRIUS_BASE_URL=http://api
       - AWS_ENDPOINT=http://localstack:4566
       - AWS_ACCESS_KEY_ID=localstack
       - AWS_SECRET_ACCESS_KEY=localstack
@@ -21,6 +22,7 @@ services:
       context: ./service-app
       target: build-env
     environment:
+      - SIRIUS_BASE_URL=http://api
       - AWS_ENDPOINT=http://localstack:4566
       - AWS_ACCESS_KEY_ID=localstack
       - AWS_SECRET_ACCESS_KEY=localstack

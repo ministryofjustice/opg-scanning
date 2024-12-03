@@ -18,7 +18,7 @@ type (
 
 	App struct {
 		Environment     string `envconfig:"ENVIRONMENT"`
-		SiriusBaseURL   string `envconfig:"SIRIUS_BASE_URL" default:"http://api"`
+		SiriusBaseURL   string `envconfig:"SIRIUS_BASE_URL"`
 		SiriusScanURL   string `envconfig:"SIRIUS_SCAN_URL" default:"api/public/v1/scanned-cases"`
 		ProjectPath     string `envconfig:"PROJECT_PATH" default:"service-app"`
 		ProjectFullPath string
