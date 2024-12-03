@@ -20,8 +20,6 @@ RUN apk update && \
     apk upgrade --no-cache libcrypto3 libssl3
     
 ENV PROJECT_PATH=/go
-#ENV SIRIUS_BASE_URL=
-#ENV AWS_ENDPOINT=
 
 WORKDIR /go/bin
 
