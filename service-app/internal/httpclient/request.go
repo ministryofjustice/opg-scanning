@@ -29,9 +29,6 @@ func NewHttpClient(config config.Config, logger logger.Logger) *HttpClient {
 }
 
 func (r *HttpClient) HTTPRequest(ctx context.Context, url, method string, payload []byte, headers map[string]string) ([]byte, error) {
-	// Log the request details before sending it
-	r.Logger.Info(fmt.Sprintf("Sending request to URL: %s", url))
-
 	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(payload))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
