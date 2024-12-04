@@ -84,7 +84,8 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	}
 	// Step 4.2: Create a new client and case stub
 	client := NewClient(middleware)
-	scannedCaseResponse, err := client.CreateCaseStub(r.Context(), *parsedBaseXml)
+	service := NewService(client)
+	scannedCaseResponse, err := service.CreateCaseStub(r.Context(), *parsedBaseXml)
 	if err != nil {
 		c.logger.Error("Failed to create case stub in Sirius: " + err.Error())
 		http.Error(w, "Failed to create case stub in Sirius", http.StatusInternalServerError)

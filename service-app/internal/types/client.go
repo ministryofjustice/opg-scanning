@@ -12,6 +12,18 @@ type ScannedCaseResponse struct {
 	UID string `json:"uid"`
 }
 
+type ScannedDocumentRequest struct {
+	CaseReference   string `json:"caseReference"`
+	Content         string `json:"content"`
+	DocumentType    string `json:"documentType"`
+	DocumentSubType string `json:"documentSubType,omitempty"`
+	ScannedDate     string `json:"scannedDate"`
+}
+
+type ScannedDocumentResponse struct {
+	UID string `json:"uid"`
+}
+
 // For handling error responses according to the OpenAPI spec
 type ErrorResponse struct {
 	Type             string            `json:"type"`

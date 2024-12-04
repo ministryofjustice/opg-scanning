@@ -151,19 +151,21 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 			t.Fatalf("failed to create middleware: %v", err)
 		}
 		client := NewClient(middleware)
+		service := NewService(client)
 
 		ctx := context.Background()
-		_, err = client.CreateCaseStub(ctx, set)
+		_, err = service.CreateCaseStub(ctx, set)
 
 		if tt.expectedErr {
-			if len(err.Error()) == 0 {
-				t.Errorf("expected error %v, but got %v", tt.expectedErr, err)
+			if err == nil {
+				t.Errorf("expected error, but got nil")
 			}
 		} else {
 			if err != nil {
-				t.Errorf("expected no error, but got: %v", err)
+				t.Errorf("unexpected error: %v", err)
 			}
 		}
+
 	})
 }
 
