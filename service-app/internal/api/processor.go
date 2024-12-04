@@ -1,34 +1,12 @@
 package api
 
 import (
-	"encoding/base64"
-	"encoding/xml"
-	"fmt"
 	"time"
 
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
-
-type Correspondence struct {
-	SubType string `xml:"SubType"`
-}
-
-func DecodeAndExtractSubType(encodedXML string) (string, error) {
-	decodedBytes, err := base64.StdEncoding.DecodeString(encodedXML)
-	if err != nil {
-		return "", fmt.Errorf("failed to decode base64 content: %w", err)
-	}
-
-	var correspondence Correspondence
-	err = xml.Unmarshal(decodedBytes, &correspondence)
-	if err != nil {
-		return "", fmt.Errorf("failed to unmarshal XML content: %w", err)
-	}
-
-	return correspondence.SubType, nil
-}
 
 func determineCaseRequest(set types.BaseSet) (*types.ScannedCaseRequest, error) {
 	now := time.Now().Format(time.RFC3339)

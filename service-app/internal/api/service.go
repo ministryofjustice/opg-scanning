@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/ministryofjustice/opg-scanning/internal/parser/corresp_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
@@ -31,11 +32,11 @@ func (s *Service) AttachDocuments(ctx context.Context, set types.BaseSet) ([]typ
 
 		// Check for Correspondence or SupCorrespondence and extract SubType
 		if util.Contains([]string{"Correspondence", "SupCorrespondence"}, doc.Type) {
-			subType, err := DecodeAndExtractSubType(doc.EmbeddedXML)
+			correspDoc, err := corresp_parser.Parse([]byte(doc.EmbeddedXML))
 			if err != nil {
 				return nil, fmt.Errorf("failed to extract SubType for document %s: %w", doc.Type, err)
 			}
-			documentSubType = subType
+			documentSubType = correspDoc.SubType
 		}
 
 		// Prepare the request payload

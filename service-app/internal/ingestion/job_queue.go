@@ -55,7 +55,8 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 						defer close(done)
 
 						// Initialize document processor
-						processor, err := factory.NewDocumentProcessor(job.Data, job.Data.Type, job.format)
+						registry := factory.NewRegistry()
+						processor, err := factory.NewDocumentProcessor(job.Data, job.Data.Type, job.format, registry, q.logger)
 						if err != nil {
 							q.logger.Error("Worker %d failed to initialize processor for job: %v\n", workerID, err)
 							return

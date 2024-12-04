@@ -2,29 +2,41 @@ package lp1f_parser
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 
-	"github.com/ministryofjustice/opg-scanning/internal/types"
+	"github.com/ministryofjustice/opg-scanning/internal/types/lpf1_types"
+	lp1f_types "github.com/ministryofjustice/opg-scanning/internal/types/lpf1_types"
 )
 
-type Sanitizer struct{}
-
-func NewSanitizer() types.Sanitizer {
-	return &Sanitizer{}
+type Sanitizer struct {
+	doc *lp1f_types.LP1FDocument
 }
 
-func (s *Sanitizer) Sanitize(doc interface{}) (interface{}, error) {
+func NewSanitizer() *Sanitizer {
+	return &Sanitizer{
+		doc: &lp1f_types.LP1FDocument{},
+	}
+}
+
+func (v *Sanitizer) Setup(doc interface{}) error {
 	if doc == nil {
-		return nil, errors.New("cannot sanitize nil data")
+		return fmt.Errorf("document is nil")
 	}
 
+	v.doc = doc.(*lpf1_types.LP1FDocument)
+
+	return nil
+}
+
+func (s *Sanitizer) Sanitize() (interface{}, error) {
 	// Sanitize the entire struct dynamically
-	if err := s.sanitizeStruct(doc); err != nil {
+	if err := s.sanitizeStruct(s.doc); err != nil {
 		return nil, err
 	}
 
-	return doc, nil
+	return s.doc, nil
 }
 
 func (s *Sanitizer) sanitizeStruct(input interface{}) error {
