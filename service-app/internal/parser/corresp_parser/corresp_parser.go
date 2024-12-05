@@ -2,12 +2,17 @@ package corresp_parser
 
 import (
 	"encoding/xml"
+	"fmt"
 
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
 	"github.com/ministryofjustice/opg-scanning/internal/types/corresp_types"
 )
 
 func Parse(data []byte) (*corresp_types.Correspondence, error) {
+	if len(data) == 0 {
+		return nil, fmt.Errorf("correspondence data is empty")
+	}
+
 	doc := &corresp_types.Correspondence{}
 	if err := xml.Unmarshal(data, doc); err != nil {
 		return nil, err

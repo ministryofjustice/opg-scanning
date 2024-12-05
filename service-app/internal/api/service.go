@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 
 	"github.com/ministryofjustice/opg-scanning/internal/parser/corresp_parser"
@@ -35,7 +36,7 @@ func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.Scann
 
 	// Encode parsed document and replace the embedded XML
 	if s.processedDoc != nil {
-		encoded, err := json.Marshal(s.processedDoc)
+		encoded, err := xml.Marshal(s.processedDoc) // Use XML instead of JSON
 		if err != nil {
 			return nil, fmt.Errorf("failed to encode parsed document: %w", err)
 		}
@@ -46,7 +47,7 @@ func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.Scann
 	if util.Contains([]string{"Correspondence", "SupCorrespondence"}, s.originalDoc.Type) {
 		correspDoc, err := corresp_parser.Parse([]byte(s.originalDoc.EmbeddedXML))
 		if err != nil {
-			return nil, fmt.Errorf("failed to extract SubType for document %s: %w", s.originalDoc.Type, err)
+			return nil, fmt.Errorf("failed to parse correspondence for document %s: %w", s.originalDoc.Type, err)
 		}
 		documentSubType = correspDoc.SubType
 	}

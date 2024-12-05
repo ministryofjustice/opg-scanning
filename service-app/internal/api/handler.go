@@ -1,10 +1,12 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/ministryofjustice/opg-go-common/telemetry"
 	"github.com/ministryofjustice/opg-scanning/config"
@@ -97,16 +99,19 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
 		c.Queue.AddToQueue(doc, "xml", func(processedDoc interface{}, originalDoc *types.BaseDocument) {
+			// Create a new context
+			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.config.HTTP.Timeout)*time.Second)
+			defer cancel()
+
 			c.logger.Info(fmt.Sprintf("Job processing completed for document type: %v", originalDoc.Type))
 
 			// Step 5.2	: Attach documents to case
 			// Set the documents original and processed before processing
 			service.processedDoc = processedDoc
 			service.originalDoc = originalDoc
-			_, err = service.AttachDocuments(r.Context(), scannedCaseResponse)
+			_, err = service.AttachDocuments(ctx, scannedCaseResponse)
 			if err != nil {
 				c.logger.Error("Failed to attach documents to case stub: " + err.Error())
-				http.Error(w, "Failed to attach documents to case stub", http.StatusInternalServerError)
 				return
 			}
 

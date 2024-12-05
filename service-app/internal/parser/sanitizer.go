@@ -16,12 +16,10 @@ func NewSanitizer(doc interface{}) *Sanitizer {
 	}
 }
 
-/*************  ✨ Codeium Command ⭐  *************/
 // SanitizeStruct recursively sanitizes a struct, sanitizing string fields and
 // recursively sanitizing nested structs. The function uses reflection to access
 // the fields of the struct and sanitizes only the exported fields. If a field
 // has a 'sanitize' tag set to 'false', the field is skipped.
-/******  178ae6ca-45cc-4000-8bfc-fba45cdcd0a9  *******/
 func (s *Sanitizer) SanitizeStruct(input interface{}) error {
 	val := reflect.ValueOf(input)
 

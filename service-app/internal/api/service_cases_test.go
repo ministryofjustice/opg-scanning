@@ -140,7 +140,7 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 			},
 		}
 
-		// Mock SecretsManager
+		// Mock dependencies
 		mockAwsClient := new(aws.MockAwsClient)
 		mockAwsClient.On("GetSecretValue", mock.Anything, mock.AnythingOfType("string")).
 			Return("mock-signing-secret", nil)
