@@ -9,7 +9,6 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
-// DocumentProcessor processes documents through parsing, validation, and sanitization.
 type DocumentProcessor struct {
 	logger    logger.Logger
 	doc       interface{}
@@ -17,7 +16,7 @@ type DocumentProcessor struct {
 	sanitizer parser.CommonSanitizer
 }
 
-// NewDocumentProcessor initializes a new DocumentProcessor.
+// Initializes a new DocumentProcessor.
 func NewDocumentProcessor(data *types.BaseDocument, docType, format string, registry RegistryInterface, logger *logger.Logger) (*DocumentProcessor, error) {
 	// Decode the embedded XML
 	embeddedXML, err := util.DecodeEmbeddedXML(data.EmbeddedXML)
@@ -74,9 +73,4 @@ func (p *DocumentProcessor) Process() (interface{}, error) {
 
 	p.doc = sanitizedDoc
 	return p.doc, nil
-}
-
-// GetDocument retrieves the processed document.
-func (p *DocumentProcessor) GetDocument() interface{} {
-	return p.doc
 }

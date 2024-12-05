@@ -13,7 +13,7 @@ import (
 type Job struct {
 	Data       *types.BaseDocument
 	format     string
-	onComplete func(interface{})
+	onComplete func(processedDoc interface{}, originalDoc *types.BaseDocument)
 }
 
 type JobQueue struct {
@@ -31,7 +31,7 @@ func NewJobQueue() *JobQueue {
 	return queue
 }
 
-func (q *JobQueue) AddToQueue(data *types.BaseDocument, format string, onComplete func(interface{})) {
+func (q *JobQueue) AddToQueue(data *types.BaseDocument, format string, onComplete func(interface{}, *types.BaseDocument)) {
 	job := Job{Data: data, format: format, onComplete: onComplete}
 	q.wg.Add(1)
 	q.Jobs <- job
@@ -70,7 +70,7 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 						}
 
 						if job.onComplete != nil {
-							job.onComplete(parsedDoc)
+							job.onComplete(parsedDoc, job.Data)
 						}
 					}()
 

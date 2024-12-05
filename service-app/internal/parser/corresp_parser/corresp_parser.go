@@ -1,13 +1,15 @@
 package corresp_parser
 
 import (
+	"encoding/xml"
+
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
 	"github.com/ministryofjustice/opg-scanning/internal/types/corresp_types"
 )
 
 func Parse(data []byte) (*corresp_types.Correspondence, error) {
 	doc := &corresp_types.Correspondence{}
-	if err := parser.UnmarshalXML(data, doc); err != nil {
+	if err := xml.Unmarshal(data, doc); err != nil {
 		return nil, err
 	}
 	// Validate required fields based on struct tags

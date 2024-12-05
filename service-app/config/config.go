@@ -17,11 +17,12 @@ type (
 	}
 
 	App struct {
-		Environment     string `envconfig:"ENVIRONMENT"`
-		SiriusBaseURL   string `envconfig:"SIRIUS_BASE_URL"`
-		SiriusScanURL   string `envconfig:"SIRIUS_SCAN_URL" default:"api/public/v1/scanned-cases"`
-		ProjectPath     string `envconfig:"PROJECT_PATH" default:"service-app"`
-		ProjectFullPath string
+		Environment        string `envconfig:"ENVIRONMENT"`
+		SiriusBaseURL      string `envconfig:"SIRIUS_BASE_URL"`
+		SiriusCaseStubURL  string `envconfig:"SIRIUS_CASE_STUB_URL" default:"api/public/v1/scanned-cases"`
+		SiriusAttachDocURL string `envconfig:"SIRIUS_ATTACH_DOC_URL" default:"api/public/v1/scanned-documents"`
+		ProjectPath        string `envconfig:"PROJECT_PATH" default:"service-app"`
+		ProjectFullPath    string
 	}
 
 	Aws struct {

@@ -82,23 +82,36 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Failed to create middleware", http.StatusInternalServerError)
 		return
 	}
-	// Step 4.2: Create a new client and case stub
+
+	// Step 5: Create a new client and prepare to attach documents
 	client := NewClient(middleware)
-	service := NewService(client)
-	scannedCaseResponse, err := service.CreateCaseStub(r.Context(), *parsedBaseXml)
+	service := NewService(client, parsedBaseXml)
+	scannedCaseResponse, err := service.CreateCaseStub(r.Context())
 	if err != nil {
 		c.logger.Error("Failed to create case stub in Sirius: " + err.Error())
 		http.Error(w, "Failed to create case stub in Sirius", http.StatusInternalServerError)
 		return
 	}
-
-	// Step 5: Queue each document for further processing
+	// Step 5.1: Queue each document for further processing
 	c.logger.Info("Queueing documents for processing")
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
-		c.Queue.AddToQueue(doc, "xml", func(processedDocument interface{}) {
-			c.logger.Info(fmt.Sprintf("%v", processedDocument))
-			c.logger.Info("Job processing completed for document")
+		c.Queue.AddToQueue(doc, "xml", func(processedDoc interface{}, originalDoc *types.BaseDocument) {
+			c.logger.Info(fmt.Sprintf("Job processing completed for document type: %v", originalDoc.Type))
+
+			// Step 5.2	: Attach documents to case
+			// Set the documents original and processed before processing
+			service.processedDoc = processedDoc
+			service.originalDoc = originalDoc
+			_, err = service.AttachDocuments(r.Context(), scannedCaseResponse)
+			if err != nil {
+				c.logger.Error("Failed to attach documents to case stub: " + err.Error())
+				http.Error(w, "Failed to attach documents to case stub", http.StatusInternalServerError)
+				return
+			}
+
+			// Log the scanned document resposne.
+			c.logger.Info(fmt.Sprintf("%v", scannedCaseResponse))
 		})
 		c.logger.Info("Job added to queue for document")
 	}

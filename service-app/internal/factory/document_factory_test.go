@@ -28,8 +28,8 @@ func TestProcessDocument_LP1F(t *testing.T) {
 	}
 
 	// Create a new DocumentProcessor using the factory
-	logger := logger.NewLogger()
 	registry := NewRegistry()
+	logger := logger.NewLogger()
 	processor, err := NewDocumentProcessor(doc, doc.Type, "XML", registry, logger)
 	require.NoError(t, err, "NewDocumentProcessor returned an error")
 

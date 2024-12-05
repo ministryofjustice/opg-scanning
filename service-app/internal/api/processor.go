@@ -8,7 +8,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
-func determineCaseRequest(set types.BaseSet) (*types.ScannedCaseRequest, error) {
+func determineCaseRequest(set *types.BaseSet) (*types.ScannedCaseRequest, error) {
 	now := time.Now().Format(time.RFC3339)
 
 	for _, doc := range set.Body.Documents {

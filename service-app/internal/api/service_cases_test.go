@@ -130,8 +130,8 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 		logger := *logger.NewLogger()
 		mockConfig := config.Config{
 			App: config.App{
-				SiriusBaseURL: mockServer.URL,
-				SiriusScanURL: endpoint,
+				SiriusBaseURL:     mockServer.URL,
+				SiriusCaseStubURL: endpoint,
 			},
 			Auth: config.Auth{
 				ApiUsername:   "test",
@@ -151,10 +151,10 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 			t.Fatalf("failed to create middleware: %v", err)
 		}
 		client := NewClient(middleware)
-		service := NewService(client)
+		service := NewService(client, &set)
 
 		ctx := context.Background()
-		_, err = service.CreateCaseStub(ctx, set)
+		_, err = service.CreateCaseStub(ctx)
 
 		if tt.expectedErr {
 			if err == nil {

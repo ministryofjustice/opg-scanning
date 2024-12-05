@@ -11,81 +11,90 @@ import (
 )
 
 type ServiceInterface interface {
-	AttachDocuments(ctx context.Context, set types.BaseSet) ([]types.ScannedDocumentResponse, error)
+	AttachDocuments(ctx context.Context, set types.BaseSet) (*types.ScannedDocumentResponse, error)
 	CreateCaseStub(ctx context.Context, set types.BaseSet) (*types.ScannedCaseResponse, error)
 }
 
 type Service struct {
-	Client *Client
+	Client       *Client
+	set          *types.BaseSet
+	originalDoc  *types.BaseDocument
+	processedDoc interface{}
 }
 
-func NewService(client *Client) *Service {
-	return &Service{Client: client}
+func NewService(client *Client, set *types.BaseSet) *Service {
+	return &Service{
+		Client: client,
+		set:    set,
+	}
 }
 
 // Attach documents to cases
-func (s *Service) AttachDocuments(ctx context.Context, set types.BaseSet) ([]types.ScannedDocumentResponse, error) {
-	responses := []types.ScannedDocumentResponse{}
+func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.ScannedCaseResponse) (*types.ScannedDocumentResponse, error) {
+	var documentSubType string
 
-	for _, doc := range set.Body.Documents {
-		var documentSubType string
-
-		// Check for Correspondence or SupCorrespondence and extract SubType
-		if util.Contains([]string{"Correspondence", "SupCorrespondence"}, doc.Type) {
-			correspDoc, err := corresp_parser.Parse([]byte(doc.EmbeddedXML))
-			if err != nil {
-				return nil, fmt.Errorf("failed to extract SubType for document %s: %w", doc.Type, err)
-			}
-			documentSubType = correspDoc.SubType
-		}
-
-		// Prepare the request payload
-		request := types.ScannedDocumentRequest{
-			CaseReference:   set.Header.CaseNo,
-			Content:         doc.EmbeddedXML,
-			DocumentType:    doc.Type,
-			DocumentSubType: documentSubType,
-			ScannedDate:     formatScannedDate(set.Header.ScanTime),
-		}
-
-		// Send the request
-		url := fmt.Sprintf("%s/scanned-documents", s.Client.Middleware.Config.App.SiriusBaseURL)
-
-		resp, err := s.Client.ClientRequest(ctx, request, url)
+	// Encode parsed document and replace the embedded XML
+	if s.processedDoc != nil {
+		encoded, err := json.Marshal(s.processedDoc)
 		if err != nil {
-			return nil, fmt.Errorf("failed to attach document %s: %w", doc.Type, err)
+			return nil, fmt.Errorf("failed to encode parsed document: %w", err)
 		}
-
-		var scannedResponse types.ScannedDocumentResponse
-		err = json.Unmarshal(*resp, &scannedResponse)
-		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal response: %w", err)
-		}
-
-		responses = append(responses, scannedResponse)
+		s.originalDoc.EmbeddedXML = string(encoded)
 	}
 
-	return responses, nil
+	// Check for Correspondence or SupCorrespondence and extract SubType
+	if util.Contains([]string{"Correspondence", "SupCorrespondence"}, s.originalDoc.Type) {
+		correspDoc, err := corresp_parser.Parse([]byte(s.originalDoc.EmbeddedXML))
+		if err != nil {
+			return nil, fmt.Errorf("failed to extract SubType for document %s: %w", s.originalDoc.Type, err)
+		}
+		documentSubType = correspDoc.SubType
+	}
+
+	// Prepare the request payload
+	request := types.ScannedDocumentRequest{
+		CaseReference:   caseResponse.UID,
+		Content:         s.originalDoc.EmbeddedXML,
+		DocumentType:    s.originalDoc.Type,
+		DocumentSubType: documentSubType,
+		ScannedDate:     formatScannedDate(s.set.Header.ScanTime),
+	}
+
+	// Send the request
+	url := fmt.Sprintf("%s/%s", s.Client.Middleware.Config.App.SiriusBaseURL, s.Client.Middleware.Config.App.SiriusAttachDocURL)
+
+	resp, err := s.Client.ClientRequest(ctx, request, url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to attach document %s: %w", s.originalDoc.Type, err)
+	}
+
+	var scannedResponse types.ScannedDocumentResponse
+	err = json.Unmarshal(*resp, &scannedResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return &scannedResponse, nil
 }
 
 // Create a case stub
-func (s *Service) CreateCaseStub(ctx context.Context, set types.BaseSet) (*types.ScannedCaseResponse, error) {
-	scannedCaseRequest, err := determineCaseRequest(set)
+func (s *Service) CreateCaseStub(ctx context.Context) (*types.ScannedCaseResponse, error) {
+	scannedCaseRequest, err := determineCaseRequest(s.set)
 	if err != nil {
 		return nil, err
 	}
 
-	if scannedCaseRequest == nil && set.Header.CaseNo == "" {
+	if scannedCaseRequest == nil && s.set.Header.CaseNo == "" {
 		return nil, fmt.Errorf("CaseNo cannot be empty with unmatched document type")
 	}
 
-	if scannedCaseRequest == nil && set.Header.CaseNo != "" {
+	if scannedCaseRequest == nil && s.set.Header.CaseNo != "" {
 		return &types.ScannedCaseResponse{
-			UID: set.Header.CaseNo,
+			UID: s.set.Header.CaseNo,
 		}, nil
 	}
 
-	url := fmt.Sprintf("%s/%s", s.Client.Middleware.Config.App.SiriusBaseURL, s.Client.Middleware.Config.App.SiriusScanURL)
+	url := fmt.Sprintf("%s/%s", s.Client.Middleware.Config.App.SiriusBaseURL, s.Client.Middleware.Config.App.SiriusCaseStubURL)
 
 	resp, err := s.Client.ClientRequest(ctx, scannedCaseRequest, url)
 	if err != nil {

@@ -68,7 +68,15 @@ func (v *Validator) AddValidatorErrorMessage(msg string) {
 	v.errorMessages = append(v.errorMessages, msg)
 }
 
-// Uses reflection to dynamically access nested struct fields and handles array/slice
+/*************  ✨ Codeium Command ⭐  *************/
+// GetFieldByPath retrieves a field by its path in the document.
+// The path is a set of strings, where each string is a field name or a field name with an optional index.
+// For example, "Page1[0].Section1.Witness.FullName" is a valid path.
+// If any part of the path does not exist, an error is returned.
+// The function returns a slice of interfaces containing the values of the field.
+// If the field is a slice or array, the function returns a slice of interfaces containing the elements of the slice or array.
+// If the field is a string, bool, or unsupported type, the function returns an error.
+/******  d551a320-999b-43dd-b3fe-8cbe5577399d  *******/
 func (v *Validator) GetFieldByPath(page, section string, fields ...string) ([]interface{}, error) {
 	current := reflect.ValueOf(v.doc).Elem()
 

@@ -42,10 +42,8 @@ func NewRegistry() *Registry {
 				Parser: func(data []byte) (interface{}, error) {
 					return corresp_parser.Parse(data)
 				},
-				// ValidatorFactory: func(doc interface{}) parser.CommonValidator {
-				// 	return corresp_parser.NewValidator(doc.(*corresp_types.Correspondence))
-				// },
-				// Sanitizer: corresp_parser.NewSanitizer(),
+				Validator: corresp_parser.NewValidator(),
+				Sanitizer: corresp_parser.NewSanitizer(),
 			},
 		},
 	}
