@@ -2,6 +2,7 @@ package httpclient
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,8 +14,8 @@ import (
 
 type HttpClient struct {
 	HttpClient *http.Client
-	Config     config.Config
-	Logger     logger.Logger
+	Config     *config.Config
+	Logger     *logger.Logger
 }
 
 func NewHttpClient(config config.Config, logger logger.Logger) *HttpClient {
@@ -22,16 +23,13 @@ func NewHttpClient(config config.Config, logger logger.Logger) *HttpClient {
 		HttpClient: &http.Client{
 			Timeout: time.Duration(config.HTTP.Timeout) * time.Second,
 		},
-		Config: config,
-		Logger: logger,
+		Config: &config,
+		Logger: &logger,
 	}
 }
 
-func (r *HttpClient) HTTPRequest(url, method string, payload []byte, headers map[string]string) ([]byte, error) {
-	// Log the request details before sending it
-	r.Logger.Info(fmt.Sprintf("Sending request to URL: %s", url))
-
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(payload))
+func (r *HttpClient) HTTPRequest(ctx context.Context, url, method string, payload []byte, headers map[string]string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(payload))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
