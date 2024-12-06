@@ -70,6 +70,8 @@ github.com/lestrrat-go/libxml2 v0.0.0-20240905100032-c934e3fcb9d3 h1:ZIYZ0+TEddr
 github.com/lestrrat-go/libxml2 v0.0.0-20240905100032-c934e3fcb9d3/go.mod h1:/0MMipmS+5SMXCSkulsvJwYmddKI4IL5tVy6AZMo9n0=
 github.com/ministryofjustice/opg-go-common v1.34.0 h1:z/GVe5McNwl0qhRuM6mUm4nlG4H+Ed9cMw/WveA1U4E=
 github.com/ministryofjustice/opg-go-common v1.34.0/go.mod h1:pHtsj+7zCtw+vJm9nFvtY9gT/SsVNouQJYz33JRlibE=
+github.com/ministryofjustice/opg-go-common v1.38.0 h1:H+QtehaJ8yrQimprK9Ty9Rn007jV9yc81UKufJSf80k=
+github.com/ministryofjustice/opg-go-common v1.38.0/go.mod h1:ChMNWq0LXn5CexlllRmuMxiWlCcIB0+msrPNJ8mXktQ=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
