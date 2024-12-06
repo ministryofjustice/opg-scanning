@@ -106,7 +106,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			c.logger.Info(fmt.Sprintf("Job processing completed for document type: %v", originalDoc.Type))
 
 			// Attach documents to case
-			// Set the documents original and processed before processing
+			// Set the documents original and processed entities before attaching
 			service.processedDoc = processedDoc
 			service.originalDoc = originalDoc
 			_, err = service.AttachDocuments(ctx, scannedCaseResponse)
