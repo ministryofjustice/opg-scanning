@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -36,11 +37,12 @@ func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.Scann
 
 	// Encode parsed document and replace the embedded XML
 	if s.processedDoc != nil {
-		encoded, err := xml.Marshal(s.processedDoc) // Use XML instead of JSON
+		encoded, err := xml.Marshal(s.processedDoc)
 		if err != nil {
 			return nil, fmt.Errorf("failed to encode parsed document: %w", err)
 		}
-		s.originalDoc.EmbeddedXML = string(encoded)
+		encodedBase64 := base64.StdEncoding.EncodeToString(encoded)
+		s.originalDoc.EmbeddedXML = encodedBase64
 	}
 
 	// Check for Correspondence or SupCorrespondence and extract SubType

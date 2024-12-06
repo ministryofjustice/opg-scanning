@@ -45,7 +45,7 @@ func (c *IndexController) HandleRequests() {
 func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) {
 	c.logger.Info("Received ingestion request")
 
-	// Step 1: Read request body
+	// Read request body
 	bodyStr, err := c.readRequestBody(r)
 	if err != nil {
 		c.logger.Error("Failed to read request body: " + err.Error())
@@ -53,7 +53,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Step 2: Determine content type and validate XML
+	// Determine content type and validate XML
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/xml" && contentType != "text/xml" {
 		c.logger.Error("Unsupported Content-Type: " + contentType)
@@ -68,15 +68,15 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Step 3: Validate the parsed set
+	// Validate the parsed set
 	if err := c.validator.ValidateSet(parsedBaseXml); err != nil {
 		c.logger.Error("Document validation failed: " + err.Error())
 		http.Error(w, "Invalid document data", http.StatusBadRequest)
 		return
 	}
 
-	// Step 4: Sirius API integration
-	// Step 4.1: Create a case stub in Sirius if we have a case to create
+	// Sirius API integration
+	// Create a case stub in Sirius if we have a case to create
 	httpClient := httpclient.NewHttpClient(*c.config, *c.logger)
 	middleware, err := httpclient.NewMiddleware(httpClient, c.AwsClient)
 	if err != nil {
@@ -85,7 +85,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Step 5: Create a new client and prepare to attach documents
+	// Create a new client and prepare to attach documents
 	client := NewClient(middleware)
 	service := NewService(client, parsedBaseXml)
 	scannedCaseResponse, err := service.CreateCaseStub(r.Context())
@@ -94,7 +94,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Failed to create case stub in Sirius", http.StatusInternalServerError)
 		return
 	}
-	// Step 5.1: Queue each document for further processing
+	// Queue each document for further processing
 	c.logger.Info("Queueing documents for processing")
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
@@ -105,7 +105,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 
 			c.logger.Info(fmt.Sprintf("Job processing completed for document type: %v", originalDoc.Type))
 
-			// Step 5.2	: Attach documents to case
+			// Attach documents to case
 			// Set the documents original and processed before processing
 			service.processedDoc = processedDoc
 			service.originalDoc = originalDoc
@@ -121,7 +121,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		c.logger.Info("Job added to queue for document")
 	}
 
-	// Step 6: Send the UUID response
+	// Send the UUID response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(scannedCaseResponse)
