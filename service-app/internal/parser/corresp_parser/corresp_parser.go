@@ -1,18 +1,22 @@
-package lp1f_parser
+package corresp_parser
 
 import (
 	"encoding/xml"
+	"fmt"
 
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
-	lp1f_types "github.com/ministryofjustice/opg-scanning/internal/types/lpf1_types"
+	"github.com/ministryofjustice/opg-scanning/internal/types/corresp_types"
 )
 
-func Parse(data []byte) (*lp1f_types.LP1FDocument, error) {
-	doc := &lp1f_types.LP1FDocument{}
+func Parse(data []byte) (*corresp_types.Correspondence, error) {
+	if len(data) == 0 {
+		return nil, fmt.Errorf("correspondence data is empty")
+	}
+
+	doc := &corresp_types.Correspondence{}
 	if err := xml.Unmarshal(data, doc); err != nil {
 		return nil, err
 	}
-
 	// Validate required fields based on struct tags
 	if err := parser.ValidateStruct(doc); err != nil {
 		return nil, err
