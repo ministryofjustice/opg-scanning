@@ -1,5 +1,0 @@
-{
-  "ReceiveMessageWaitTimeSeconds": "0",
-  "RedrivePolicy": "{\"deadLetterTargetArn\":\"arn:aws:sqs:eu-west-1:000000000000:notify-dead-letter-queue\",\"maxReceiveCount\":\"3\"}",
-  "VisibilityTimeout": "60"
-}

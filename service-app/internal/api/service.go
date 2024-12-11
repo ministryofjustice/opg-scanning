@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -39,9 +40,16 @@ func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.Scann
 	if s.processedDoc != nil {
 		encoded, err := xml.Marshal(s.processedDoc)
 		if err != nil {
-			return nil, fmt.Errorf("failed to encode parsed document: %w", err)
+			return nil, fmt.Errorf("failed to encode parsed document to XML: %w", err)
 		}
-		encodedBase64 := base64.StdEncoding.EncodeToString(encoded)
+
+		// Create a buffer to add XML declaration
+		var buffer bytes.Buffer
+		buffer.WriteString(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>`)
+		buffer.Write(encoded)
+
+		// Base64 encode the XML content
+		encodedBase64 := base64.StdEncoding.EncodeToString(buffer.Bytes())
 		s.originalDoc.EmbeddedXML = encodedBase64
 	}
 
