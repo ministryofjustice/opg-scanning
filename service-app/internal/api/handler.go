@@ -70,7 +70,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 
 	// Validate the parsed set
 	if err := c.validator.ValidateSet(parsedBaseXml); err != nil {
-		c.logger.Error("Document validation failed: " + err.Error())
+		c.logger.Error("Set validation failed: " + err.Error())
 		http.Error(w, "Invalid document data", http.StatusBadRequest)
 		return
 	}
@@ -94,6 +94,14 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Failed to create case stub in Sirius", http.StatusInternalServerError)
 		return
 	}
+
+	// Ensure scannedCaseResponse
+	if scannedCaseResponse == nil || scannedCaseResponse.UID == "" {
+		c.logger.Error("scannedCaseResponse is nil or missing UID")
+		http.Error(w, "Invalid response from Sirius when creating case stub", http.StatusInternalServerError)
+		return
+	}
+
 	// Queue each document for further processing
 	c.logger.Info("Queueing documents for processing")
 	for i := range parsedBaseXml.Body.Documents {
@@ -103,30 +111,30 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.config.HTTP.Timeout)*time.Second)
 			defer cancel()
 
-			c.logger.Info(fmt.Sprintf("Job processing completed for document type: %v", originalDoc.Type))
-
 			// Attach documents to case
 			// Set the documents original and processed entities before attaching
 			service.processedDoc = processedDoc
 			service.originalDoc = originalDoc
-			_, err = service.AttachDocuments(ctx, scannedCaseResponse)
-			if err != nil {
-				c.logger.Error("Failed to attach documents to case stub: " + err.Error())
+			attchResp, docErr := service.AttachDocuments(ctx, scannedCaseResponse)
+			if docErr != nil {
+				c.logger.Error(fmt.Sprintf("%v: Failed to attach documents to case stub for %v, error: %v", scannedCaseResponse.UID, originalDoc.Type, docErr.Error()))
 				return
 			}
 
-			// Log the scanned document resposne.
-			c.logger.Info(fmt.Sprintf("%v", scannedCaseResponse))
+			c.logger.Info(fmt.Sprintf("%v: Docment attached to %v", scannedCaseResponse.UID, attchResp.UUID))
+			c.logger.Info(fmt.Sprintf("%v: Job processing completed for document type: %v", scannedCaseResponse.UID, originalDoc.Type))
 		})
-		c.logger.Info("Job added to queue for document")
+		c.logger.Info(fmt.Sprintf("%v: Document queued for processing for document type: %v", scannedCaseResponse.UID, doc.Type))
 	}
 
 	// Send the UUID response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(scannedCaseResponse)
-	c.logger.Info("Ingestion request processed successfully, UID: " + scannedCaseResponse.UID)
-
+	if err := json.NewEncoder(w).Encode(scannedCaseResponse); err != nil {
+		c.logger.Error("Failed to encode response: " + err.Error())
+	} else {
+		c.logger.Info("Ingestion request processed successfully, UID: " + scannedCaseResponse.UID)
+	}
 }
 
 func (c *IndexController) CloseQueue() {
