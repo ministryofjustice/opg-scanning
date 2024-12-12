@@ -1,11 +1,9 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 
 	"github.com/ministryofjustice/opg-scanning/internal/parser/corresp_parser"
@@ -19,10 +17,9 @@ type ServiceInterface interface {
 }
 
 type Service struct {
-	Client       *Client
-	set          *types.BaseSet
-	originalDoc  *types.BaseDocument
-	processedDoc interface{}
+	Client      *Client
+	set         *types.BaseSet
+	originalDoc *types.BaseDocument
 }
 
 func NewService(client *Client, set *types.BaseSet) *Service {
@@ -35,23 +32,6 @@ func NewService(client *Client, set *types.BaseSet) *Service {
 // Attach documents to cases
 func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.ScannedCaseResponse) (*types.ScannedDocumentResponse, error) {
 	var documentSubType string
-
-	// Encode parsed document and replace the embedded XML
-	if s.processedDoc != nil {
-		encoded, err := xml.Marshal(s.processedDoc)
-		if err != nil {
-			return nil, fmt.Errorf("failed to encode parsed document to XML: %w", err)
-		}
-
-		// Create a buffer to add XML declaration
-		var buffer bytes.Buffer
-		buffer.WriteString(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>`)
-		buffer.Write(encoded)
-
-		// Base64 encode the XML content
-		encodedBase64 := base64.StdEncoding.EncodeToString(buffer.Bytes())
-		s.originalDoc.EmbeddedXML = encodedBase64
-	}
 
 	// Check for Correspondence or SupCorrespondence and extract SubType
 	if util.Contains([]string{"Correspondence", "SupCorrespondence"}, s.originalDoc.Type) {
@@ -71,7 +51,7 @@ func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.Scann
 	// Prepare the request payload
 	request := types.ScannedDocumentRequest{
 		CaseReference:   caseResponse.UID,
-		Content:         s.originalDoc.EmbeddedXML,
+		Content:         s.originalDoc.EmbeddedPDF,
 		DocumentType:    s.originalDoc.Type,
 		DocumentSubType: documentSubType,
 		ScannedDate:     formatScannedDate(s.set.Header.ScanTime),

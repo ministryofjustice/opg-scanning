@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"encoding/xml"
+	"os"
 	"regexp"
 	"testing"
 
@@ -13,7 +13,6 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
-	"github.com/ministryofjustice/opg-scanning/internal/types/corresp_types"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -39,6 +38,12 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 		t.Fatalf("failed to create middleware: %v", err)
 	}
 
+	// Load PDF from the test file
+	data, err := os.ReadFile("../../pdf/dummy.pdf")
+	if data == nil || err != nil {
+		t.Fatal("failed to load dummy PDF")
+	}
+
 	// Load XML data from the test file
 	xmlData := util.LoadXMLFileTesting(t, "../../xml/Correspondence-valid.xml")
 	if xmlData == "" {
@@ -49,15 +54,9 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 	service := &Service{
 		Client: &Client{Middleware: middleware},
 		originalDoc: &types.BaseDocument{
-			EmbeddedXML: base64.StdEncoding.EncodeToString([]byte(xmlData)),
+			EmbeddedXML: xmlData,
+			EmbeddedPDF: base64.StdEncoding.EncodeToString(data),
 			Type:        "Correspondence",
-		},
-		processedDoc: &corresp_types.Correspondence{
-			XMLName: xml.Name{
-				Local: "Correspondence",
-			},
-			CaseNumber: []string{"12345", "67890"},
-			SubType:    "Application Related",
 		},
 		set: &types.BaseSet{
 			Header: &types.BaseHeader{

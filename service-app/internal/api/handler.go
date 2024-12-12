@@ -107,17 +107,23 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
 		c.Queue.AddToQueue(doc, "xml", func(processedDoc interface{}, originalDoc *types.BaseDocument) {
+			// Panic recovery block
+			defer func() {
+				if r := recover(); r != nil {
+					c.logger.Error(fmt.Sprintf("Panic recovered in document processing: %v. Document type: %v", r, originalDoc.Type))
+				}
+			}()
+
 			// Create a new context
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.config.HTTP.Timeout)*time.Second)
 			defer cancel()
 
 			// Attach documents to case
 			// Set the documents original and processed entities before attaching
-			service.processedDoc = processedDoc
 			service.originalDoc = originalDoc
 			attchResp, docErr := service.AttachDocuments(ctx, scannedCaseResponse)
 			if docErr != nil {
-				c.logger.Error(fmt.Sprintf("%v: Failed to attach documents to case stub for %v, error: %v", scannedCaseResponse.UID, originalDoc.Type, docErr.Error()))
+				c.logger.Error(fmt.Sprintf("%v: Failed to attach documents to case stub for %v, error: %v", scannedCaseResponse.UID, originalDoc.Type, err.Error()))
 				return
 			}
 
