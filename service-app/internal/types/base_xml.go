@@ -28,3 +28,8 @@ type BaseDocument struct {
 	EmbeddedXML   string `xml:"XML"`
 	EmbeddedImage string `xml:"Image"`
 }
+
+type BasePage struct {
+	BURN         string `xml:"BURN"`
+	PhysicalPage string `xml:"PhysicalPage"`
+}
