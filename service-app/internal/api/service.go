@@ -55,7 +55,13 @@ func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.Scann
 
 	// Check for Correspondence or SupCorrespondence and extract SubType
 	if util.Contains([]string{"Correspondence", "SupCorrespondence"}, s.originalDoc.Type) {
-		correspDoc, err := corresp_parser.Parse([]byte(s.originalDoc.EmbeddedXML))
+		// Decode the base64-encoded XML
+		decodedXML, err := base64.StdEncoding.DecodeString(s.originalDoc.EmbeddedXML)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode base64-encoded XML: %w", err)
+		}
+		// Parse the XML
+		correspDoc, err := corresp_parser.Parse([]byte(decodedXML))
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse correspondence for document %s: %w", s.originalDoc.Type, err)
 		}

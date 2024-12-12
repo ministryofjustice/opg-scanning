@@ -2,8 +2,10 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
+	"regexp"
 	"testing"
 
 	"github.com/ministryofjustice/opg-scanning/config"
@@ -12,6 +14,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/types/corresp_types"
+	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -30,31 +33,30 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 	mockLogger := logger.NewLogger()
 	mockClient.On("GetLogger").Return(mockLogger)
 
+	// Create middleware instance
 	middleware, err := httpclient.NewMiddleware(mockClient, mockAwsClient)
 	if err != nil {
 		t.Fatalf("failed to create middleware: %v", err)
 	}
 
-	// XML representation of the processed document
-	xmlData := `
-		<Correspondence xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		                xsi:noNamespaceSchemaLocation="Correspondence.xsd">
-		    <SubType>Unknown</SubType>
-		    <CaseNumber>INVALID_CASE123</CaseNumber>
-		</Correspondence>`
+	// Load XML data from the test file
+	xmlData := util.LoadXMLFileTesting(t, "../../xml/Correspondence-valid.xml")
+	if xmlData == "" {
+		t.Fatal("failed to load sample XML")
+	}
 
 	// Prepare service instance
 	service := &Service{
-		Client: &Client{Middleware: middleware}, // Inject mock client
+		Client: &Client{Middleware: middleware},
 		originalDoc: &types.BaseDocument{
-			EmbeddedXML: xmlData, // Use valid XML
+			EmbeddedXML: base64.StdEncoding.EncodeToString([]byte(xmlData)),
 			Type:        "Correspondence",
 		},
 		processedDoc: &corresp_types.Correspondence{
 			XMLName: xml.Name{
 				Local: "Correspondence",
 			},
-			CaseNumber: "CASE123",
+			CaseNumber: []string{"12345", "67890"},
 			SubType:    "Application Related",
 		},
 		set: &types.BaseSet{
@@ -64,39 +66,40 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 		},
 	}
 
-	// Simulate the request
 	caseResponse := &types.ScannedCaseResponse{
 		UID: "CASE123",
 	}
-	ctx := context.Background()
 
-	// Mock Sirius response
+	// Mock the response from HTTPRequest
 	mockResponse := &types.ScannedDocumentResponse{
-		UID: "CASE123",
+		UUID:                "CASE123",
+		Type:                "Correspondence",
+		Subtype:             "Application Related",
+		SourceDocumentType:  "Correspondence",
+		Title:               "Case Document",
+		FriendlyDescription: "Scanned document for case",
+		ID:                  1,
 	}
 	mockResponseBytes, _ := json.Marshal(mockResponse)
 
-	// Mock HTTPRequest method with correct argument matchers
-	mockClient.On("HTTPRequest",
-		mock.Anything,                            // Context
-		mock.AnythingOfType("string"),            // URL
-		mock.AnythingOfType("string"),            // Method
-		mock.AnythingOfType("[]uint8"),           // Payload ([]byte)
-		mock.AnythingOfType("map[string]string"), // Headers
-	).Return(mockResponseBytes, nil)
+	// Mock the HTTPRequest method
+	mockClient.On("HTTPRequest", mock.Anything, mock.MatchedBy(func(url string) bool {
+		// Remove domain from url using regex pattern
+		urlWithoutDomain := regexp.MustCompile(`^https?://[^/]+`).ReplaceAllString(url, "")
+		return urlWithoutDomain == "/api/public/v1/scanned-documents"
+	}), "POST", mock.Anything, mock.Anything).Return(mockResponseBytes, nil)
 
-	// Call AttachDocuments
+	ctx := context.Background()
 	response, err := service.AttachDocuments(ctx, caseResponse)
-	assert.NoError(t, err, "Expected no error from AttachDocuments")
+	if err != nil {
+		t.Fatalf("AttachDocuments returned error: %v", err)
+	}
+	assert.NotNil(t, response, "Expected non-nil response")
 	assert.Equal(t, mockResponse, response, "Expected response to match mock response")
 
-	// Validate that HTTPRequest was called with expected arguments
-	mockClient.AssertCalled(t, "HTTPRequest", mock.Anything,
-		mock.MatchedBy(func(url string) bool {
-			return url == "/api/public/v1/scanned-documents"
-		}),
-		"POST",
-		mock.AnythingOfType("[]uint8"),
-		mock.AnythingOfType("map[string]string"),
-	)
+	// Assert HTTPRequest was called with the expected parameters
+	mockClient.AssertCalled(t, "HTTPRequest", mock.Anything, mock.MatchedBy(func(url string) bool {
+		urlWithoutDomain := regexp.MustCompile(`^https?://[^/]+`).ReplaceAllString(url, "")
+		return urlWithoutDomain == "/api/public/v1/scanned-documents"
+	}), "POST", mock.Anything, mock.Anything)
 }
