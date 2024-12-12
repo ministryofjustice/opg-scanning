@@ -6,8 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ministryofjustice/opg-scanning/internal/types"
-	lp1f_types "github.com/ministryofjustice/opg-scanning/internal/types/lpf1_types"
+	"github.com/ministryofjustice/opg-scanning/internal/parser"
 	"github.com/stretchr/testify/require"
 )
 
@@ -67,12 +66,13 @@ func TestInvalidDateOrderXML(t *testing.T) {
 	require.True(t, found, "Expected date ordering validation error not found")
 }
 
-func getValidator(t *testing.T, fileName string) types.Validator {
+func getValidator(t *testing.T, fileName string) parser.CommonValidator {
 	xml := loadXMLFile(t, "../../../xml/"+fileName)
-	doc, err := NewParser().Parse([]byte(xml))
+	doc, err := Parse([]byte(xml))
 	require.NoError(t, err)
-
-	return NewValidator(doc.(*lp1f_types.LP1FDocument))
+	validator := NewValidator()
+	validator.Setup(doc)
+	return validator
 }
 
 func loadXMLFile(t *testing.T, filepath string) string {

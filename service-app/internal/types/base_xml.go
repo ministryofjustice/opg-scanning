@@ -22,9 +22,14 @@ type BaseBody struct {
 }
 
 type BaseDocument struct {
-	Type          string `xml:"Type,attr"`
-	Encoding      string `xml:"Encoding,attr"`
-	NoPages       int    `xml:"NoPages,attr"`
-	EmbeddedXML   string `xml:"XML"`
-	EmbeddedImage string `xml:"Image"`
+	Type        string `xml:"Type,attr"`
+	Encoding    string `xml:"Encoding,attr"`
+	NoPages     int    `xml:"NoPages,attr"`
+	EmbeddedXML string `xml:"XML"`
+	EmbeddedPDF string `xml:"PDF"`
+}
+
+type BasePage struct {
+	BURN         string `xml:"BURN"`
+	PhysicalPage string `xml:"PhysicalPage"`
 }

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Correspondence xmlns="http://www.w3.org/2001/XMLSchema-instance">
+  <SubType>Legal</SubType>
+  <CaseNumber>12345</CaseNumber>
+  <CaseNumber>67890</CaseNumber>
+  <Page>
+    <BURN>123ABC</BURN>
+    <PhysicalPage>1</PhysicalPage>
+  </Page>
+  <Page>
+    <BURN>456DEF</BURN>
+    <PhysicalPage>2</PhysicalPage>
+  </Page>
+</Correspondence>
