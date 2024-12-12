@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/types/lpf1_types"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +28,9 @@ func TestProcessDocument_LP1F(t *testing.T) {
 	}
 
 	// Create a new DocumentProcessor using the factory
-	processor, err := NewDocumentProcessor(doc, doc.Type, "XML")
+	registry := NewRegistry()
+	logger := logger.NewLogger()
+	processor, err := NewDocumentProcessor(doc, doc.Type, "XML", registry, logger)
 	require.NoError(t, err, "NewDocumentProcessor returned an error")
 
 	// Process the document

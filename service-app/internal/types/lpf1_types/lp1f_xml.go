@@ -1,9 +1,6 @@
 package lpf1_types
 
-type BasePage struct {
-	BURN         string `xml:"BURN"`
-	PhysicalPage string `xml:"PhysicalPage"`
-}
+import "github.com/ministryofjustice/opg-scanning/internal/types"
 
 type Address struct {
 	Address1 string `xml:"Address1"`
@@ -192,107 +189,107 @@ type Section15 struct {
 }
 
 type Page1 struct {
-	BasePage
+	types.BasePage
 	Section1 Section1 `xml:"Section1"`
 }
 
 type Page2 struct {
-	BasePage
+	types.BasePage
 	Section2 Section2 `xml:"Section2"`
 }
 
 type Page3 struct {
-	BasePage
+	types.BasePage
 	Section2 Section3 `xml:"Section3"`
 }
 
 type Page4 struct {
-	BasePage
+	types.BasePage
 	Section3 Section3 `xml:"Section3"`
 }
 
 type Page5 struct {
-	BasePage
+	types.BasePage
 	Section4 Section4 `xml:"Section4"`
 }
 
 type Page6 struct {
-	BasePage
+	types.BasePage
 	Section5 Section5 `xml:"Section5"`
 }
 
 type Page7 struct {
-	BasePage
+	types.BasePage
 	Section6 Section6 `xml:"Section6"`
 }
 
 type Page8 struct {
-	BasePage
+	types.BasePage
 	Section7 Section7 `xml:"Section7"`
 }
 
 type Page9 struct {
-	BasePage
+	types.BasePage
 	Section8 string `xml:"Section8"`
 }
 
 type Page10 struct {
-	BasePage
+	types.BasePage
 	Section9 Section9 `xml:"Section9"`
 }
 
 type Page11 struct {
-	BasePage
+	types.BasePage
 	Section10 Section10 `xml:"Section10"`
 }
 
 type Page12 struct {
-	BasePage
+	types.BasePage
 	Section11 Section11 `xml:"Section11"`
 }
 
 type Page16 struct {
-	BasePage
+	types.BasePage
 	Section16 string `xml:"Section16"`
 }
 
 type Page17 struct {
-	BasePage
+	types.BasePage
 	Section12 Section12 `xml:"Section12"`
 }
 
 type Page18 struct {
-	BasePage
+	types.BasePage
 	Section13 Section13 `xml:"Section13"`
 }
 
 type Page19 struct {
-	BasePage
+	types.BasePage
 	Section14 Section14 `xml:"Section14"`
 }
 
 type Page20 struct {
-	BasePage
+	types.BasePage
 	Section15 Section15 `xml:"Section15"`
 }
 
 type ContinuationPage1 struct {
-	BasePage
+	types.BasePage
 	ContinuationSheet1 ContinuationSheet1 `xml:"ContinuationSheet1"`
 }
 
 type ContinuationPage2 struct {
-	BasePage
+	types.BasePage
 	ContinuationSheet2 ContinuationSheet2 `xml:"ContinuationSheet2"`
 }
 
 type ContinuationPage3 struct {
-	BasePage
+	types.BasePage
 	ContinuationSheet3 ContinuationSheet3 `xml:"ContinuationSheet3"`
 }
 
 type ContinuationPage4 struct {
-	BasePage
+	types.BasePage
 	ContinuationSheet4 ContinuationSheet4 `xml:"ContinuationSheet4"`
 }
 
@@ -323,7 +320,7 @@ type AuthorisedPerson struct {
 }
 
 type InfoPage struct {
-	BasePage
+	types.BasePage
 }
 
 type AdditionalInformation struct {

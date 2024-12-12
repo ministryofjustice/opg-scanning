@@ -17,8 +17,11 @@ func BaseParserXml(data []byte) (*types.BaseSet, error) {
 	return &parsed, nil
 }
 
-// Checks for required fields based on `required:"true"` tags
 // TODO: Check if this is needed due to manual validation overrides.
+// ValidateStruct checks if the provided struct or its nested structs
+// have all fields marked with the "required" tag present and non-empty.
+// It supports pointer dereferencing and recursive validation for nested structs.
+// Returns an error if any required field is missing or empty; otherwise, returns nil.
 func ValidateStruct(s interface{}) error {
 	val := reflect.ValueOf(s)
 

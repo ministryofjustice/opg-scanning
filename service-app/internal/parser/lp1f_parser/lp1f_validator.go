@@ -6,23 +6,32 @@ import (
 	"time"
 
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
-	"github.com/ministryofjustice/opg-scanning/internal/types"
-	lp1f_types "github.com/ministryofjustice/opg-scanning/internal/types/lpf1_types"
+	"github.com/ministryofjustice/opg-scanning/internal/types/lpf1_types"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
 type Validator struct {
-	doc                     *lp1f_types.LP1FDocument
-	commonValidator         *parser.CommonValidator
+	doc                     *lpf1_types.LP1FDocument
+	commonValidator         *parser.Validator
 	dates                   []time.Time
 	applicantSignatureDates []time.Time
 }
 
-func NewValidator(doc *lp1f_types.LP1FDocument) types.Validator {
+func NewValidator() *Validator {
 	return &Validator{
-		doc:             doc,
-		commonValidator: parser.NewCommonValidator(doc),
+		doc: &lpf1_types.LP1FDocument{},
 	}
+}
+
+func (v *Validator) Setup(doc interface{}) error {
+	if doc == nil {
+		return fmt.Errorf("document is nil")
+	}
+
+	v.doc = doc.(*lpf1_types.LP1FDocument)
+	v.commonValidator = parser.NewValidator(v.doc)
+
+	return nil
 }
 
 func (v *Validator) Validate() error {
@@ -35,13 +44,13 @@ func (v *Validator) Validate() error {
 
 	// Iterate over each instance of Page12 (since its an array)
 	// and validate them individually
-	for i, _ := range v.doc.Page12 {
+	for i := range v.doc.Page12 {
 		v.commonValidator.WitnessSignatureFullNameAddressValidator(fmt.Sprintf("Page12[%d]", i), "Section11")
 		v.validateSection(fmt.Sprintf("Page12[%d]", i), "Section11", "Attorney")
 	}
 
 	// Applicant validation iterations
-	for i, _ := range v.doc.Page20 {
+	for i := range v.doc.Page20 {
 		v.applicantSignatureValidator(fmt.Sprintf("Page20[%d]", i))
 	}
 
