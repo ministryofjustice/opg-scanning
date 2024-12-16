@@ -25,8 +25,6 @@ create_bucket() {
 }
 
 awslocal sqs create-queue --queue-name ddc.fifo --attributes FifoQueue=true,ContentBasedDeduplication=true,VisibilityTimeout=30,ReceiveMessageWaitTimeSeconds=0
-awslocal sqs create-queue --queue-name notify-dead-letter-queue --attributes VisibilityTimeout=30,ReceiveMessageWaitTimeSeconds=0
-awslocal sqs create-queue --queue-name notify --attributes file:///etc/localstack/init/ready.d/notify-queue-attributes.json
 
 # Set secrets in Secrets Manager
 awslocal secretsmanager create-secret --name local/jwt-key \
