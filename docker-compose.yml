@@ -24,9 +24,9 @@ services:
     environment:
       - SIRIUS_BASE_URL=http://api
       - AWS_ENDPOINT=http://localstack:4566
-      - AWS_ACCESS_KEY_ID=localstack
-      - AWS_SECRET_ACCESS_KEY=localstack
-      - SECRETS_MANAGER_PREFIX=local/  
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - SECRETS_MANAGER_PREFIX=local/
       - ENVIRONMENT=local
     volumes:
       - .:/app

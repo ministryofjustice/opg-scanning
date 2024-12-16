@@ -29,7 +29,7 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 	mockConfig := config.NewConfig()
 	mockClient.On("GetConfig").Return(mockConfig)
 
-	mockLogger := logger.NewLogger()
+	mockLogger := logger.NewLogger(mockConfig)
 	mockClient.On("GetLogger").Return(mockLogger)
 
 	// Create middleware instance

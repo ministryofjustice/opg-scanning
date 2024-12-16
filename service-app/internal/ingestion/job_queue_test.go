@@ -6,12 +6,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
 func TestJobQueue(t *testing.T) {
-	queue := NewJobQueue()
+	cfg := config.NewConfig()
+	queue := NewJobQueue(cfg)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

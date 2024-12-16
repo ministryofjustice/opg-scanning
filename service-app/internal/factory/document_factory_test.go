@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/types/lpf1_types"
@@ -29,7 +30,8 @@ func TestProcessDocument_LP1F(t *testing.T) {
 
 	// Create a new DocumentProcessor using the factory
 	registry := NewRegistry()
-	logger := logger.NewLogger()
+	cfg := config.NewConfig()
+	logger := logger.NewLogger(cfg)
 	processor, err := NewDocumentProcessor(doc, doc.Type, "XML", registry, logger)
 	require.NoError(t, err, "NewDocumentProcessor returned an error")
 
