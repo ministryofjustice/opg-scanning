@@ -1,8 +1,10 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"net/http"
@@ -28,9 +30,9 @@ type IndexController struct {
 func NewIndexController(awsClient *aws.AwsClient, appConfig *config.Config) *IndexController {
 	return &IndexController{
 		config:    appConfig,
-		logger:    logger.NewLogger(),
+		logger:    logger.NewLogger(appConfig),
 		validator: ingestion.NewValidator(),
-		Queue:     ingestion.NewJobQueue(),
+		Queue:     ingestion.NewJobQueue(appConfig),
 		AwsClient: awsClient,
 	}
 }
@@ -38,40 +40,39 @@ func NewIndexController(awsClient *aws.AwsClient, appConfig *config.Config) *Ind
 func (c *IndexController) HandleRequests() {
 	http.Handle("/ingest", telemetry.Middleware(c.logger.SlogLogger)(http.HandlerFunc(c.IngestHandler)))
 
-	c.logger.Info("Starting server on :" + c.config.HTTP.Port)
+	c.logger.Info("Starting server on :"+c.config.HTTP.Port, nil)
 	http.ListenAndServe(":"+c.config.HTTP.Port, nil)
 }
 
 func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) {
-	c.logger.Info("Received ingestion request")
-
-	// Read request body
-	bodyStr, err := c.readRequestBody(r)
-	if err != nil {
-		c.logger.Error("Failed to read request body: " + err.Error())
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	if r.Method != http.MethodPost {
+		c.respondWithError(w, http.StatusMethodNotAllowed, "Invalid HTTP method", nil)
 		return
 	}
 
-	// Determine content type and validate XML
+	c.logger.Info("Received ingestion request", nil)
+
+	bodyStr, err := c.readRequestBody(r)
+	if err != nil {
+		c.respondWithError(w, http.StatusBadRequest, "Failed to read request body", err)
+		return
+	}
+
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/xml" && contentType != "text/xml" {
-		c.logger.Error("Unsupported Content-Type: " + contentType)
-		http.Error(w, "Unsupported Content-Type", http.StatusBadRequest)
+		c.respondWithError(w, http.StatusBadRequest, "Invalid content type", fmt.Errorf("expected application/xml or text/xml, got %s", contentType))
 		return
 	}
 
 	parsedBaseXml, err := c.validateAndSanitizeXML(bodyStr)
 	if err != nil {
-		c.logger.Error("XML validation failed: " + err.Error())
-		http.Error(w, "Invalid XML data", http.StatusBadRequest)
+		c.respondWithError(w, http.StatusBadRequest, "Invalid XML data", err)
 		return
 	}
 
 	// Validate the parsed set
 	if err := c.validator.ValidateSet(parsedBaseXml); err != nil {
-		c.logger.Error("Set validation failed: " + err.Error())
-		http.Error(w, "Invalid document data", http.StatusBadRequest)
+		c.respondWithError(w, http.StatusBadRequest, "Invalid XML data", err)
 		return
 	}
 
@@ -80,8 +81,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	httpClient := httpclient.NewHttpClient(*c.config, *c.logger)
 	middleware, err := httpclient.NewMiddleware(httpClient, c.AwsClient)
 	if err != nil {
-		c.logger.Error("Failed to create middleware: " + err.Error())
-		http.Error(w, "Failed to create middleware", http.StatusInternalServerError)
+		c.respondWithError(w, http.StatusInternalServerError, "Failed to create middleware", err)
 		return
 	}
 
@@ -90,30 +90,22 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	service := NewService(client, parsedBaseXml)
 	scannedCaseResponse, err := service.CreateCaseStub(r.Context())
 	if err != nil {
-		c.logger.Error("Failed to create case stub in Sirius: " + err.Error())
-		http.Error(w, "Failed to create case stub in Sirius", http.StatusInternalServerError)
+		c.respondWithError(w, http.StatusInternalServerError, "Failed to create case stub in Sirius", err)
 		return
 	}
 
 	// Ensure scannedCaseResponse
 	if scannedCaseResponse == nil || scannedCaseResponse.UID == "" {
-		c.logger.Error("scannedCaseResponse is nil or missing UID")
-		http.Error(w, "Invalid response from Sirius when creating case stub", http.StatusInternalServerError)
+		c.respondWithError(w, http.StatusInternalServerError,
+			"Invalid response from Sirius when creating case stub, scannedCaseResponse is nil or missing UID",
+			fmt.Errorf("scannedCaseResponse UID missing"))
 		return
 	}
-
 	// Queue each document for further processing
-	c.logger.Info("Queueing documents for processing")
+	c.logger.Info("Queueing documents for processing", nil)
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
 		c.Queue.AddToQueue(doc, "xml", func(processedDoc interface{}, originalDoc *types.BaseDocument) {
-			// Panic recovery block
-			defer func() {
-				if r := recover(); r != nil {
-					c.logger.Error(fmt.Sprintf("Panic recovered in document processing: %v. Document type: %v", r, originalDoc.Type))
-				}
-			}()
-
 			// Create a new context
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.config.HTTP.Timeout)*time.Second)
 			defer cancel()
@@ -123,23 +115,45 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			service.originalDoc = originalDoc
 			attchResp, docErr := service.AttachDocuments(ctx, scannedCaseResponse)
 			if docErr != nil {
-				c.logger.Error(fmt.Sprintf("%v: Failed to attach documents to case stub for %v, error: %v", scannedCaseResponse.UID, originalDoc.Type, err.Error()))
+				c.logger.Error("Failed to attach document", map[string]interface{}{
+					"Set UID":       scannedCaseResponse.UID,
+					"Document type": originalDoc.Type,
+					"Error":         docErr.Error(),
+				})
 				return
 			}
 
-			c.logger.Info(fmt.Sprintf("%v: Docment attached to %v", scannedCaseResponse.UID, attchResp.UUID))
-			c.logger.Info(fmt.Sprintf("%v: Job processing completed for document type: %v", scannedCaseResponse.UID, originalDoc.Type))
+			// Persist form data
+			persistMsg, persistErr := c.processAndPersist(ctx, processedDoc, originalDoc)
+			if persistErr != nil {
+				c.logger.Error(persistMsg, map[string]interface{}{
+					"Set UID":       scannedCaseResponse.UID,
+					"Document type": originalDoc.Type,
+					"Error":         persistErr.Error(),
+				})
+				return
+			}
+
+			c.logger.Info("Job processing completed for document. %s", map[string]interface{}{
+				"Set UID":       scannedCaseResponse.UID,
+				"PDF UUID":      attchResp.UUID,
+				"Document type": originalDoc.Type,
+			}, persistMsg)
+
 		})
-		c.logger.Info(fmt.Sprintf("%v: Document queued for processing for document type: %v", scannedCaseResponse.UID, doc.Type))
+		c.logger.Info("Document queued for processing", map[string]interface{}{
+			"Set UID":       scannedCaseResponse.UID,
+			"Document type": doc.Type,
+		})
 	}
 
 	// Send the UUID response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	if err := json.NewEncoder(w).Encode(scannedCaseResponse); err != nil {
-		c.logger.Error("Failed to encode response: " + err.Error())
+		c.respondWithError(w, http.StatusInternalServerError, "Failed to encode response", err)
 	} else {
-		c.logger.Info("Ingestion request processed successfully, UID: " + scannedCaseResponse.UID)
+		c.logger.Info("Ingestion request processed successfully, UID: %s", nil, scannedCaseResponse.UID)
 	}
 }
 
@@ -147,8 +161,16 @@ func (c *IndexController) CloseQueue() {
 	c.Queue.Close()
 }
 
+func (c *IndexController) respondWithError(w http.ResponseWriter, statusCode int, message string, err error) {
+	c.logger.Error("%s: %v", nil, message, err)
+	http.Error(w, message, statusCode)
+}
+
 // Helper Method: Read Request Body
 func (c *IndexController) readRequestBody(r *http.Request) (string, error) {
+	if r.Body == nil {
+		return "", fmt.Errorf("request body is empty")
+	}
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return "", err
@@ -166,7 +188,7 @@ func (c *IndexController) validateAndSanitizeXML(bodyStr string) (*types.BaseSet
 	}
 
 	// Validate against XSD
-	c.logger.Info("Validating against XSD")
+	c.logger.Info("Validating against XSD", nil)
 	xsdValidator, err := ingestion.NewXSDValidator(c.config.App.ProjectFullPath+"/xsd/"+schemaLocation, bodyStr)
 	if err != nil {
 		return nil, err
@@ -176,7 +198,7 @@ func (c *IndexController) validateAndSanitizeXML(bodyStr string) (*types.BaseSet
 	}
 
 	// Validate and sanitize the XML
-	c.logger.Info("Validating and sanitizing XML")
+	c.logger.Info("Validating and sanitizing XML", nil)
 	xmlValidator := ingestion.NewXmlValidator(*c.config)
 	parsedBaseXml, err := xmlValidator.XmlValidateSanitize(bodyStr)
 	if err != nil {
@@ -184,4 +206,21 @@ func (c *IndexController) validateAndSanitizeXML(bodyStr string) (*types.BaseSet
 	}
 
 	return parsedBaseXml, nil
+}
+
+func (c *IndexController) processAndPersist(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) (message string, err error) {
+	// Convert processedDoc to XML
+	xmlBytes, err := xml.MarshalIndent(processedDoc, "", "  ")
+	if err != nil {
+		return "Failed to marshal processedDoc to XML", err
+	}
+
+	// Persist the XML
+	xmlReader := bytes.NewReader(xmlBytes)
+	awsErr := c.AwsClient.PersistFormData(ctx, xmlReader, originalDoc.Type)
+	if awsErr != nil {
+		return "Failed to persist form data", awsErr
+	}
+
+	return "Form data persisted successfully", nil
 }
