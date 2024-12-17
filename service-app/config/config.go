@@ -26,8 +26,10 @@ type (
 	}
 
 	Aws struct {
-		Endpoint string `envconfig:"AWS_ENDPOINT"`
-		Region   string `envconfig:"AWS_REGION" default:"eu-west-1"`
+		JobsQueueARN    string `envconfig:"JOBQUEUE_ARN" default:"000000000000/ddc.fifo"`
+		JobsQueueBucket string `envconfig:"JOBQUEUE_S3_BUCKET_NAME" default:"opg-backoffice-jobsqueue-local"`
+		Endpoint        string `envconfig:"AWS_ENDPOINT"`
+		Region          string `envconfig:"AWS_REGION" default:"eu-west-1"`
 	}
 
 	Auth struct {
