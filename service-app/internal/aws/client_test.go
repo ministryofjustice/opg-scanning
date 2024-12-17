@@ -35,8 +35,9 @@ func TestPersistFormData_LocalStack(t *testing.T) {
 	docType := "TestDoc"
 	body := bytes.NewReader([]byte("test data"))
 
-	err = awsClient.PersistFormData(ctx, body, docType)
+	fileName, err := awsClient.PersistFormData(ctx, body, docType)
 	assert.NoError(t, err, "PersistFormData should not return an error")
+	assert.Contains(t, fileName, "FORM_DDC_", "Expected file name to start with 'FORM_DDC_'")
 
 	currentTime := time.Now().Format("20060102150405")
 	expectedKey := fmt.Sprintf("FORM_DDC_%s_%s.xml", currentTime, docType)

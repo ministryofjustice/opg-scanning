@@ -59,10 +59,10 @@ func (a *AwsClient) GetSecretValue(ctx context.Context, secretName string) (stri
 	return *output.SecretString, nil
 }
 
-func (a *AwsClient) PersistFormData(ctx context.Context, body io.Reader, docType string) error {
+func (a *AwsClient) PersistFormData(ctx context.Context, body io.Reader, docType string) (string, error) {
 	bucketName := a.config.Aws.JobsQueueBucket
 	if bucketName == "" {
-		return fmt.Errorf("JOBSQUEUE_BUCKET is not set")
+		return "", fmt.Errorf("JOBSQUEUE_BUCKET is not set")
 	}
 
 	// Generate the filename using the required format
@@ -80,11 +80,11 @@ func (a *AwsClient) PersistFormData(ctx context.Context, body io.Reader, docType
 	// Upload the file to S3
 	_, err := a.S3.PutObject(ctx, input)
 	if err != nil {
-		return fmt.Errorf(
+		return "", fmt.Errorf(
 			"failed to upload object to S3: %w (endpoint: %s, bucket: %s, key: %s)",
 			err, a.config.Aws.Endpoint, bucketName, fileName,
 		)
 	}
 
-	return nil
+	return fileName, nil
 }

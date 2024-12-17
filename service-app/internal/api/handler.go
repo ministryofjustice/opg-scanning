@@ -123,10 +123,10 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 				return
 			}
 
-			// Persist form data
-			persistMsg, persistErr := c.processAndPersist(ctx, processedDoc, originalDoc)
+			// Persist form data in S3 bucket
+			fileName, persistErr := c.processAndPersist(ctx, processedDoc, originalDoc)
 			if persistErr != nil {
-				c.logger.Error(persistMsg, map[string]interface{}{
+				c.logger.Error("Failed to persist document", map[string]interface{}{
 					"Set UID":       scannedCaseResponse.UID,
 					"Document type": originalDoc.Type,
 					"Error":         persistErr.Error(),
@@ -134,11 +134,28 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 				return
 			}
 
-			c.logger.Info("Job processing completed for document. %s", map[string]interface{}{
+			// Persist external aws job queue with UID+fileName
+			AwsQueue, err := aws.NewAwsQueue(c.config)
+			if err != nil {
+				c.logger.Error("Failed to create AWS queue", nil, err)
+			}
+			messageID, err := AwsQueue.QueueSetForProcessing(ctx, scannedCaseResponse, fileName)
+			if err != nil {
+				c.logger.Error("Failed to queue document for processing", map[string]interface{}{
+					"Set UID":       scannedCaseResponse.UID,
+					"Document type": originalDoc.Type,
+					"Error":         err.Error(),
+				})
+				return
+			}
+
+			c.logger.Info("Job processing completed for document", map[string]interface{}{
+				"File name":     fileName,
+				"Job queue ID":  messageID,
 				"Set UID":       scannedCaseResponse.UID,
 				"PDF UUID":      attchResp.UUID,
 				"Document type": originalDoc.Type,
-			}, persistMsg)
+			})
 
 		})
 		c.logger.Info("Document queued for processing", map[string]interface{}{
@@ -208,19 +225,19 @@ func (c *IndexController) validateAndSanitizeXML(bodyStr string) (*types.BaseSet
 	return parsedBaseXml, nil
 }
 
-func (c *IndexController) processAndPersist(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) (message string, err error) {
+func (c *IndexController) processAndPersist(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) (fileName string, err error) {
 	// Convert processedDoc to XML
 	xmlBytes, err := xml.MarshalIndent(processedDoc, "", "  ")
 	if err != nil {
-		return "Failed to marshal processedDoc to XML", err
+		return "", err
 	}
 
 	// Persist the XML
 	xmlReader := bytes.NewReader(xmlBytes)
-	awsErr := c.AwsClient.PersistFormData(ctx, xmlReader, originalDoc.Type)
+	fileName, awsErr := c.AwsClient.PersistFormData(ctx, xmlReader, originalDoc.Type)
 	if awsErr != nil {
-		return "Failed to persist form data", awsErr
+		return "", awsErr
 	}
 
-	return "Form data persisted successfully", nil
+	return fileName, nil
 }
