@@ -26,7 +26,7 @@ type (
 	}
 
 	Aws struct {
-		JobsQueueARN    string `envconfig:"JOBQUEUE_ARN" default:"000000000000/ddc.fifo"`
+		JobsQueueURL    string `envconfig:"JOBQUEUE_SQS_QUEUE_URL" default:"000000000000/ddc.fifo"`
 		JobsQueueBucket string `envconfig:"JOBQUEUE_S3_BUCKET_NAME" default:"opg-backoffice-jobsqueue-local"`
 		Endpoint        string `envconfig:"AWS_ENDPOINT"`
 		Region          string `envconfig:"AWS_REGION" default:"eu-west-1"`

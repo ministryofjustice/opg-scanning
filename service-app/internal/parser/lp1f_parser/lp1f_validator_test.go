@@ -1,12 +1,11 @@
 package lp1f_parser
 
 import (
-	"os"
 	"regexp"
-	"strings"
 	"testing"
 
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
+	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -62,32 +61,15 @@ func TestInvalidDateOrderXML(t *testing.T) {
 	require.Error(t, err, "Expected validation errors due to date ordering but got none")
 
 	messages := validator.(*Validator).commonValidator.GetValidatorErrorMessages()
-	found := containsMessage(messages, "all form dates must be before the earliest applicant signature date")
+	found := util.Contains(messages, "all form dates must be before the earliest applicant signature date")
 	require.True(t, found, "Expected date ordering validation error not found")
 }
 
 func getValidator(t *testing.T, fileName string) parser.CommonValidator {
-	xml := loadXMLFile(t, "../../../xml/"+fileName)
+	xml := util.LoadXMLFileTesting(t, "../../../xml/"+fileName)
 	doc, err := Parse([]byte(xml))
 	require.NoError(t, err)
 	validator := NewValidator()
 	validator.Setup(doc)
 	return validator
-}
-
-func loadXMLFile(t *testing.T, filepath string) string {
-	data, err := os.ReadFile(filepath)
-	if err != nil {
-		require.FailNow(t, "Failed to read XML file", err.Error())
-	}
-	return string(data)
-}
-
-func containsMessage(messages []string, expectedMessage string) bool {
-	for _, msg := range messages {
-		if strings.Contains(msg, expectedMessage) {
-			return true
-		}
-	}
-	return false
 }

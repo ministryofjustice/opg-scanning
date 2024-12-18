@@ -28,7 +28,7 @@ func NewAwsQueue(cfg *config.Config) (*AwsQueue, error) {
 
 	return &AwsQueue{
 		SqsClient: sqs.New(sess),
-		QueueURL:  cfg.Aws.JobsQueueARN,
+		QueueURL:  cfg.Aws.JobsQueueURL,
 	}, nil
 }
 
