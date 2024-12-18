@@ -107,13 +107,13 @@ func (m *Middleware) ensureToken(ctx context.Context) error {
 	m.mu.RUnlock()
 
 	if tokenValid {
-		m.Logger.Info("Using cached JWT token.")
+		m.Logger.Info("Using cached JWT token.", nil)
 		return nil
 	}
 
 	// Recheck token validity after acquiring the write lock
 	if m.token != "" && time.Now().Before(m.tokenExpiry) {
-		m.Logger.Info("Another goroutine refreshed the token.")
+		m.Logger.Info("Another goroutine refreshed the token.", nil)
 		return nil
 	}
 

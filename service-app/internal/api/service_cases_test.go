@@ -127,7 +127,6 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 		mockServer := setupMockServer(t, tt.expectedReq)
 		defer mockServer.Close()
 
-		logger := *logger.NewLogger()
 		mockConfig := config.Config{
 			App: config.App{
 				SiriusBaseURL:     mockServer.URL,
@@ -139,6 +138,7 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 				JWTExpiration: 3600,
 			},
 		}
+		logger := *logger.NewLogger(&mockConfig)
 
 		// Mock dependencies
 		mockAwsClient := new(aws.MockAwsClient)
