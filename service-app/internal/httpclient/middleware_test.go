@@ -14,8 +14,8 @@ import (
 
 func TestEnsureTokenConcurrency(t *testing.T) {
 	ctx := context.Background()
-	logger := *logger.NewLogger()
 	cfg := config.NewConfig()
+	logger := *logger.NewLogger(cfg)
 	mockConfig := config.Config{
 		HTTP: cfg.HTTP,
 		App:  cfg.App,
