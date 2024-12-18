@@ -26,11 +26,7 @@ func (v *Validator) AddValidatorErrorMessage(msg string) {
 
 func (v *Validator) GetValidatorErrorMessages() []string {
 	errorMessages := []string{}
-	for i, msg := range v.errorMessages {
-		formattedMsg := fmt.Sprintf("%d. %s", i+1, msg)
-		errorMessages = append(errorMessages, formattedMsg)
-	}
-	return errorMessages
+	return append(errorMessages, v.errorMessages...)
 }
 
 func (v *Validator) WitnessSignatureFullNameAddressValidator(page string, section string) bool {

@@ -67,7 +67,7 @@ func TestInvalidDateOrderXML(t *testing.T) {
 
 func getValidator(t *testing.T, fileName string) parser.CommonValidator {
 	xml := util.LoadXMLFileTesting(t, "../../../xml/"+fileName)
-	doc, err := Parse([]byte(xml))
+	doc, err := Parse(xml)
 	require.NoError(t, err)
 	validator := NewValidator()
 	validator.Setup(doc)

@@ -2,6 +2,7 @@ package ingestion
 
 import (
 	"context"
+	"encoding/base64"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -22,9 +23,15 @@ func TestJobQueue(t *testing.T) {
 
 	var processedJobs int32
 
+	xmlStringData1 := util.LoadXMLFileTesting(t, "../../xml/LP1F-valid.xml")
+	xmlStringData2 := util.LoadXMLFileTesting(t, "../../xml/LP1F-alternate.xml")
+
+	xmlData1 := base64.StdEncoding.EncodeToString(xmlStringData1)
+	xmlData2 := base64.StdEncoding.EncodeToString(xmlStringData2)
+
 	sampleXMLArray := []string{
-		util.LoadXMLFileTesting(t, "../../xml/LP1F-valid.xml"),
-		util.LoadXMLFileTesting(t, "../../xml/LP1F-alternate.xml"),
+		xmlData1,
+		xmlData2,
 	}
 
 	numJobs := len(sampleXMLArray)
