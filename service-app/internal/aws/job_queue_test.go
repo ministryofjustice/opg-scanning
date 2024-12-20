@@ -52,6 +52,6 @@ func validateMessageInQueue(t *testing.T, awsQueue *AwsQueue, scannedCaseRespons
 	assert.NoError(t, err)
 
 	// Validate message content
-	assert.Equal(t, scannedCaseResponse.UID, receivedMessage["UID"])
-	assert.Equal(t, fileName, receivedMessage["FileName"])
+	assert.Equal(t, scannedCaseResponse.UID, receivedMessage["uid"])
+	assert.Equal(t, fileName, receivedMessage["filename"])
 }
