@@ -35,8 +35,8 @@ func NewAwsQueue(cfg *config.Config) (*AwsQueue, error) {
 func (q *AwsQueue) QueueSetForProcessing(ctx context.Context, scannedCaseResponse *types.ScannedCaseResponse, fileName string) (MessageID *string, err error) {
 	// Create a message structure
 	message := map[string]interface{}{
-		"UID":      scannedCaseResponse.UID,
-		"FileName": fileName,
+		"uid":      scannedCaseResponse.UID,
+		"filename": fileName,
 	}
 
 	// Serialize the message to JSON
