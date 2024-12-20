@@ -61,7 +61,7 @@ func (p *DocumentProcessor) Process() (interface{}, error) {
 	// Validate the document
 	p.validator.Setup(p.doc)
 	if err := p.validator.Validate(); err != nil {
-		p.logger.Error("Validation failed: " + err.Error())
+		p.logger.Error("Validation failed: "+err.Error(), nil)
 	}
 
 	// Sanitize the document

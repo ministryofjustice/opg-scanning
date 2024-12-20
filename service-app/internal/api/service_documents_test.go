@@ -29,7 +29,7 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 	mockConfig := config.NewConfig()
 	mockClient.On("GetConfig").Return(mockConfig)
 
-	mockLogger := logger.NewLogger()
+	mockLogger := logger.NewLogger(mockConfig)
 	mockClient.On("GetLogger").Return(mockLogger)
 
 	// Create middleware instance
@@ -45,7 +45,8 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 	}
 
 	// Load XML data from the test file
-	xmlData := util.LoadXMLFileTesting(t, "../../xml/Correspondence-valid.xml")
+	xmlStringData := util.LoadXMLFileTesting(t, "../../xml/Correspondence-valid.xml")
+	xmlData := base64.StdEncoding.EncodeToString(xmlStringData)
 	if xmlData == "" {
 		t.Fatal("failed to load sample XML")
 	}
