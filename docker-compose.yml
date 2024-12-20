@@ -67,7 +67,7 @@ services:
       - "4566:4566"
       - "4571:4571"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4566/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
       interval: 5s
       timeout: 10s
       retries: 5
