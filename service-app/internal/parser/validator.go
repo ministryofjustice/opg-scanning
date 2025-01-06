@@ -20,6 +20,15 @@ func NewValidator(doc interface{}) *Validator {
 	}
 }
 
+func (v *Validator) AddValidatorErrorMessage(msg string) {
+	v.errorMessages = append(v.errorMessages, msg)
+}
+
+func (v *Validator) GetValidatorErrorMessages() []string {
+	errorMessages := []string{}
+	return append(errorMessages, v.errorMessages...)
+}
+
 func (v *Validator) WitnessSignatureFullNameAddressValidator(page string, section string) bool {
 	if !v.formHasWitnessSignature(page, section) {
 		v.AddValidatorErrorMessage(fmt.Sprintf("%s %s Witness Signature not set.", page, section))
@@ -34,38 +43,6 @@ func (v *Validator) WitnessSignatureFullNameAddressValidator(page string, sectio
 	}
 
 	return len(v.errorMessages) == 0
-}
-
-func (v *Validator) formHasWitnessSignature(page, section string) bool {
-	signature, err := v.GetFieldByPath(page, section, "Witness", "Signature")
-	if err == nil && signature[0].(bool) {
-		return true
-	}
-	return false
-}
-
-func (v *Validator) formHasWitnessFullName(page, section string) bool {
-	fullName, err := v.GetFieldByPath(page, section, "Witness", "FullName")
-	if err == nil && fullName[0] != "" {
-		return true
-	}
-	return false
-}
-
-func (v *Validator) formHasWitnessAddress(page, section string) bool {
-	addressLine1, err1 := v.GetFieldByPath(page, section, "Witness", "Address", "Address1")
-	postcode, err2 := v.GetFieldByPath(page, section, "Witness", "Address", "Postcode")
-
-	// Check that addressLine1 and postcode contain non-empty strings
-	if err1 == nil && err2 == nil && addressLine1[0] != "" && postcode[0] != "" {
-		return true
-	}
-
-	return false
-}
-
-func (v *Validator) AddValidatorErrorMessage(msg string) {
-	v.errorMessages = append(v.errorMessages, msg)
 }
 
 // GetFieldByPath retrieves a field by its path in the document.
@@ -134,7 +111,35 @@ func (v *Validator) GetFieldByPath(page, section string, fields ...string) ([]in
 	}
 }
 
-// Handles field names with optional indices e.g. "Page12[0]"
+func (v *Validator) formHasWitnessSignature(page, section string) bool {
+	signature, err := v.GetFieldByPath(page, section, "Witness", "Signature")
+	if err == nil && signature[0].(bool) {
+		return true
+	}
+	return false
+}
+
+func (v *Validator) formHasWitnessFullName(page, section string) bool {
+	fullName, err := v.GetFieldByPath(page, section, "Witness", "FullName")
+	if err == nil && fullName[0] != "" {
+		return true
+	}
+	return false
+}
+
+func (v *Validator) formHasWitnessAddress(page, section string) bool {
+	addressLine1, err1 := v.GetFieldByPath(page, section, "Witness", "Address", "Address1")
+	postcode, err2 := v.GetFieldByPath(page, section, "Witness", "Address", "Postcode")
+
+	// Check that addressLine1 and postcode contain non-empty strings
+	if err1 == nil && err2 == nil && addressLine1[0] != "" && postcode[0] != "" {
+		return true
+	}
+
+	return false
+}
+
+// Helper function to handle field names with optional indices e.g. "Page12[0]"
 func parseFieldWithIndex(field string) (string, *int, error) {
 	if !strings.Contains(field, "[") {
 		return field, nil, nil // No index specified
@@ -150,12 +155,4 @@ func parseFieldWithIndex(field string) (string, *int, error) {
 	}
 
 	return name, &index, nil
-}
-
-func (v *Validator) GetValidatorErrorMessages() []string {
-	errorMessages := []string{}
-	for _, msg := range v.errorMessages {
-		errorMessages = append(errorMessages, msg+"\n")
-	}
-	return errorMessages
 }

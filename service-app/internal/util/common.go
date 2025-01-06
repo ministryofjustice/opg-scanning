@@ -1,12 +1,13 @@
 package util
 
 import (
-	"encoding/base64"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -32,13 +33,13 @@ func GetProjectRoot() (string, error) {
 	return absPath, nil
 }
 
-func LoadXMLFileTesting(t *testing.T, filepath string) string {
+func LoadXMLFileTesting(t *testing.T, filepath string) []byte {
 	data, err := os.ReadFile(filepath)
 	// reading the file.
 	if err != nil {
 		require.FailNow(t, "Failed to read XML file", err.Error())
 	}
-	return base64.StdEncoding.EncodeToString(data)
+	return data
 }
 
 func WriteToFile(fileName string, message string, path string) {
@@ -59,4 +60,29 @@ func Contains(slice []string, item string) bool {
 		}
 	}
 	return false
+}
+
+// Serializes a map of string keys and values of type string or int into a PHP serialized string format.
+// It supports only string and integer types for values.
+// Only supports flat arrays.
+func PhpSerialize(data map[string]interface{}) string {
+	var sb strings.Builder
+	// Serialize the map as a PHP array
+	sb.WriteString("a:" + strconv.Itoa(len(data)) + ":{")
+
+	for key, value := range data {
+		// Serialize the key
+		sb.WriteString("s:" + strconv.Itoa(len(key)) + `:"` + key + `";`)
+
+		// Serialize the value based on type
+		switch v := value.(type) {
+		case string:
+			sb.WriteString("s:" + strconv.Itoa(len(v)) + `:"` + v + `";`)
+		case int:
+			sb.WriteString("i:" + strconv.Itoa(v) + ";")
+		}
+	}
+
+	sb.WriteString("}")
+	return sb.String()
 }
