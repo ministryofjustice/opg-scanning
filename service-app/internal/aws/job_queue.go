@@ -2,7 +2,6 @@ package aws
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -10,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
+	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
 type AwsQueue struct {
@@ -33,22 +33,15 @@ func NewAwsQueue(cfg *config.Config) (*AwsQueue, error) {
 }
 
 func (q *AwsQueue) QueueSetForProcessing(ctx context.Context, scannedCaseResponse *types.ScannedCaseResponse, fileName string) (MessageID *string, err error) {
-	// Create a message structure
-	message := map[string]interface{}{
-		"uid":      scannedCaseResponse.UID,
-		"filename": fileName,
-	}
-
-	// Serialize the message to JSON
-	messageBody, err := json.Marshal(message)
+	finalMessageJson, err := createMessageBody(scannedCaseResponse, fileName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal message: %w", err)
+		return nil, err
 	}
 
 	// Send the message to the SQS queue
 	input := &sqs.SendMessageInput{
 		QueueUrl:       aws.String(q.QueueURL),
-		MessageBody:    aws.String(string(messageBody)),
+		MessageBody:    aws.String(finalMessageJson),
 		MessageGroupId: aws.String(scannedCaseResponse.UID),
 	}
 
@@ -58,4 +51,23 @@ func (q *AwsQueue) QueueSetForProcessing(ctx context.Context, scannedCaseRespons
 	}
 
 	return output.MessageId, nil
+}
+
+func createMessageBody(scannedCaseResponse *types.ScannedCaseResponse, fileName string) (string, error) {
+	// Create a message structure
+	phpSerializedContent := util.PhpSerialize(map[string]interface{}{
+		"uid":      scannedCaseResponse.UID,
+		"filename": fileName,
+	})
+	phpSerializedMetadata := util.PhpSerialize(map[string]interface{}{
+		"__name__": "Ddc\\\\Job\\\\FormJob",
+	})
+
+	// Create the final message structure
+	finalMessage := map[string]interface{}{
+		"content":  phpSerializedContent,
+		"metadata": phpSerializedMetadata,
+	}
+
+	return util.PhpSerialize(finalMessage), nil
 }

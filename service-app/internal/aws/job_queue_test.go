@@ -12,6 +12,23 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestPHPSerialization(t *testing.T) {
+	scannedCaseResponse := &types.ScannedCaseResponse{
+		UID: "700000001219",
+	}
+	fileName := "SET_DDC_20250106093401__LPA_677ba389ab101.xml"
+
+	finalMessageSerialized, _ := createMessageBody(scannedCaseResponse, fileName)
+
+	// Expected output format
+	expectedOutput := `a:2:{s:7:"content";s:104:"a:2:{s:3:"uid";s:12:"700000001219";s:8:"filename";s:45:"SET_DDC_20250106093401__LPA_677ba389ab101.xml";}";s:8:"metadata";s:46:"a:1:{s:8:"__name__";s:17:"Ddc\\Job\\FormJob";}";}`
+
+	// Check if the generated output matches the expected output
+	if finalMessageSerialized != expectedOutput {
+		t.Errorf("Expected: %s\nGot: %s", expectedOutput, finalMessageSerialized)
+	}
+}
+
 // Tests the QueueSetForProcessing function using LocalStack.
 func TestAwsQueue_QueueSetForProcessing(t *testing.T) {
 	cfg := config.NewConfig()
