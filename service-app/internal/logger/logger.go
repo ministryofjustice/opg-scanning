@@ -16,7 +16,7 @@ type Logger struct {
 func NewLogger(cfg *config.Config) *Logger {
 	slogLogger := telemetry.NewLogger("opg-data-lpa-store/getlist").With(
 		slog.String("environment", cfg.App.Environment),
-		slog.String("application", "opg-scanning-service"),
+		slog.String("service_name", "opg-scanning-service"),
 	)
 	return &Logger{
 		cfg:        cfg,
