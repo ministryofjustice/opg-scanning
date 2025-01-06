@@ -2,6 +2,7 @@ package aws
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -33,15 +34,16 @@ func NewAwsQueue(cfg *config.Config) (*AwsQueue, error) {
 }
 
 func (q *AwsQueue) QueueSetForProcessing(ctx context.Context, scannedCaseResponse *types.ScannedCaseResponse, fileName string) (MessageID *string, err error) {
-	finalMessageJson, err := createMessageBody(scannedCaseResponse, fileName)
+	message := createMessageBody(scannedCaseResponse, fileName)
+	messageJson, err := json.Marshal(message)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal message to JSON: %w", err)
 	}
 
 	// Send the message to the SQS queue
 	input := &sqs.SendMessageInput{
 		QueueUrl:       aws.String(q.QueueURL),
-		MessageBody:    aws.String(finalMessageJson),
+		MessageBody:    aws.String(string(messageJson)),
 		MessageGroupId: aws.String(scannedCaseResponse.UID),
 	}
 
@@ -53,21 +55,20 @@ func (q *AwsQueue) QueueSetForProcessing(ctx context.Context, scannedCaseRespons
 	return output.MessageId, nil
 }
 
-func createMessageBody(scannedCaseResponse *types.ScannedCaseResponse, fileName string) (string, error) {
+func createMessageBody(scannedCaseResponse *types.ScannedCaseResponse, fileName string) map[string]interface{} {
 	// Create a message structure
-	phpSerializedContent := util.PhpSerialize(map[string]interface{}{
+	content := map[string]interface{}{
 		"uid":      scannedCaseResponse.UID,
 		"filename": fileName,
-	})
-	phpSerializedMetadata := util.PhpSerialize(map[string]interface{}{
-		"__name__": "Ddc\\\\Job\\\\FormJob",
-	})
-
-	// Create the final message structure
-	finalMessage := map[string]interface{}{
-		"content":  phpSerializedContent,
-		"metadata": phpSerializedMetadata,
 	}
 
-	return util.PhpSerialize(finalMessage), nil
+	// Create the final message structure
+	message := map[string]interface{}{
+		"content": util.PhpSerialize(content),
+		"metadata": map[string]interface{}{
+			"__name__": "Ddc\\Job\\FormJob",
+		},
+	}
+
+	return message
 }
