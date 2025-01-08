@@ -61,7 +61,7 @@ func requestCreateScannedCase(url string, reqData types.ScannedCaseRequest) (*ty
 		return nil, fmt.Errorf("failed to marshal request data: %w", err)
 	}
 
-	req, err := http.NewRequest("POST", url+"/scanned-cases", bytes.NewBuffer(body))
+	responseBody, err := c.Middleware.HTTPRequest(ctx, url, "POST", body, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}

@@ -6,6 +6,10 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
+	"strings"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func GetProjectRoot() (string, error) {
@@ -37,4 +41,47 @@ func WriteToFile(fileName string, message string, path string) {
 	if _, err := f.Write([]byte(message + "\n")); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func Contains(slice []string, item string) bool {
+	for _, v := range slice {
+		if v == item {
+			return true
+		}
+	}
+	return false
+}
+
+// Serializes a map of string keys and values of type string or int into a PHP serialized string format.
+// It supports only string and integer types for values.
+// Only supports flat arrays.
+func PhpSerialize(data map[string]interface{}) string {
+	var sb strings.Builder
+	// Serialize the map as a PHP array
+	sb.WriteString("a:" + strconv.Itoa(len(data)) + ":{")
+
+	for key, value := range data {
+		// Serialize the key
+		sb.WriteString("s:" + strconv.Itoa(len(key)) + `:"` + key + `";`)
+
+		// Serialize the value based on type
+		switch v := value.(type) {
+		case string:
+			sb.WriteString("s:" + strconv.Itoa(len(v)) + `:"` + v + `";`)
+		case int:
+			sb.WriteString("i:" + strconv.Itoa(v) + ";")
+		}
+	}
+
+	sb.WriteString("}")
+	return sb.String()
+}
+
+// Generates a bcrypt hash for the given password
+func HashPassword(password string) string {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Fatalf("Error hashing password: %v", err)
+	}
+	return string(hashedPassword)
 }
