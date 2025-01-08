@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	"github.com/ministryofjustice/opg-scanning/config"
-	"github.com/ministryofjustice/opg-scanning/internal/aws"
 	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
+	"github.com/ministryofjustice/opg-scanning/internal/mocks"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"github.com/stretchr/testify/assert"
@@ -20,23 +20,11 @@ import (
 
 func TestAttachDocument_Correspondence(t *testing.T) {
 	// Mock dependencies
-	mockAwsClient := new(aws.MockAwsClient)
-	mockAwsClient.On("GetSecretValue", mock.Anything, mock.AnythingOfType("string")).
-		Return("mock-signing-secret", nil)
+	mockConfig := config.Config{}
+	logger := *logger.NewLogger(&mockConfig)
 
+	_, httpMiddleware, _ := mocks.PrepareMocks(&mockConfig, &logger)
 	mockClient := new(httpclient.MockHttpClient)
-
-	mockConfig := config.NewConfig()
-	mockClient.On("GetConfig").Return(mockConfig)
-
-	mockLogger := logger.NewLogger(mockConfig)
-	mockClient.On("GetLogger").Return(mockLogger)
-
-	// Create middleware instance
-	middleware, err := httpclient.NewMiddleware(mockClient, mockAwsClient)
-	if err != nil {
-		t.Fatalf("failed to create middleware: %v", err)
-	}
 
 	// Load PDF from the test file
 	data, err := os.ReadFile("../../pdf/dummy.pdf")
@@ -53,7 +41,7 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 
 	// Prepare service instance
 	service := &Service{
-		Client: &Client{Middleware: middleware},
+		Client: &Client{Middleware: httpMiddleware},
 		originalDoc: &types.BaseDocument{
 			EmbeddedXML: xmlData,
 			EmbeddedPDF: base64.StdEncoding.EncodeToString(data),

@@ -3,6 +3,7 @@ package httpclient
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
@@ -13,13 +14,15 @@ import (
 )
 
 type Middleware struct {
-	Client      HttpClientInterface
-	Config      *config.Config
-	Logger      *logger.Logger
-	awsClient   aws.AwsClientInterface
-	token       string
-	tokenExpiry time.Time
-	mu          sync.RWMutex
+	Client        HttpClientInterface
+	Config        *config.Config
+	Logger        *logger.Logger
+	awsClient     aws.AwsClientInterface
+	Token         string
+	tokenExpiry   time.Time
+	signingSecret string
+	ApiUser       string
+	mu            sync.RWMutex
 }
 
 type Claims struct {
@@ -48,33 +51,40 @@ func NewMiddleware(client HttpClientInterface, awsClient aws.AwsClientInterface)
 	}, nil
 }
 
-func NewClaims(cfg config.Config) (Claims, error) {
-	if cfg.Auth.ApiUsername == "" {
+func (m *Middleware) NewClaims() (Claims, error) {
+	if m.ApiUser == "" {
 		return Claims{}, fmt.Errorf("middleware configuration is missing or invalid")
 	}
 
 	return Claims{
-		SessionData: cfg.Auth.ApiUsername,
+		SessionData: m.ApiUser,
 		Iat:         time.Now().Unix(),
-		Exp:         time.Now().Add(time.Duration(cfg.Auth.JWTExpiration) * time.Second).Unix(),
+		Exp:         time.Now().Add(time.Duration(m.Config.Auth.JWTExpiration) * time.Second).Unix(),
 	}, nil
 }
 
-func (m *Middleware) fetchSigningSecret(ctx context.Context) (string, error) {
+func (m *Middleware) fetchSigningSecret(ctx context.Context) error {
+	if m.signingSecret != "" {
+		return nil
+	}
+
 	secret, err := m.awsClient.GetSecretValue(ctx, m.Config.Auth.JWTSecretARN)
 	if err != nil {
-		return "", fmt.Errorf("failed to fetch signing secret: %w", err)
+		return fmt.Errorf("failed to fetch signing secret: %w", err)
 	}
-	return secret, nil
+
+	m.signingSecret = secret
+
+	return nil
 }
 
 func (m *Middleware) generateToken(ctx context.Context) (string, error) {
-	signingSecret, err := m.fetchSigningSecret(ctx)
+	err := m.fetchSigningSecret(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch signing secret: %w", err)
 	}
 
-	claims, err := NewClaims(*m.Config)
+	claims, err := m.NewClaims()
 	if err != nil {
 		return "", fmt.Errorf("failed to create claims: %w", err)
 	}
@@ -86,7 +96,7 @@ func (m *Middleware) generateToken(ctx context.Context) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtClaims)
-	signedToken, err := token.SignedString([]byte(signingSecret))
+	signedToken, err := token.SignedString([]byte(m.signingSecret))
 	if err != nil {
 		return "", fmt.Errorf("failed to sign token: %w", err)
 	}
@@ -94,16 +104,16 @@ func (m *Middleware) generateToken(ctx context.Context) (string, error) {
 	expiry := time.Unix(claims.Exp, 0)
 
 	m.mu.Lock()
-	m.token = signedToken
+	m.Token = signedToken
 	m.tokenExpiry = expiry
 	m.mu.Unlock()
 
 	return signedToken, nil
 }
 
-func (m *Middleware) ensureToken(ctx context.Context) error {
+func (m *Middleware) EnsureToken(ctx context.Context) error {
 	m.mu.RLock()
-	tokenValid := m.token != "" && time.Now().Before(m.tokenExpiry)
+	tokenValid := m.Token != "" && time.Now().Before(m.tokenExpiry)
 	m.mu.RUnlock()
 
 	if tokenValid {
@@ -112,7 +122,7 @@ func (m *Middleware) ensureToken(ctx context.Context) error {
 	}
 
 	// Recheck token validity after acquiring the write lock
-	if m.token != "" && time.Now().Before(m.tokenExpiry) {
+	if m.Token != "" && time.Now().Before(m.tokenExpiry) {
 		m.Logger.Info("Another goroutine refreshed the token.", nil)
 		return nil
 	}
@@ -128,21 +138,28 @@ func (m *Middleware) ensureToken(ctx context.Context) error {
 }
 
 // Acts as an HTTP wrapper for existing client with Authorization header set.
-func (m *Middleware) HTTPRequest(ctx context.Context, url, method string, payload []byte, headers map[string]string) ([]byte, error) {
-	// Ensure a valid token is available
-	if err := m.ensureToken(ctx); err != nil {
+func (m *Middleware) HTTPRequest(ctx context.Context, url, method string, payload []byte, headers map[string]string, r *http.Request) ([]byte, error) {
+	// Check for JWT token in the cookies if not already in the headers
+	if m.Token == "" {
+		// Check if cookie is present
+		cookie, _ := r.Cookie("membane")
+		m.mu.RLock()
+		m.Token = cookie.Value
+		m.mu.RUnlock()
+	}
+
+	// Ensure token is valid
+	if err := m.EnsureToken(ctx); err != nil {
 		return nil, fmt.Errorf("failed to ensure token: %w", err)
 	}
 
-	// Safely initialize headers if nil
+	// Add the Authorization header
 	if headers == nil {
 		headers = make(map[string]string)
 	}
+	headers["Authorization"] = "Bearer " + m.Token
 
-	// Add Authorization header
-	headers["Authorization"] = "Bearer " + m.token
-
-	// Perform the HTTP request
+	// Perform the target HTTP request
 	response, err := m.Client.HTTPRequest(ctx, url, method, payload, headers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to perform HTTP request: %w", err)
