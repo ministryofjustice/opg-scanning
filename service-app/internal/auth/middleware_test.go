@@ -28,7 +28,7 @@ func TestAuthenticateMiddleware(t *testing.T) {
 	mockAwsClient := new(aws.MockAwsClient)
 
 	// Mock GetSecretValue
-	mockAwsClient.On("GetSsmValue", mock.Anything, "/local/local-credentials").Return(fmt.Sprintf("opg_document_and_d@publicguardian.gsi.gov.uk:%s", passwordHash), nil)
+	mockAwsClient.On("GetSsmValue", mock.Anything, "/local/local-credentials").Return(fmt.Sprintf(`{"opg_document_and_d@publicguardian.gsi.gov.uk":"%s"}`, passwordHash), nil)
 	mockAwsClient.On("GetSecretValue", mock.Anything, "local/jwt-key").Return("mysupersecrettestkeythatis128bits", nil)
 
 	httpClient := httpclient.NewHttpClient(*cfg, *logger)
