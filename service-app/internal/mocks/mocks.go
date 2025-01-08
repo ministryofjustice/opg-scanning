@@ -27,7 +27,10 @@ func PrepareMocks(mockConfig *config.Config, logger *logger.Logger) (*httpclient
 	httpClient.On("GetConfig").Return(mockConfig)
 	httpClient.On("GetLogger").Return(logger)
 
-	httpClientMiddleware, _ := httpclient.NewMiddleware(httpClient, mockAwsClient)
+	httpClientMiddleware, err := httpclient.NewMiddleware(httpClient, mockAwsClient)
+	if err != nil {
+		panic(err)
+	}
 
 	return httpClient, httpClientMiddleware, mockAwsClient
 }

@@ -20,7 +20,14 @@ import (
 
 func TestAttachDocument_Correspondence(t *testing.T) {
 	// Mock dependencies
-	mockConfig := config.Config{}
+	mockConfig := config.Config{
+		Auth: config.Auth{
+			ApiUsername:    "opg_document_and_d@publicguardian.gsi.gov.uk",
+			JWTSecretARN:   "local/jwt-key",
+			CredentialsARN: "local/local-credentials",
+			JWTExpiration:  3600,
+		},
+	}
 	logger := *logger.NewLogger(&mockConfig)
 
 	_, httpMiddleware, _ := mocks.PrepareMocks(&mockConfig, &logger)

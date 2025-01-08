@@ -53,7 +53,7 @@ func NewMiddleware(client HttpClientInterface, awsClient aws.AwsClientInterface)
 
 func (m *Middleware) NewClaims() (Claims, error) {
 	if m.ApiUser == "" {
-		return Claims{}, fmt.Errorf("middleware configuration is missing or invalid")
+		m.ApiUser = m.Config.Auth.ApiUsername
 	}
 
 	return Claims{
@@ -140,13 +140,15 @@ func (m *Middleware) EnsureToken(ctx context.Context) error {
 // Acts as an HTTP wrapper for existing client with Authorization header set.
 func (m *Middleware) HTTPRequest(ctx context.Context, url, method string, payload []byte, headers map[string]string, r *http.Request) ([]byte, error) {
 	// Check for JWT token in the cookies if not already in the headers
-	if m.Token == "" {
-		// Check if cookie is present
-		cookie, _ := r.Cookie("membane")
-		m.mu.RLock()
-		m.Token = cookie.Value
-		m.mu.RUnlock()
-	}
+	// if m.Token == "" {
+	// 	// Check if cookie is present
+	// 	cookie, err := r.Cookie("membane")
+	// 	if err == nil {
+	// 		m.mu.RLock()
+	// 		m.Token = cookie.Value
+	// 		m.mu.RUnlock()
+	// 	}
+	// }
 
 	// Ensure token is valid
 	if err := m.EnsureToken(ctx); err != nil {
