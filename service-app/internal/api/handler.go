@@ -10,8 +10,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/ministryofjustice/opg-go-common/telemetry"
 	"github.com/ministryofjustice/opg-scanning/config"
+	"github.com/ministryofjustice/opg-scanning/internal/auth"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
 	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
@@ -20,31 +22,65 @@ import (
 )
 
 type IndexController struct {
-	config    *config.Config
-	logger    *logger.Logger
-	validator *ingestion.Validator
-	Queue     *ingestion.JobQueue
-	AwsClient *aws.AwsClient
+	config         *config.Config
+	logger         *logger.Logger
+	validator      *ingestion.Validator
+	httpMiddleware *httpclient.Middleware
+	authMiddleware *auth.Middleware
+	Queue          *ingestion.JobQueue
+	AwsClient      *aws.AwsClient
 }
 
 func NewIndexController(awsClient *aws.AwsClient, appConfig *config.Config) *IndexController {
+	logger := logger.NewLogger(appConfig)
+	httpClient := httpclient.NewHttpClient(*appConfig, *logger)
+	httpMiddleware, err := httpclient.NewMiddleware(httpClient, awsClient)
+	if err != nil {
+		logger.Error("Failed to create middleware: %v", nil, err)
+		return nil
+	}
+
 	return &IndexController{
-		config:    appConfig,
-		logger:    logger.NewLogger(appConfig),
-		validator: ingestion.NewValidator(),
-		Queue:     ingestion.NewJobQueue(appConfig),
-		AwsClient: awsClient,
+		config:         appConfig,
+		logger:         logger,
+		validator:      ingestion.NewValidator(),
+		httpMiddleware: httpMiddleware,
+		authMiddleware: auth.NewMiddleware(awsClient, httpMiddleware, appConfig, logger),
+		Queue:          ingestion.NewJobQueue(appConfig),
+		AwsClient:      awsClient,
 	}
 }
 
 func (c *IndexController) HandleRequests() {
-	http.Handle("/ingest", telemetry.Middleware(c.logger.SlogLogger)(http.HandlerFunc(c.IngestHandler)))
+	// Create the /auth route to handle user authentication and issue JWT token
+	http.Handle("/auth", http.HandlerFunc(c.AuthHandler))
+
+	// Protect the /ingest route with JWT validation (using the authMiddleware)
+	http.Handle("/ingest", telemetry.Middleware(c.logger.SlogLogger)(
+		c.authMiddleware.CheckAuth(http.HandlerFunc(c.IngestHandler)),
+	))
 
 	c.logger.Info("Starting server on :"+c.config.HTTP.Port, nil)
 	http.ListenAndServe(":"+c.config.HTTP.Port, nil)
 }
 
+func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
+	// This handler will pass on to the Authenticate middleware that will validate the user
+	// credentials and issue a token.
+	c.authMiddleware.Authenticate(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// This function will only be called if authentication is successful
+		w.Write([]byte("Authentication successful"))
+	})).ServeHTTP(w, r)
+}
+
 func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) {
+	// Extract claims from context
+	_, ok := r.Context().Value("claims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Unauthorized: Unable to extract claims", http.StatusUnauthorized)
+		return
+	}
+
 	if r.Method != http.MethodPost {
 		c.respondWithError(w, http.StatusMethodNotAllowed, "Invalid HTTP method", nil)
 		return
@@ -54,7 +90,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 
 	bodyStr, err := c.readRequestBody(r)
 	if err != nil {
-		c.respondWithError(w, http.StatusBadRequest, "Failed to read request body", err)
+		c.respondWithError(w, http.StatusBadRequest, "Invalid request body", err)
 		return
 	}
 
@@ -76,17 +112,8 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Sirius API integration
-	// Create a case stub in Sirius if we have a case to create
-	httpClient := httpclient.NewHttpClient(*c.config, *c.logger)
-	middleware, err := httpclient.NewMiddleware(httpClient, c.AwsClient)
-	if err != nil {
-		c.respondWithError(w, http.StatusInternalServerError, "Failed to create middleware", err)
-		return
-	}
-
 	// Create a new client and prepare to attach documents
-	client := NewClient(middleware)
+	client := NewClient(c.httpMiddleware)
 	service := NewService(client, parsedBaseXml)
 	scannedCaseResponse, err := service.CreateCaseStub(r.Context())
 	if err != nil {
@@ -103,6 +130,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	}
 	// Queue each document for further processing
 	c.logger.Info("Queueing documents for processing", nil)
+
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
 		c.Queue.AddToQueue(doc, "xml", func(processedDoc interface{}, originalDoc *types.BaseDocument) {

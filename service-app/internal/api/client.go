@@ -28,7 +28,7 @@ func (c *Client) ClientRequest(ctx context.Context, reqData interface{}, url str
 		return nil, fmt.Errorf("failed to marshal request data: %w", err)
 	}
 
-	responseBody, err := c.Middleware.HTTPRequest(ctx, url, "POST", body, nil)
+	responseBody, err := c.Middleware.HTTPRequest(ctx, url, "POST", body, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("request to Sirius API failed: %w", err)
 	}

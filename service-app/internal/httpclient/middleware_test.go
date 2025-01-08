@@ -6,57 +6,28 @@ import (
 	"testing"
 	"time"
 
-	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestEnsureTokenConcurrency(t *testing.T) {
-	ctx := context.Background()
 	cfg := config.NewConfig()
 	logger := *logger.NewLogger(cfg)
-	mockConfig := config.Config{
-		HTTP: cfg.HTTP,
-		App:  cfg.App,
-		Aws:  cfg.Aws,
-		Auth: config.Auth{
-			ApiUsername:   "test",
-			JWTSecretARN:  "local/jwt-key",
-			JWTExpiration: 3600,
-		},
-	}
 
-	// TODO: Check if we can integration AWS client during git actions workflow
-	// For now skip the test
-	if cfg.App.Environment != "local" {
-		t.Skip("Skipping test as it requires localstack and RUN_LOCAL_TESTS is not set to true")
-	}
+	mockAwsClient := new(aws.MockAwsClient)
+	mockAwsClient.On("GetSecretValue", mock.Anything, "local/jwt-key").Return("mysupersecrettestkeythatis128bits", nil)
 
-	// Log mockConfig
-	// t.Logf("mockConfig: %+v", mockConfig)
-
-	// Load AWS configuration
-	awsCfg, err := awsConfig.LoadDefaultConfig(ctx,
-		awsConfig.WithRegion(cfg.Aws.Region),
-	)
-	if err != nil {
-		t.Errorf("Failed to load AWS config %v", err)
-		return
-	}
-	// Initialize AwsClient
-	awsClient, err := aws.NewAwsClient(ctx, awsCfg, &mockConfig)
-	if err != nil {
-		t.Errorf("failed to initialize AWS clients: %v", err)
-	}
-	httpClient := NewHttpClient(mockConfig, logger)
+	httpClient := NewHttpClient(*cfg, logger)
 
 	middleware := &Middleware{
 		Client:      httpClient,
-		Config:      &mockConfig,
+		Config:      cfg,
 		Logger:      &logger,
-		awsClient:   awsClient,
+		awsClient:   mockAwsClient,
 		tokenExpiry: time.Now().Add(time.Hour),
+		ApiUser:     "test",
 		mu:          sync.RWMutex{},
 	}
 
@@ -65,7 +36,7 @@ func TestEnsureTokenConcurrency(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := middleware.ensureToken(context.Background())
+			err := middleware.EnsureToken(context.Background())
 			if err != nil {
 				t.Errorf("ensureToken failed: %v", err)
 			}

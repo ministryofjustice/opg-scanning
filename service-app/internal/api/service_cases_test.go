@@ -1,18 +1,16 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/ministryofjustice/opg-scanning/config"
-	"github.com/ministryofjustice/opg-scanning/internal/aws"
-	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
+	"github.com/ministryofjustice/opg-scanning/internal/mocks"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/stretchr/testify/mock"
 )
@@ -91,70 +89,51 @@ func parseXMLPayload(t *testing.T, payload string) types.BaseSet {
 	return set
 }
 
-func setupMockServer(t *testing.T, expectedReq *types.ScannedCaseRequest) *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
-		if r.Method != http.MethodPost {
-			t.Errorf("expected POST method, got %s", r.Method)
-		}
-
-		var receivedRequest types.ScannedCaseRequest
-		if err := json.NewDecoder(r.Body).Decode(&receivedRequest); err != nil {
-			t.Fatalf("failed to decode request body: %v", err)
-		}
-
-		if expectedReq != nil {
-			if receivedRequest.CaseType != expectedReq.CaseType {
-				t.Errorf("expected case type %s, but got %s", expectedReq.CaseType, receivedRequest.CaseType)
-			}
-			if expectedReq.CourtReference != "" && receivedRequest.CourtReference != expectedReq.CourtReference {
-				t.Errorf("expected court reference %s, but got %s", expectedReq.CourtReference, receivedRequest.CourtReference)
-			}
-		}
-
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"UID": "dummy-uid-1234"}`))
-	}))
-}
-
 func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 	t.Run(tt.name, func(t *testing.T) {
 		t.Parallel()
 
-		endpoint := "api/public/v1/scanned-cases"
 		set := parseXMLPayload(t, tt.xmlPayload)
-		mockServer := setupMockServer(t, tt.expectedReq)
-		defer mockServer.Close()
-
 		mockConfig := config.Config{
-			App: config.App{
-				SiriusBaseURL:     mockServer.URL,
-				SiriusCaseStubURL: endpoint,
-			},
 			Auth: config.Auth{
-				ApiUsername:   "test",
-				JWTSecretARN:  "local/jwt-key",
-				JWTExpiration: 3600,
+				ApiUsername:    "opg_document_and_d@publicguardian.gsi.gov.uk",
+				JWTSecretARN:   "local/jwt-key",
+				CredentialsARN: "local/local-credentials",
+				JWTExpiration:  3600,
 			},
 		}
 		logger := *logger.NewLogger(&mockConfig)
 
 		// Mock dependencies
-		mockAwsClient := new(aws.MockAwsClient)
-		mockAwsClient.On("GetSecretValue", mock.Anything, mock.AnythingOfType("string")).
-			Return("mock-signing-secret", nil)
+		mockHttpClient, mockHttpMiddleware, _ := mocks.PrepareMocks(&mockConfig, &logger)
+		mockHttpClient.On("HTTPRequest", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Maybe().
+			Run(func(args mock.Arguments) {
+				payload := args[3].([]byte)
 
-		httpClient := httpclient.NewHttpClient(mockConfig, logger)
-		middleware, err := httpclient.NewMiddleware(httpClient, mockAwsClient)
-		if err != nil {
-			t.Fatalf("failed to create middleware: %v", err)
-		}
-		client := NewClient(middleware)
+				var receivedRequest types.ScannedCaseRequest
+				if err := json.NewDecoder(bytes.NewReader(payload)).Decode(&receivedRequest); err != nil {
+					t.Fatalf("failed to decode request body: %v", err)
+				}
+
+				// Perform assertions or checks on the received request data
+				if tt.expectedReq != nil {
+					if receivedRequest.CaseType != tt.expectedReq.CaseType {
+						t.Errorf("expected case type %s, but got %s", tt.expectedReq.CaseType, receivedRequest.CaseType)
+					}
+					if tt.expectedReq.CourtReference != "" && receivedRequest.CourtReference != tt.expectedReq.CourtReference {
+						t.Errorf("expected court reference %s, but got %s", tt.expectedReq.CourtReference, receivedRequest.CourtReference)
+					}
+				}
+			}).
+			Return([]byte(`{"UID": "dummy-uid-1234"}`), nil)
+
+		client := NewClient(mockHttpMiddleware)
 		service := NewService(client, &set)
 
 		ctx := context.Background()
-		_, err = service.CreateCaseStub(ctx)
+
+		_, err := service.CreateCaseStub(ctx)
 
 		if tt.expectedErr {
 			if err == nil {
@@ -166,6 +145,8 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 			}
 		}
 
+		// Assert mock expectations
+		mockHttpClient.AssertExpectations(t)
 	})
 }
 
