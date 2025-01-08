@@ -14,3 +14,8 @@ func (m *MockAwsClient) GetSecretValue(ctx context.Context, secretName string) (
 	args := m.Called(ctx, secretName)
 	return args.String(0), args.Error(1)
 }
+
+func (m *MockAwsClient) GetSsmValue(ctx context.Context, secretName string) (string, error) {
+	args := m.Called(ctx, secretName)
+	return args.String(0), args.Error(1)
+}

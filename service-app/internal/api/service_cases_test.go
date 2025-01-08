@@ -10,11 +10,9 @@ import (
 	"testing"
 
 	"github.com/ministryofjustice/opg-scanning/config"
-	"github.com/ministryofjustice/opg-scanning/internal/aws"
-	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
+	"github.com/ministryofjustice/opg-scanning/internal/mocks"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
-	"github.com/stretchr/testify/mock"
 )
 
 type requestCaseStub struct {
@@ -132,29 +130,20 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 				SiriusBaseURL:     mockServer.URL,
 				SiriusCaseStubURL: endpoint,
 			},
-			Auth: config.Auth{
-				ApiUsername:   "test",
-				JWTSecretARN:  "local/jwt-key",
-				JWTExpiration: 3600,
-			},
 		}
 		logger := *logger.NewLogger(&mockConfig)
 
 		// Mock dependencies
-		mockAwsClient := new(aws.MockAwsClient)
-		mockAwsClient.On("GetSecretValue", mock.Anything, mock.AnythingOfType("string")).
-			Return("mock-signing-secret", nil)
+		_, httpMiddleware, _ := mocks.PrepareMocks(&mockConfig, &logger)
 
-		httpClient := httpclient.NewHttpClient(mockConfig, logger)
-		middleware, err := httpclient.NewMiddleware(httpClient, mockAwsClient)
-		if err != nil {
-			t.Fatalf("failed to create middleware: %v", err)
-		}
-		client := NewClient(middleware)
+		client := NewClient(httpMiddleware)
 		service := NewService(client, &set)
 
 		ctx := context.Background()
-		_, err = service.CreateCaseStub(ctx)
+
+		_, err := service.CreateCaseStub(ctx)
+
+		t.Log("expected request: ", tt.expectedReq)
 
 		if tt.expectedErr {
 			if err == nil {
