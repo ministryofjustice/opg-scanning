@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/factory"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
@@ -13,7 +14,7 @@ import (
 type Job struct {
 	Data       *types.BaseDocument
 	format     string
-	onComplete func(interface{})
+	onComplete func(processedDoc interface{}, originalDoc *types.BaseDocument)
 }
 
 type JobQueue struct {
@@ -22,16 +23,16 @@ type JobQueue struct {
 	logger *logger.Logger
 }
 
-func NewJobQueue() *JobQueue {
+func NewJobQueue(config *config.Config) *JobQueue {
 	queue := &JobQueue{
 		Jobs:   make(chan Job, 10), // Buffer size can be adjusted based on needs
 		wg:     &sync.WaitGroup{},
-		logger: logger.NewLogger(),
+		logger: logger.NewLogger(config),
 	}
 	return queue
 }
 
-func (q *JobQueue) AddToQueue(data *types.BaseDocument, format string, onComplete func(interface{})) {
+func (q *JobQueue) AddToQueue(data *types.BaseDocument, format string, onComplete func(interface{}, *types.BaseDocument)) {
 	job := Job{Data: data, format: format, onComplete: onComplete}
 	q.wg.Add(1)
 	q.Jobs <- job
@@ -55,27 +56,28 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 						defer close(done)
 
 						// Initialize document processor
-						processor, err := factory.NewDocumentProcessor(job.Data, job.Data.Type, job.format)
+						registry := factory.NewRegistry()
+						processor, err := factory.NewDocumentProcessor(job.Data, job.Data.Type, job.format, registry, q.logger)
 						if err != nil {
-							q.logger.Error("Worker %d failed to initialize processor for job: %v\n", workerID, err)
+							q.logger.Error("Worker %d failed to initialize processor for job: %v\n", nil, workerID, err)
 							return
 						}
 
 						// Process the document
 						parsedDoc, err := processor.Process()
 						if err != nil {
-							q.logger.Error("Worker %d failed to process job: %v\n", workerID, err)
+							q.logger.Error("Worker %d failed to process job: %v\n", nil, workerID, err)
 							return
 						}
 
 						if job.onComplete != nil {
-							job.onComplete(parsedDoc)
+							job.onComplete(parsedDoc, job.Data)
 						}
 					}()
 
 					select {
 					case <-processCtx.Done():
-						q.logger.Error("Worker %d timed out processing job\n", workerID)
+						q.logger.Error("Worker %d timed out processing job\n", nil, workerID)
 					case <-done:
 						// Job completed without timing out
 					}
@@ -83,7 +85,7 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 					q.wg.Done()
 
 				case <-ctx.Done():
-					q.logger.Info("Worker pool stopped")
+					q.logger.Info("Worker pool stopped", nil)
 					return
 				}
 			}

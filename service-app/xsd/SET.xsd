@@ -31,7 +31,7 @@
                                                 </xs:restriction>
                                             </xs:simpleType>
                                         </xs:element>
-                                        <xs:element name="Image" nillable="false">
+                                        <xs:element name="PDF" nillable="false">
                                             <xs:simpleType>
                                                 <xs:restriction base="xs:base64Binary">
                                                     <xs:minLength value="1"/>

@@ -8,7 +8,9 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"testing"
 
+	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -30,6 +32,15 @@ func GetProjectRoot() (string, error) {
 	}
 
 	return absPath, nil
+}
+
+func LoadXMLFileTesting(t *testing.T, filepath string) []byte {
+	data, err := os.ReadFile(filepath)
+	// reading the file.
+	if err != nil {
+		require.FailNow(t, "Failed to read XML file", err.Error())
+	}
+	return data
 }
 
 func WriteToFile(fileName string, message string, path string) {

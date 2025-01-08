@@ -8,19 +8,28 @@ import (
 	"strings"
 )
 
-type CommonValidator struct {
+type Validator struct {
 	doc           interface{}
 	errorMessages []string
 }
 
-func NewCommonValidator(doc interface{}) *CommonValidator {
-	return &CommonValidator{
+func NewValidator(doc interface{}) *Validator {
+	return &Validator{
 		doc:           doc,
 		errorMessages: []string{},
 	}
 }
 
-func (v *CommonValidator) WitnessSignatureFullNameAddressValidator(page string, section string) bool {
+func (v *Validator) AddValidatorErrorMessage(msg string) {
+	v.errorMessages = append(v.errorMessages, msg)
+}
+
+func (v *Validator) GetValidatorErrorMessages() []string {
+	errorMessages := []string{}
+	return append(errorMessages, v.errorMessages...)
+}
+
+func (v *Validator) WitnessSignatureFullNameAddressValidator(page string, section string) bool {
 	if !v.formHasWitnessSignature(page, section) {
 		v.AddValidatorErrorMessage(fmt.Sprintf("%s %s Witness Signature not set.", page, section))
 	}
@@ -36,40 +45,14 @@ func (v *CommonValidator) WitnessSignatureFullNameAddressValidator(page string, 
 	return len(v.errorMessages) == 0
 }
 
-func (v *CommonValidator) formHasWitnessSignature(page, section string) bool {
-	signature, err := v.GetFieldByPath(page, section, "Witness", "Signature")
-	if err == nil && signature[0].(bool) {
-		return true
-	}
-	return false
-}
-
-func (v *CommonValidator) formHasWitnessFullName(page, section string) bool {
-	fullName, err := v.GetFieldByPath(page, section, "Witness", "FullName")
-	if err == nil && fullName[0] != "" {
-		return true
-	}
-	return false
-}
-
-func (v *CommonValidator) formHasWitnessAddress(page, section string) bool {
-	addressLine1, err1 := v.GetFieldByPath(page, section, "Witness", "Address", "Address1")
-	postcode, err2 := v.GetFieldByPath(page, section, "Witness", "Address", "Postcode")
-
-	// Check that addressLine1 and postcode contain non-empty strings
-	if err1 == nil && err2 == nil && addressLine1[0] != "" && postcode[0] != "" {
-		return true
-	}
-
-	return false
-}
-
-func (v *CommonValidator) AddValidatorErrorMessage(msg string) {
-	v.errorMessages = append(v.errorMessages, msg)
-}
-
-// Uses reflection to dynamically access nested struct fields and handles array/slice
-func (v *CommonValidator) GetFieldByPath(page, section string, fields ...string) ([]interface{}, error) {
+// GetFieldByPath retrieves a field by its path in the document.
+// The path is a set of strings, where each string is a field name or a field name with an optional index.
+// For example, "Page1[0].Section1.Witness.FullName" is a valid path.
+// If any part of the path does not exist, an error is returned.
+// The function returns a slice of interfaces containing the values of the field.
+// If the field is a slice or array, the function returns a slice of interfaces containing the elements of the slice or array.
+// If the field is a string, bool, or unsupported type, the function returns an error.
+func (v *Validator) GetFieldByPath(page, section string, fields ...string) ([]interface{}, error) {
 	current := reflect.ValueOf(v.doc).Elem()
 
 	// Start navigation through the fields path
@@ -128,7 +111,35 @@ func (v *CommonValidator) GetFieldByPath(page, section string, fields ...string)
 	}
 }
 
-// Handles field names with optional indices e.g. "Page12[0]"
+func (v *Validator) formHasWitnessSignature(page, section string) bool {
+	signature, err := v.GetFieldByPath(page, section, "Witness", "Signature")
+	if err == nil && signature[0].(bool) {
+		return true
+	}
+	return false
+}
+
+func (v *Validator) formHasWitnessFullName(page, section string) bool {
+	fullName, err := v.GetFieldByPath(page, section, "Witness", "FullName")
+	if err == nil && fullName[0] != "" {
+		return true
+	}
+	return false
+}
+
+func (v *Validator) formHasWitnessAddress(page, section string) bool {
+	addressLine1, err1 := v.GetFieldByPath(page, section, "Witness", "Address", "Address1")
+	postcode, err2 := v.GetFieldByPath(page, section, "Witness", "Address", "Postcode")
+
+	// Check that addressLine1 and postcode contain non-empty strings
+	if err1 == nil && err2 == nil && addressLine1[0] != "" && postcode[0] != "" {
+		return true
+	}
+
+	return false
+}
+
+// Helper function to handle field names with optional indices e.g. "Page12[0]"
 func parseFieldWithIndex(field string) (string, *int, error) {
 	if !strings.Contains(field, "[") {
 		return field, nil, nil // No index specified
@@ -144,12 +155,4 @@ func parseFieldWithIndex(field string) (string, *int, error) {
 	}
 
 	return name, &index, nil
-}
-
-func (v *CommonValidator) GetValidatorErrorMessages() []string {
-	errorMessages := []string{}
-	for _, msg := range v.errorMessages {
-		errorMessages = append(errorMessages, msg+"\n")
-	}
-	return errorMessages
 }

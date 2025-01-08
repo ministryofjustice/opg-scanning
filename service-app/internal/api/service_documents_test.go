@@ -78,7 +78,6 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 	}), "POST", mock.Anything, mock.Anything).Return(mockResponseBytes, nil)
 
 	ctx := context.Background()
-
 	response, err := service.AttachDocuments(ctx, caseResponse)
 	if err != nil {
 		t.Fatalf("AttachDocuments returned error: %v", err)
