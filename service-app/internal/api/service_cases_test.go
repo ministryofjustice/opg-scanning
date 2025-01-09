@@ -9,8 +9,9 @@ import (
 	"testing"
 
 	"github.com/ministryofjustice/opg-scanning/config"
+	"github.com/ministryofjustice/opg-scanning/internal/auth"
+	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
-	"github.com/ministryofjustice/opg-scanning/internal/mocks"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/stretchr/testify/mock"
 )
@@ -105,7 +106,9 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 		logger := *logger.NewLogger(&mockConfig)
 
 		// Mock dependencies
-		mockHttpClient, mockHttpMiddleware, _ := mocks.PrepareMocks(&mockConfig, &logger)
+		mockHttpClient, _, _, tokenGenerator := auth.PrepareMocks(&mockConfig, &logger)
+		httpMiddleware, _ := httpclient.NewMiddleware(mockHttpClient, tokenGenerator)
+
 		mockHttpClient.On("HTTPRequest", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Maybe().
 			Run(func(args mock.Arguments) {
@@ -128,7 +131,7 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 			}).
 			Return([]byte(`{"UID": "dummy-uid-1234"}`), nil)
 
-		client := NewClient(mockHttpMiddleware)
+		client := NewClient(httpMiddleware)
 		service := NewService(client, &set)
 
 		ctx := context.Background()

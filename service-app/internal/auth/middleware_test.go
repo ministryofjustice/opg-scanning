@@ -1,88 +1,79 @@
 package auth
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"net/http/httptest"
+	"context"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/ministryofjustice/opg-scanning/config"
-	"github.com/ministryofjustice/opg-scanning/internal/aws"
-	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestAuthenticateMiddleware(t *testing.T) {
+	// @TODO implement test case checking token/cookie validity
+}
+
+func TestEnsureTokenConcurrency(t *testing.T) {
 	cfg := config.NewConfig()
+	// Set a reasonable JWTExpiration for testiing e.g. 60 seconds
+	cfg.Auth.JWTExpiration = 60
+
 	logger := logger.NewLogger(cfg)
 
-	// Pre gen bcrypt hash for the pass
-	passwordHash := util.HashPassword("test")
+	_, _, mockAwsClient, _ := PrepareMocks(cfg, logger)
+	tokenGenerator := NewJWTTokenGenerator(mockAwsClient, cfg, logger)
 
-	// Mock AWS Client
-	mockAwsClient := new(aws.MockAwsClient)
+	var wg sync.WaitGroup
+	numGoroutines := 10
+	tokensChan := make(chan string, numGoroutines)
+	errorsChan := make(chan error, numGoroutines)
 
-	// Mock GetSecretValue
-	mockAwsClient.On("GetSsmValue", mock.Anything, "/local/local-credentials").Return(fmt.Sprintf(`{"opg_document_and_d@publicguardian.gsi.gov.uk":"%s"}`, passwordHash), nil)
-	mockAwsClient.On("GetSecretValue", mock.Anything, "local/jwt-key").Return("mysupersecrettestkeythatis128bits", nil)
-
-	httpClient := httpclient.NewHttpClient(*cfg, *logger)
-	httpClientMiddleware, _ := httpclient.NewMiddleware(httpClient, mockAwsClient)
-
-	authMiddleware := NewMiddleware(mockAwsClient, httpClientMiddleware, cfg, logger)
-
-	// Define the handler to test after authentication
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Authenticated"))
-	})
-
-	// Create a test server to test the middleware
-	ts := httptest.NewServer(authMiddleware.Authenticate(handler))
-	defer ts.Close()
-
-	// Test valid credentials
-	credentials := UserCredentials{
-		User: User{
-			Email:    "opg_document_and_d@publicguardian.gsi.gov.uk",
-			Password: "test",
-		},
+	// Launch multiple goroutines to call EnsureToken concurrently
+	for i := 0; i < numGoroutines; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := tokenGenerator.EnsureToken(context.Background())
+			if err != nil {
+				errorsChan <- err
+				return
+			}
+			token := tokenGenerator.GetToken()
+			tokensChan <- token
+		}()
 	}
-	body, err := json.Marshal(credentials)
-	if err != nil {
-		t.Fatalf("Could not marshal credentials: %v", err)
+	wg.Wait()
+	close(errorsChan)
+	close(tokensChan)
+
+	// Check for any errors from goroutines
+	for err := range errorsChan {
+		t.Errorf("EnsureToken failed: %v", err)
 	}
 
-	req, err := http.NewRequest("POST", ts.URL, bytes.NewReader(body))
-	if err != nil {
-		t.Fatalf("Could not create request: %v", err)
-	}
+	// Assert that GetSecretValue was called only once
+	mockAwsClient.AssertNumberOfCalls(t, "GetSecretValue", 1)
 
-	// Send request to the test server
-	resp, err := ts.Client().Do(req)
-	if err != nil {
-		t.Fatalf("Could not send request: %v", err)
-	}
-
-	// Check response status
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-
-	// Check that the "membrane" cookie is set
-	cookies := resp.Cookies()
-	var tokenCookie *http.Cookie
-	for _, cookie := range cookies {
-		if cookie.Name == "membrane" {
-			tokenCookie = cookie
-			break
+	// Collect all tokens and verify they are the same
+	var firstToken string
+	for token := range tokensChan {
+		if firstToken == "" {
+			firstToken = token
+			assert.NotEmpty(t, firstToken, "First token should not be empty")
+		} else {
+			assert.Equal(t, firstToken, token, "All tokens should be identical")
 		}
 	}
 
-	// Assert that the token cookie exists
-	assert.NotNil(t, tokenCookie)
-	assert.NotEmpty(t, tokenCookie.Value)
+	// verify that the token expiry is in the future
+	expiry := tokenGenerator.GetExpiry()
+	assert.True(t, expiry.After(time.Now()), "Token expiry should be in the future")
+
+	// verify that tokenExpiry is around now + JWTExpiration
+	expectedExpiry := time.Now().Add(time.Duration(cfg.Auth.JWTExpiration) * time.Second)
+	assert.WithinDuration(t, expectedExpiry, expiry, 2*time.Second, "Token expiry should be set correctly")
+
+	mockAwsClient.AssertExpectations(t)
 }

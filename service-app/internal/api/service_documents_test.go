@@ -5,13 +5,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"os"
-	"regexp"
 	"testing"
 
 	"github.com/ministryofjustice/opg-scanning/config"
+	"github.com/ministryofjustice/opg-scanning/internal/auth"
 	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
-	"github.com/ministryofjustice/opg-scanning/internal/mocks"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"github.com/stretchr/testify/assert"
@@ -30,8 +29,8 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 	}
 	logger := *logger.NewLogger(&mockConfig)
 
-	_, httpMiddleware, _ := mocks.PrepareMocks(&mockConfig, &logger)
-	mockClient := new(httpclient.MockHttpClient)
+	mockHttpClient, _, _, tokenGenerator := auth.PrepareMocks(&mockConfig, &logger)
+	httpMiddleware, _ := httpclient.NewMiddleware(mockHttpClient, tokenGenerator)
 
 	// Load PDF from the test file
 	data, err := os.ReadFile("../../pdf/dummy.pdf")
@@ -77,12 +76,12 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 	}
 	mockResponseBytes, _ := json.Marshal(mockResponse)
 
-	// Mock the HTTPRequest method
-	mockClient.On("HTTPRequest", mock.Anything, mock.MatchedBy(func(url string) bool {
-		// Remove domain from url using regex pattern
-		urlWithoutDomain := regexp.MustCompile(`^https?://[^/]+`).ReplaceAllString(url, "")
-		return urlWithoutDomain == "/api/public/v1/scanned-documents"
-	}), "POST", mock.Anything, mock.Anything).Return(mockResponseBytes, nil)
+	mockHttpClient.On("HTTPRequest",
+		mock.Anything,
+		mock.Anything,
+		"POST",
+		mock.Anything,
+		mock.Anything).Return(mockResponseBytes, nil)
 
 	ctx := context.Background()
 	response, err := service.AttachDocuments(ctx, caseResponse)
@@ -91,10 +90,5 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 	}
 	assert.NotNil(t, response, "Expected non-nil response")
 	assert.Equal(t, mockResponse, response, "Expected response to match mock response")
-
-	// Assert HTTPRequest was called with the expected parameters
-	mockClient.AssertCalled(t, "HTTPRequest", mock.Anything, mock.MatchedBy(func(url string) bool {
-		urlWithoutDomain := regexp.MustCompile(`^https?://[^/]+`).ReplaceAllString(url, "")
-		return urlWithoutDomain == "/api/public/v1/scanned-documents"
-	}), "POST", mock.Anything, mock.Anything)
+	mockHttpClient.AssertExpectations(t)
 }

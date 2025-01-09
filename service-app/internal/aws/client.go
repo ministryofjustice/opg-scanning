@@ -2,8 +2,10 @@ package aws
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	awsSdk "github.com/aws/aws-sdk-go-v2/aws"
@@ -17,6 +19,7 @@ import (
 type AwsClientInterface interface {
 	GetSecretValue(ctx context.Context, secretName string) (string, error)
 	GetSsmValue(ctx context.Context, secretName string) (string, error)
+	FetchCredentials(ctx context.Context) (map[string]string, error)
 }
 
 type AwsClient struct {
@@ -110,4 +113,24 @@ func (a *AwsClient) PersistFormData(ctx context.Context, body io.Reader, docType
 	}
 
 	return fileName, nil
+}
+
+func (a *AwsClient) FetchCredentials(ctx context.Context) (map[string]string, error) {
+	secretValue, err := a.GetSsmValue(ctx, a.config.Auth.CredentialsARN)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve secret from AWS: %w", err)
+	}
+
+	secretValue = strings.TrimPrefix(secretValue, "kms:alias/aws/ssm:")
+
+	var credentials map[string]string
+	if err := json.Unmarshal([]byte(secretValue), &credentials); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal credentials: %w", err)
+	}
+
+	if len(credentials) == 0 {
+		return nil, fmt.Errorf("no credentials found in secret")
+	}
+
+	return credentials, nil
 }

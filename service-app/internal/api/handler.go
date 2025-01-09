@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/ministryofjustice/opg-go-common/telemetry"
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/auth"
@@ -33,19 +32,27 @@ type IndexController struct {
 
 func NewIndexController(awsClient *aws.AwsClient, appConfig *config.Config) *IndexController {
 	logger := logger.NewLogger(appConfig)
+
+	// Create dependencies
 	httpClient := httpclient.NewHttpClient(*appConfig, *logger)
-	httpMiddleware, err := httpclient.NewMiddleware(httpClient, awsClient)
-	if err != nil {
-		logger.Error("Failed to create middleware: %v", nil, err)
-		return nil
+	tokenGenerator := auth.NewJWTTokenGenerator(awsClient, appConfig, logger)
+	cookieHelper := auth.MembraneCookieHelper{
+		CookieName: "membrane",
+		Secure:     appConfig.App.Environment != "local",
 	}
+	authenticator := auth.NewBasicAuthAuthenticator(awsClient, cookieHelper, tokenGenerator)
+
+	// Create authentication middleware
+	authMiddleware := auth.NewMiddleware(authenticator, tokenGenerator, cookieHelper, logger)
+	// Create HTTP middleware
+	httpMiddleware, _ := httpclient.NewMiddleware(httpClient, tokenGenerator)
 
 	return &IndexController{
 		config:         appConfig,
 		logger:         logger,
 		validator:      ingestion.NewValidator(),
 		httpMiddleware: httpMiddleware,
-		authMiddleware: auth.NewMiddleware(awsClient, httpMiddleware, appConfig, logger),
+		authMiddleware: authMiddleware,
 		Queue:          ingestion.NewJobQueue(appConfig),
 		AwsClient:      awsClient,
 	}
@@ -57,7 +64,7 @@ func (c *IndexController) HandleRequests() {
 
 	// Protect the /ingest route with JWT validation (using the authMiddleware)
 	http.Handle("/ingest", telemetry.Middleware(c.logger.SlogLogger)(
-		c.authMiddleware.CheckAuth(http.HandlerFunc(c.IngestHandler)),
+		c.authMiddleware.CheckAuthMiddleware(http.HandlerFunc(c.IngestHandler)),
 	))
 
 	c.logger.Info("Starting server on :"+c.config.HTTP.Port, nil)
@@ -65,21 +72,23 @@ func (c *IndexController) HandleRequests() {
 }
 
 func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
-	// This handler will pass on to the Authenticate middleware that will validate the user
-	// credentials and issue a token.
-	c.authMiddleware.Authenticate(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// This function will only be called if authentication is successful
-		w.Write([]byte("Authentication successful"))
-	})).ServeHTTP(w, r)
+	// Authenticate user credentials and issue JWT token
+	_, err := c.authMiddleware.Authenticator.Authenticate(w, r)
+	if err != nil {
+		c.respondWithError(w, http.StatusUnauthorized, "Authentication failed", err)
+		return
+	}
+
+	w.Write([]byte("Authentication successful"))
 }
 
 func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract claims from context
-	_, ok := r.Context().Value("claims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Unauthorized: Unable to extract claims", http.StatusUnauthorized)
-		return
-	}
+	// _, ok := r.Context().Value("claims").(jwt.MapClaims)
+	// if !ok {
+	// 	c.respondWithError(w, http.StatusUnauthorized, "Unauthorized: Unable to extract claims", nil)
+	// 	return
+	// }
 
 	if r.Method != http.MethodPost {
 		c.respondWithError(w, http.StatusMethodNotAllowed, "Invalid HTTP method", nil)
