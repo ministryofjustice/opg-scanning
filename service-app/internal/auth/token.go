@@ -12,7 +12,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 )
 
-// Returns a token after 10 minutes
+// Refresh token after 10 minutes
 const secretTTL = 10 * time.Minute
 
 type TokenGenerator interface {

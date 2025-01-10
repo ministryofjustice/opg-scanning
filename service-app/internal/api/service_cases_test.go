@@ -95,14 +95,7 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 		t.Parallel()
 
 		set := parseXMLPayload(t, tt.xmlPayload)
-		mockConfig := config.Config{
-			Auth: config.Auth{
-				ApiUsername:    "opg_document_and_d@publicguardian.gsi.gov.uk",
-				JWTSecretARN:   "local/jwt-key",
-				CredentialsARN: "local/local-credentials",
-				JWTExpiration:  3600,
-			},
-		}
+		mockConfig := *config.NewConfig()
 		logger := *logger.NewLogger(&mockConfig)
 
 		// Mock dependencies
