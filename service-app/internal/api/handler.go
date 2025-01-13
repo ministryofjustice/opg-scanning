@@ -60,10 +60,10 @@ func NewIndexController(awsClient *aws.AwsClient, appConfig *config.Config) *Ind
 
 func (c *IndexController) HandleRequests() {
 	// Create the route to handle user authentication and issue JWT token
-	http.Handle("/api/ddc", http.HandlerFunc(c.AuthHandler))
+	http.Handle("/auth/sessions", http.HandlerFunc(c.AuthHandler))
 
 	// Protect the route with JWT validation (using the authMiddleware)
-	http.Handle("/auth/sessions", telemetry.Middleware(c.logger.SlogLogger)(
+	http.Handle("/api/ddc", telemetry.Middleware(c.logger.SlogLogger)(
 		c.authMiddleware.CheckAuthMiddleware(http.HandlerFunc(c.IngestHandler)),
 	))
 

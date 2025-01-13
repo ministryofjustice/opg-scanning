@@ -18,7 +18,6 @@ import (
 
 type AwsClientInterface interface {
 	GetSecretValue(ctx context.Context, secretName string) (string, error)
-	GetSsmValue(ctx context.Context, secretName string) (string, error)
 	FetchCredentials(ctx context.Context) (map[string]string, error)
 }
 

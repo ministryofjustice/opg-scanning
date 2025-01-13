@@ -1,23 +1,16 @@
 package auth
 
 import (
-	"fmt"
-
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/mocks"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"github.com/stretchr/testify/mock"
 )
 
 func PrepareMocks(mockConfig *config.Config, logger *logger.Logger) (*mocks.MockHttpClient, *Middleware, *aws.MockAwsClient, *JWTTokenGenerator) {
-	// Hash the password as required
-	passwordHash := util.HashPassword("test")
-
 	// Initialize the mock AWS client
 	mockAwsClient := new(aws.MockAwsClient)
-	mockAwsClient.On("GetSsmValue", mock.Anything, "/local/local-credentials").Maybe().Return(fmt.Sprintf("opg_document_and_d@publicguardian.gsi.gov.uk:%s", passwordHash), nil)
 	mockAwsClient.On("GetSecretValue", mock.Anything, "local/jwt-key").Maybe().Return("mysupersecrettestkeythatis128bits", nil)
 	mockAwsClient.On("FetchCredentials", mock.Anything).Maybe().Return(map[string]string{
 		mockConfig.Auth.ApiUsername: "test",
