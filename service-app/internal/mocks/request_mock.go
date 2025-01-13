@@ -1,4 +1,4 @@
-package httpclient
+package mocks
 
 import (
 	"context"
