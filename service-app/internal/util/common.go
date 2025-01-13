@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func GetProjectRoot() (string, error) {
@@ -86,13 +85,4 @@ func PhpSerialize(data map[string]interface{}) string {
 
 	sb.WriteString("}")
 	return sb.String()
-}
-
-// Generates a bcrypt hash for the given password
-func HashPassword(password string) string {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		log.Fatalf("Error hashing password: %v", err)
-	}
-	return string(hashedPassword)
 }
