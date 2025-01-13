@@ -33,9 +33,10 @@ type (
 	}
 
 	Auth struct {
-		ApiUsername   string `envconfig:"API_USERNAME" default:"opg_document_and_d@publicguardian.gsi.gov.uk"`
-		JWTSecretARN  string `envconfig:"JWT_SECRET_ARN" default:"local/jwt-key"`
-		JWTExpiration int    `envconfig:"JWT_EXPIRATION" default:"3600"`
+		ApiUsername    string `envconfig:"API_USERNAME" default:"opg_document_and_d@publicguardian.gsi.gov.uk"`
+		JWTSecretARN   string `envconfig:"JWT_SECRET_ARN" default:"local/jwt-key"`
+		CredentialsARN string `envconfig:"CREDENTIALS_ARN" default:"/local/local-credentials"`
+		JWTExpiration  int    `envconfig:"JWT_EXPIRATION" default:"3600"`
 	}
 
 	HTTP struct {
