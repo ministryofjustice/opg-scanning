@@ -6,6 +6,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/mocks"
 	"github.com/stretchr/testify/mock"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func PrepareMocks(mockConfig *config.Config, logger *logger.Logger) (*mocks.MockHttpClient, *Middleware, *aws.MockAwsClient, *JWTTokenGenerator) {
@@ -13,7 +14,7 @@ func PrepareMocks(mockConfig *config.Config, logger *logger.Logger) (*mocks.Mock
 	mockAwsClient := new(aws.MockAwsClient)
 	mockAwsClient.On("GetSecretValue", mock.Anything, "local/jwt-key").Maybe().Return("mysupersecrettestkeythatis128bits", nil)
 	mockAwsClient.On("FetchCredentials", mock.Anything).Maybe().Return(map[string]string{
-		mockConfig.Auth.ApiUsername: "test",
+		mockConfig.Auth.ApiUsername: hashPassword("password"),
 	}, nil)
 	// Create the HTTP client and middleware
 	mockHttpClient := new(mocks.MockHttpClient)
@@ -29,4 +30,12 @@ func PrepareMocks(mockConfig *config.Config, logger *logger.Logger) (*mocks.Mock
 	authMiddleware := NewMiddleware(authenticator, tokenGenerator, cookieHelper, logger)
 
 	return mockHttpClient, authMiddleware, mockAwsClient, tokenGenerator
+}
+
+func hashPassword(password string) string {
+	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		panic("failed to hash password in mock: " + err.Error())
+	}
+	return string(hashedBytes)
 }

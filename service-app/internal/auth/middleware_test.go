@@ -11,10 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAuthenticateMiddleware(t *testing.T) {
-	// @TODO implement test case checking token/cookie validity
-}
-
 func TestEnsureTokenConcurrency(t *testing.T) {
 	cfg := config.NewConfig()
 	// Set a reasonable JWTExpiration for testiing e.g. 60 seconds
