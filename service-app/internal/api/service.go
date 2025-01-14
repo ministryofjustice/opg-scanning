@@ -91,6 +91,10 @@ func (s *Service) CreateCaseStub(ctx context.Context) (*types.ScannedCaseRespons
 		}, nil
 	}
 
+	if s.Client.Middleware == nil {
+		return nil, fmt.Errorf("middleware is nil")
+	}
+
 	url := fmt.Sprintf("%s/%s", s.Client.Middleware.Config.App.SiriusBaseURL, s.Client.Middleware.Config.App.SiriusCaseStubURL)
 
 	resp, err := s.Client.ClientRequest(ctx, scannedCaseRequest, url)
