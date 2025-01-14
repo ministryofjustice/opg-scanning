@@ -1,10 +1,6 @@
-.PHONY: all test clean build start
+.PHONY: all test build start clean
 
-all: build test start clean
-
-build:
-	@echo "Building the application image using Docker Compose..."
-	@docker-compose build || { echo "Failed to build the application image"; exit 1; }
+all: test start clean
 
 test:
 	@echo "Running tests in the service-app-test container..."
@@ -12,7 +8,12 @@ test:
 	@docker-compose run --rm service-app-test || { echo "Tests failed"; exit 1; }
 	@docker-compose down --remove-orphans --volumes service-app-test
 
+build:
+	@echo "Building the application..."
+	@docker-compose build || { echo "Failed to build the application image"; exit 1; }
+
 start:
+	@${MAKE} build
 	@echo "Running the application using Docker Compose..."
 	@docker-compose up -d || { echo "Failed to start Docker Compose"; exit 1; }
 
