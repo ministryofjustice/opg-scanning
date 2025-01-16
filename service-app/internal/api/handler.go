@@ -27,10 +27,10 @@ type IndexController struct {
 	httpMiddleware *httpclient.Middleware
 	authMiddleware *auth.Middleware
 	Queue          *ingestion.JobQueue
-	AwsClient      *aws.AwsClient
+	AwsClient      aws.AwsClientInterface
 }
 
-func NewIndexController(awsClient *aws.AwsClient, appConfig *config.Config) *IndexController {
+func NewIndexController(awsClient aws.AwsClientInterface, appConfig *config.Config) *IndexController {
 	logger := logger.NewLogger(appConfig)
 
 	// Create dependencies
@@ -111,13 +111,13 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 
 	parsedBaseXml, err := c.validateAndSanitizeXML(bodyStr)
 	if err != nil {
-		c.respondWithError(w, http.StatusBadRequest, "Invalid XML data", err)
+		c.respondWithError(w, http.StatusBadRequest, "Validate and sanitize XML failed", err)
 		return
 	}
 
 	// Validate the parsed set
 	if err := c.validator.ValidateSet(parsedBaseXml); err != nil {
-		c.respondWithError(w, http.StatusBadRequest, "Invalid XML data", err)
+		c.respondWithError(w, http.StatusBadRequest, "Validate set failed", err)
 		return
 	}
 
