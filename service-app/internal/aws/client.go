@@ -19,6 +19,7 @@ import (
 type AwsClientInterface interface {
 	GetSecretValue(ctx context.Context, secretName string) (string, error)
 	FetchCredentials(ctx context.Context) (map[string]string, error)
+	PersistFormData(ctx context.Context, body io.Reader, docType string) (string, error)
 }
 
 type AwsClient struct {
