@@ -59,7 +59,10 @@ func NewIndexController(awsClient aws.AwsClientInterface, appConfig *config.Conf
 }
 
 func (c *IndexController) HandleRequests() {
-	http.Handle("/health-check", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	http.Handle("/health-check", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	}))
 
 	// Create the route to handle user authentication and issue JWT token
 	http.Handle("/auth/sessions", http.HandlerFunc(c.AuthHandler))
