@@ -10,6 +10,7 @@ const (
 	DocumentTypeLP1F    = "LP1F"
 	DocumentTypeLP1H    = "LP1H"
 	DocumentTypeLP2     = "LP2"
+	DocumentCorresp     = "Correspondence"
 )
 
 const (
@@ -22,6 +23,12 @@ const (
 )
 
 var (
+	SupprotedDocumentTypes = []string{
+		DocumentTypeLP1F,
+		DocumentTypeLP1H,
+		DocumentCorresp,
+	}
+
 	LPATypeDocuments = []string{
 		DocumentTypeLPA002,
 		DocumentTypeLP1F,
