@@ -33,9 +33,6 @@ type AwsClient struct {
 func NewAwsClient(ctx context.Context, cfg awsSdk.Config, appConfig *config.Config) (*AwsClient, error) {
 	// Use the same endpoint for all services
 	customEndpoint := appConfig.Aws.Endpoint
-	if customEndpoint == "" {
-		return nil, fmt.Errorf("AWS_ENDPOINT is not set")
-	}
 
 	smClient := secretsmanager.NewFromConfig(cfg, func(o *secretsmanager.Options) {
 		o.BaseEndpoint = &customEndpoint
