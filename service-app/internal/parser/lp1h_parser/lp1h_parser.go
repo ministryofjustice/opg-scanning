@@ -1,11 +1,11 @@
-package lp1f_parser
+package lp1h_parser
 
 import (
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
-	lp1f_types "github.com/ministryofjustice/opg-scanning/internal/types/lpf1_types"
+	"github.com/ministryofjustice/opg-scanning/internal/types/lp1h_types"
 )
 
 func Parse(data []byte) (interface{}, error) {
-	doc := &lp1f_types.LP1FDocument{}
+	doc := &lp1h_types.LP1HDocument{}
 	return parser.DocumentParser(data, doc)
 }
