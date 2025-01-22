@@ -1,20 +1,20 @@
-package lp1f_parser
+package lp1h_parser
 
 import (
 	"fmt"
 
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
-	"github.com/ministryofjustice/opg-scanning/internal/types/lpf1_types"
+	"github.com/ministryofjustice/opg-scanning/internal/types/lp1h_types"
 )
 
 type Validator struct {
-	doc             *lpf1_types.LP1FDocument
+	doc             *lp1h_types.LP1HDocument
 	commonValidator *parser.Validator
 }
 
 func NewValidator() *Validator {
 	return &Validator{
-		doc: &lpf1_types.LP1FDocument{},
+		doc: &lp1h_types.LP1HDocument{},
 	}
 }
 
@@ -23,7 +23,7 @@ func (v *Validator) Setup(doc interface{}) error {
 		return fmt.Errorf("document is nil")
 	}
 
-	v.doc = doc.(*lpf1_types.LP1FDocument)
+	v.doc = doc.(*lp1h_types.LP1HDocument)
 	v.commonValidator = parser.NewValidator(v.doc)
 
 	return nil
@@ -34,7 +34,7 @@ func (v *Validator) Validate() error {
 	v.commonValidator.WitnessSignatureFullNameAddressValidator("Page10", "Section9")
 
 	// Section validations
-	v.commonValidator.ValidateSection("Page10", "Section9", "Donor")
+	// v.commonValidator.ValidateSection("Page10", "Section9", "Donor")
 	v.commonValidator.ValidateSection("Page11", "Section10", "")
 
 	// Iterate over each instance of Page12 (since its an array)

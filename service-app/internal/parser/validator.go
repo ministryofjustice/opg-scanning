@@ -6,13 +6,19 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
+// Validator is a struct that holds document data and validation error messages
 type Validator struct {
 	doc           interface{}
 	errorMessages []string
+	dates         []time.Time
 }
 
+// NewValidator creates a new instance of Validator
 func NewValidator(doc interface{}) *Validator {
 	return &Validator{
 		doc:           doc,
@@ -20,42 +26,23 @@ func NewValidator(doc interface{}) *Validator {
 	}
 }
 
+// AddValidatorErrorMessage adds an error message to the validator's list of error messages
 func (v *Validator) AddValidatorErrorMessage(msg string) {
 	v.errorMessages = append(v.errorMessages, msg)
 }
 
+// GetValidatorErrorMessages returns a copy of the validator's error messages
 func (v *Validator) GetValidatorErrorMessages() []string {
 	errorMessages := []string{}
 	return append(errorMessages, v.errorMessages...)
 }
 
-func (v *Validator) WitnessSignatureFullNameAddressValidator(page string, section string) bool {
-	if !v.formHasWitnessSignature(page, section) {
-		v.AddValidatorErrorMessage(fmt.Sprintf("%s %s Witness Signature not set.", page, section))
-	}
+// Helper functions for working with field values
 
-	if !v.formHasWitnessFullName(page, section) {
-		v.AddValidatorErrorMessage(fmt.Sprintf("%s %s Witness Full Name not set.", page, section))
-	}
-
-	if !v.formHasWitnessAddress(page, section) {
-		v.AddValidatorErrorMessage(fmt.Sprintf("%s %s Witness Address not valid.", page, section))
-	}
-
-	return len(v.errorMessages) == 0
-}
-
-// GetFieldByPath retrieves a field by its path in the document.
-// The path is a set of strings, where each string is a field name or a field name with an optional index.
-// For example, "Page1[0].Section1.Witness.FullName" is a valid path.
-// If any part of the path does not exist, an error is returned.
-// The function returns a slice of interfaces containing the values of the field.
-// If the field is a slice or array, the function returns a slice of interfaces containing the elements of the slice or array.
-// If the field is a string, bool, or unsupported type, the function returns an error.
+// GetFieldByPath retrieves a field by its path in the document
 func (v *Validator) GetFieldByPath(page, section string, fields ...string) ([]interface{}, error) {
 	current := reflect.ValueOf(v.doc).Elem()
 
-	// Start navigation through the fields path
 	for _, field := range append([]string{page, section}, fields...) {
 		if field == "" {
 			continue
@@ -66,13 +53,11 @@ func (v *Validator) GetFieldByPath(page, section string, fields ...string) ([]in
 			return nil, err
 		}
 
-		// Navigate to the field by name
 		current = current.FieldByName(fieldName)
 		if !current.IsValid() {
 			return nil, fmt.Errorf("field %s does not exist in path %v", field, fields)
 		}
 
-		// Dereference pointers
 		if current.Kind() == reflect.Ptr {
 			if current.IsNil() {
 				return nil, fmt.Errorf("field %s in path %v is nil", field, fields)
@@ -80,13 +65,11 @@ func (v *Validator) GetFieldByPath(page, section string, fields ...string) ([]in
 			current = current.Elem()
 		}
 
-		// Handle slices/arrays with optional index
 		if current.Kind() == reflect.Slice || current.Kind() == reflect.Array {
 			if index == nil {
 				continue
 			}
 
-			// If index is provided, access the specific element
 			if *index < 0 || *index >= current.Len() {
 				return nil, fmt.Errorf("index %d out of bounds for field %s", *index, field)
 			}
@@ -94,7 +77,6 @@ func (v *Validator) GetFieldByPath(page, section string, fields ...string) ([]in
 		}
 	}
 
-	// Return the final field value as a slice of interfaces
 	switch current.Kind() {
 	case reflect.String:
 		return []interface{}{current.String()}, nil
@@ -111,41 +93,12 @@ func (v *Validator) GetFieldByPath(page, section string, fields ...string) ([]in
 	}
 }
 
-func (v *Validator) formHasWitnessSignature(page, section string) bool {
-	signature, err := v.GetFieldByPath(page, section, "Witness", "Signature")
-	if err == nil && signature[0].(bool) {
-		return true
-	}
-	return false
-}
-
-func (v *Validator) formHasWitnessFullName(page, section string) bool {
-	fullName, err := v.GetFieldByPath(page, section, "Witness", "FullName")
-	if err == nil && fullName[0] != "" {
-		return true
-	}
-	return false
-}
-
-func (v *Validator) formHasWitnessAddress(page, section string) bool {
-	addressLine1, err1 := v.GetFieldByPath(page, section, "Witness", "Address", "Address1")
-	postcode, err2 := v.GetFieldByPath(page, section, "Witness", "Address", "Postcode")
-
-	// Check that addressLine1 and postcode contain non-empty strings
-	if err1 == nil && err2 == nil && addressLine1[0] != "" && postcode[0] != "" {
-		return true
-	}
-
-	return false
-}
-
 // Helper function to handle field names with optional indices e.g. "Page12[0]"
 func parseFieldWithIndex(field string) (string, *int, error) {
 	if !strings.Contains(field, "[") {
 		return field, nil, nil // No index specified
 	}
 
-	// Extract the field name and index
 	name := field[:strings.Index(field, "[")]
 	indexStr := field[strings.Index(field, "[")+1 : strings.Index(field, "]")]
 
@@ -155,4 +108,173 @@ func parseFieldWithIndex(field string) (string, *int, error) {
 	}
 
 	return name, &index, nil
+}
+
+// Validation functions for form fields
+
+// WitnessSignatureFullNameAddressValidator validates the presence of witness signature, full name, and address
+func (v *Validator) WitnessSignatureFullNameAddressValidator(page string, section string) bool {
+	if !v.formHasWitnessSignature(page, section) {
+		v.AddValidatorErrorMessage(fmt.Sprintf("%s %s Witness Signature not set.", page, section))
+	}
+
+	if !v.formHasWitnessFullName(page, section) {
+		v.AddValidatorErrorMessage(fmt.Sprintf("%s %s Witness Full Name not set.", page, section))
+	}
+
+	if !v.formHasWitnessAddress(page, section) {
+		v.AddValidatorErrorMessage(fmt.Sprintf("%s %s Witness Address not valid.", page, section))
+	}
+
+	return len(v.errorMessages) == 0
+}
+
+// ValidateSection validates the presence and format of a signature date for a specific section
+func (v *Validator) ValidateSection(page, section, field string) {
+	dateStr, err := v.getFieldValues(page, section, field)
+	if err != nil {
+		v.AddValidatorErrorMessage(err.Error())
+		return
+	}
+
+	if date, err := validateSignatureDate(dateStr, field); err != nil {
+		v.AddValidatorErrorMessage(err.Error())
+	} else {
+		v.dates = append(v.dates, date)
+	}
+}
+
+// ApplicantSignatureValidator gathers applicant signature dates and validates them
+func (v *Validator) ApplicantSignatureValidator(page string) []time.Time {
+	var applicantSignatureDates []time.Time
+
+	// Retrieve and validate applicant signature dates
+	applicants, err := v.GetFieldByPath(page, "Section15", "Applicant")
+	if err != nil {
+		v.AddValidatorErrorMessage(fmt.Sprintf("failed to retrieve applicant data: %v", err))
+		return nil
+	}
+
+	for _, applicant := range applicants {
+		applicantVal := reflect.ValueOf(applicant)
+		if applicantVal.Kind() == reflect.Ptr {
+			applicantVal = applicantVal.Elem()
+		}
+
+		signatureField := applicantVal.FieldByName("Signature")
+		dateField := applicantVal.FieldByName("Date")
+
+		if !signatureField.IsValid() || !signatureField.Bool() {
+			continue
+		}
+		if !dateField.IsValid() || dateField.Kind() != reflect.String {
+			v.AddValidatorErrorMessage("applicant date is missing or invalid")
+			continue
+		}
+
+		dateStr := dateField.String()
+		signatureDate, err := util.ParseDate(dateStr, "")
+		if err != nil {
+			v.AddValidatorErrorMessage("applicant date is invalid")
+			continue
+		}
+
+		applicantSignatureDates = append(applicantSignatureDates, signatureDate)
+	}
+
+	// Ensure applicant dates follow correct ordering rules
+	if len(applicantSignatureDates) == 0 {
+		v.AddValidatorErrorMessage("no valid applicant signature/dates found")
+	} else {
+		v.checkDatesAgainstEarliestApplicantDate(applicantSignatureDates)
+	}
+
+	return applicantSignatureDates
+}
+
+// Checks if the date string is valid and not in the future
+func validateSignatureDate(dateStr, label string) (time.Time, error) {
+	parsedDate, err := util.ParseDate(dateStr, "")
+	if err != nil {
+		return time.Time{}, fmt.Errorf("invalid %s date format: %w", label, err)
+	}
+
+	if parsedDate.After(time.Now()) {
+		return time.Time{}, fmt.Errorf("%s date cannot be in the future", label)
+	}
+
+	return parsedDate, nil
+}
+
+// Helper function to check if all form dates are before the earliest applicant signature date
+func (v *Validator) checkDatesAgainstEarliestApplicantDate(applicantSignatureDates []time.Time) {
+	earliestDate := getEarliestDate(applicantSignatureDates)
+	for _, date := range v.dates {
+		if date.After(earliestDate) {
+			v.AddValidatorErrorMessage("all form dates must be before the earliest applicant signature date")
+			return
+		}
+	}
+}
+
+// Helper function to retrieve the earliest date from a list of dates
+func getEarliestDate(dates []time.Time) time.Time {
+	if len(dates) == 0 {
+		return time.Time{}
+	}
+	earliest := dates[0]
+	for _, date := range dates[1:] {
+		if date.Before(earliest) {
+			earliest = date
+		}
+	}
+	return earliest
+}
+
+// Helper functions for checking specific fields in the form
+
+// formHasWitnessSignature checks if the witness signature field is present and valid
+func (v *Validator) formHasWitnessSignature(page, section string) bool {
+	signature, err := v.GetFieldByPath(page, section, "Witness", "Signature")
+	if err == nil && signature[0].(bool) {
+		return true
+	}
+	return false
+}
+
+// formHasWitnessFullName checks if the witness full name field is present and valid
+func (v *Validator) formHasWitnessFullName(page, section string) bool {
+	fullName, err := v.GetFieldByPath(page, section, "Witness", "FullName")
+	if err == nil && fullName[0] != "" {
+		return true
+	}
+	return false
+}
+
+// formHasWitnessAddress checks if the witness address fields are present and valid
+func (v *Validator) formHasWitnessAddress(page, section string) bool {
+	addressLine1, err1 := v.GetFieldByPath(page, section, "Witness", "Address", "Address1")
+	postcode, err2 := v.GetFieldByPath(page, section, "Witness", "Address", "Postcode")
+
+	if err1 == nil && err2 == nil && addressLine1[0] != "" && postcode[0] != "" {
+		return true
+	}
+
+	return false
+}
+
+// Retrieves and validates the signature and date fields for a section
+func (v *Validator) getFieldValues(page, section, field string) (string, error) {
+	signatureVal, err := v.GetFieldByPath(page, section, field, "Signature")
+	if err != nil || !signatureVal[0].(bool) {
+		return "", fmt.Errorf("%s %s %s signature not set or invalid", page, section, field)
+	}
+
+	dateVal, err := v.GetFieldByPath(page, section, field, "Date")
+	dateStr := dateVal[0].(string)
+	if err != nil || dateStr == "" {
+		return "", fmt.Errorf("missing %s %s %s date", page, section, field)
+	}
+
+	return dateStr, nil
 }
