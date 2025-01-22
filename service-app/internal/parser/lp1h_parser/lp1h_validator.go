@@ -3,14 +3,13 @@ package lp1h_parser
 import (
 	"fmt"
 
-	"github.com/ministryofjustice/opg-scanning/internal/parser/lp1f_parser"
+	"github.com/ministryofjustice/opg-scanning/internal/parser"
 	"github.com/ministryofjustice/opg-scanning/internal/types/lp1h_types"
 )
 
 type Validator struct {
-	// We use LP1F validator to validate the common fields
-	lp1f_parser.Validator
-	doc *lp1h_types.LP1HDocument
+	doc             *lp1h_types.LP1HDocument
+	commonValidator *parser.Validator
 }
 
 func NewValidator() *Validator {
@@ -25,20 +24,34 @@ func (v *Validator) Setup(doc interface{}) error {
 	}
 
 	v.doc = doc.(*lp1h_types.LP1HDocument)
-	v.Validator.Setup(v.doc)
+	v.commonValidator = parser.NewValidator(v.doc)
 
 	return nil
 }
 
 func (v *Validator) Validate() error {
-	// Validate the common LP1F fields
-	if err := v.Validator.Validate(); err != nil {
-		return err
+	// Common witness validations
+	v.commonValidator.WitnessSignatureFullNameAddressValidator("Page10", "Section9")
+
+	// Section validations
+	// v.commonValidator.ValidateSection("Page10", "Section9", "Donor")
+	v.commonValidator.ValidateSection("Page11", "Section10", "")
+
+	// Iterate over each instance of Page12 (since its an array)
+	// and validate them individually
+	for i := range v.doc.Page12 {
+		v.commonValidator.WitnessSignatureFullNameAddressValidator(fmt.Sprintf("Page12[%d]", i), "Section11")
+		v.commonValidator.ValidateSection(fmt.Sprintf("Page12[%d]", i), "Section11", "Attorney")
 	}
 
-	if v.doc.XMLName.Local != "LP1H" {
-		return fmt.Errorf("should be LP1H")
+	// Applicant validation iterations
+	for i := range v.doc.Page20 {
+		v.commonValidator.ApplicantSignatureValidator(fmt.Sprintf("Page20[%d]", i))
 	}
 
+	// Return errors if any
+	if messages := v.commonValidator.GetValidatorErrorMessages(); len(messages) > 0 {
+		return fmt.Errorf("failed to validate LP1F document: %v", messages)
+	}
 	return nil
 }
