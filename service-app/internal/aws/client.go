@@ -34,7 +34,7 @@ type AwsClient struct {
 func NewAwsClient(ctx context.Context, cfg awsSdk.Config, appConfig *config.Config) (*AwsClient, error) {
 	// Use the same endpoint for all services
 	var customEndpoint *string
-	if (appConfig.Aws.Endpoint != "") {
+	if appConfig.Aws.Endpoint != "" {
 		customEndpoint = aws.String(appConfig.Aws.Endpoint)
 	}
 
@@ -101,7 +101,8 @@ func (a *AwsClient) PersistFormData(ctx context.Context, body io.Reader, docType
 		Bucket:               &bucketName,
 		Key:                  &fileName,
 		Body:                 body,
-		ServerSideEncryption: types.ServerSideEncryptionAes256,
+		ServerSideEncryption: types.ServerSideEncryptionAwsKms,
+		SSEKMSKeyId:          &a.config.Aws.JobsQueueBucketKmsKey,
 	}
 
 	// Upload the file to S3
