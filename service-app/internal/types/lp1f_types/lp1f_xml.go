@@ -1,4 +1,4 @@
-package lpf1_types
+package lp1f_types
 
 import "github.com/ministryofjustice/opg-scanning/internal/types"
 

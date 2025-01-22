@@ -4,17 +4,17 @@ import (
 	"fmt"
 
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
-	"github.com/ministryofjustice/opg-scanning/internal/types/lpf1_types"
+	"github.com/ministryofjustice/opg-scanning/internal/types/lp1f_types"
 )
 
 type Validator struct {
-	doc             *lpf1_types.LP1FDocument
+	doc             *lp1f_types.LP1FDocument
 	commonValidator *parser.Validator
 }
 
 func NewValidator() *Validator {
 	return &Validator{
-		doc: &lpf1_types.LP1FDocument{},
+		doc: &lp1f_types.LP1FDocument{},
 	}
 }
 
@@ -23,7 +23,7 @@ func (v *Validator) Setup(doc interface{}) error {
 		return fmt.Errorf("document is nil")
 	}
 
-	v.doc = doc.(*lpf1_types.LP1FDocument)
+	v.doc = doc.(*lp1f_types.LP1FDocument)
 	v.commonValidator = parser.NewValidator(v.doc)
 
 	return nil

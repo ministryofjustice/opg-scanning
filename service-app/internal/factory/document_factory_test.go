@@ -8,7 +8,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
-	"github.com/ministryofjustice/opg-scanning/internal/types/lpf1_types"
+	"github.com/ministryofjustice/opg-scanning/internal/types/lp1f_types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -41,7 +41,7 @@ func TestProcessDocument_LP1F(t *testing.T) {
 	processedDoc, err := processor.Process()
 	require.NoError(t, err, "Document processing failed")
 
-	lp1fDoc, ok := processedDoc.(*lpf1_types.LP1FDocument)
+	lp1fDoc, ok := processedDoc.(*lp1f_types.LP1FDocument)
 	require.True(t, ok, "Expected processedDoc to be of type *lp1f_types.LP1FDocument")
 
 	assert.Equal(t, "ANDREW ROBERT", lp1fDoc.Page1.Section1.FirstName, "FirstName mismatch")

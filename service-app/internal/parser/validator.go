@@ -40,7 +40,7 @@ func (v *Validator) GetValidatorErrorMessages() []string {
 // Helper functions for working with field values
 
 // GetFieldByPath retrieves a field by its path in the document
-func (v *Validator) GetFieldByPath(page, section string, fields ...string) ([]interface{}, error) {
+func (v *Validator) GetFieldByPath(page string, section string, fields ...string) ([]interface{}, error) {
 	current := reflect.ValueOf(v.doc).Elem()
 
 	for _, field := range append([]string{page, section}, fields...) {
