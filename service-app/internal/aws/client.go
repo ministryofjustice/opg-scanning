@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/ministryofjustice/opg-scanning/config"
 )
 
@@ -32,21 +33,21 @@ type AwsClient struct {
 // Initializes all required AWS service clients.
 func NewAwsClient(ctx context.Context, cfg awsSdk.Config, appConfig *config.Config) (*AwsClient, error) {
 	// Use the same endpoint for all services
-	customEndpoint := appConfig.Aws.Endpoint
-	if customEndpoint == "" {
-		return nil, fmt.Errorf("AWS_ENDPOINT is not set")
+	var customEndpoint *string
+	if (appConfig.Aws.Endpoint != "") {
+		customEndpoint = aws.String(appConfig.Aws.Endpoint)
 	}
 
 	smClient := secretsmanager.NewFromConfig(cfg, func(o *secretsmanager.Options) {
-		o.BaseEndpoint = &customEndpoint
+		o.BaseEndpoint = customEndpoint
 	})
 
 	SsmClient := ssm.NewFromConfig(cfg, func(o *ssm.Options) {
-		o.BaseEndpoint = &customEndpoint
+		o.BaseEndpoint = customEndpoint
 	})
 
 	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.BaseEndpoint = &customEndpoint
+		o.BaseEndpoint = customEndpoint
 		o.UsePathStyle = appConfig.App.Environment == "local"
 	})
 

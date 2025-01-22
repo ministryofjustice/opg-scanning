@@ -14,9 +14,8 @@ type Logger struct {
 }
 
 func NewLogger(cfg *config.Config) *Logger {
-	slogLogger := telemetry.NewLogger("opg-scanning-service/getlist").With(
+	slogLogger := telemetry.NewLogger("opg-scanning-service").With(
 		slog.String("environment", cfg.App.Environment),
-		slog.String("service_name", "opg-scanning-service"),
 	)
 	return &Logger{
 		cfg:        cfg,

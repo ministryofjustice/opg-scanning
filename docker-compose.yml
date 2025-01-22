@@ -11,6 +11,11 @@ services:
       - AWS_SECRET_ACCESS_KEY=test
       - SECRETS_MANAGER_PREFIX=local/
       - ENVIRONMENT=local
+    healthcheck:
+      test: wget -O /dev/null -S 'http://localhost:8081/health-check' 2>&1 | grep 'HTTP/1.1 200 OK' || exit 1
+      interval: 5s
+      timeout: 2s
+      retries: 5
     depends_on:
       localstack:
         condition: service_healthy
