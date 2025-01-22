@@ -19,14 +19,27 @@ var scannedCaseResponse = &types.ScannedCaseResponse{
 const fileName = "SET_DDC_20250106093401__LPA_677ba389ab101.xml"
 
 func TestAwsQueue_PHPSerialization(t *testing.T) {
-	// Generate the message body
 	message := createMessageBody(scannedCaseResponse, fileName)
 
 	messageJson, err := json.Marshal(message)
 	assert.NoError(t, err, "Failed to marshal message to JSON")
 
 	expectedOutput := `{"content":"a:2:{s:3:\"uid\";s:12:\"700000001219\";s:8:\"filename\";s:45:\"SET_DDC_20250106093401__LPA_677ba389ab101.xml\";}","metadata":{"__name__":"Ddc\\Job\\FormJob"}}`
-	assert.JSONEq(t, expectedOutput, string(messageJson), "The serialized message does not match the expected output.")
+
+	var actual map[string]interface{}
+	var expected map[string]interface{}
+
+	err = json.Unmarshal(messageJson, &actual)
+	assert.NoError(t, err)
+
+	err = json.Unmarshal([]byte(expectedOutput), &expected)
+	assert.NoError(t, err)
+
+	assert.Equal(t, expected["metadata"], actual["metadata"])
+	expectedContent := expected["content"].(string)
+	actualContent := actual["content"].(string)
+
+	assert.Equal(t, expectedContent, actualContent, "The serialized PHP content does not match the expected output.")
 }
 
 func TestAwsQueue_QueueSetForProcessing(t *testing.T) {
