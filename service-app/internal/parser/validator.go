@@ -129,8 +129,8 @@ func (v *Validator) WitnessSignatureFullNameAddressValidator(page string, sectio
 	return len(v.errorMessages) == 0
 }
 
-// ValidateSection validates the presence and format of a signature date for a specific section
-func (v *Validator) ValidateSection(page, section, field string) {
+// Validates the presence and format of a signature date for a specific section
+func (v *Validator) ValidateSignatureDate(page, section, field string) {
 	dateStr, err := v.getFieldValues(page, section, field)
 	if err != nil {
 		v.AddValidatorErrorMessage(err.Error())

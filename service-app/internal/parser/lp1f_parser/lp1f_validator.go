@@ -34,14 +34,14 @@ func (v *Validator) Validate() error {
 	v.commonValidator.WitnessSignatureFullNameAddressValidator("Page10", "Section9")
 
 	// Section validations
-	v.commonValidator.ValidateSection("Page10", "Section9", "Donor")
-	v.commonValidator.ValidateSection("Page11", "Section10", "")
+	v.commonValidator.ValidateSignatureDate("Page10", "Section9", "Donor")
+	v.commonValidator.ValidateSignatureDate("Page11", "Section10", "")
 
 	// Iterate over each instance of Page12 (since its an array)
 	// and validate them individually
 	for i := range v.doc.Page12 {
 		v.commonValidator.WitnessSignatureFullNameAddressValidator(fmt.Sprintf("Page12[%d]", i), "Section11")
-		v.commonValidator.ValidateSection(fmt.Sprintf("Page12[%d]", i), "Section11", "Attorney")
+		v.commonValidator.ValidateSignatureDate(fmt.Sprintf("Page12[%d]", i), "Section11", "Attorney")
 	}
 
 	// Applicant validation iterations
