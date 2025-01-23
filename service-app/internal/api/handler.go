@@ -129,7 +129,9 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	// Create a new client and prepare to attach documents
 	client := NewClient(c.httpMiddleware)
 	service := NewService(client, parsedBaseXml)
-	scannedCaseResponse, err := service.CreateCaseStub(r.Context())
+	ctx, cancel := context.WithTimeout(r.Context(), time.Duration(c.config.HTTP.Timeout)*time.Second)
+	defer cancel()
+	scannedCaseResponse, err := service.CreateCaseStub(ctx)
 	if err != nil {
 		c.respondWithError(w, http.StatusInternalServerError, "Failed to create case stub in Sirius", err)
 		return
