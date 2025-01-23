@@ -8,8 +8,8 @@ import (
 )
 
 type Sanitizer struct {
-	doc             *lp1f_types.LP1FDocument
-	commonSanitizer *parser.Sanitizer
+	doc           *lp1f_types.LP1FDocument
+	baseSanitizer *parser.BaseSanitizer
 }
 
 func NewSanitizer() *Sanitizer {
@@ -24,14 +24,14 @@ func (v *Sanitizer) Setup(doc interface{}) error {
 	}
 
 	v.doc = doc.(*lp1f_types.LP1FDocument)
-	v.commonSanitizer = parser.NewSanitizer(v.doc)
+	v.baseSanitizer = parser.NewBaseSanitizer(v.doc)
 
 	return nil
 }
 
 func (s *Sanitizer) Sanitize() (interface{}, error) {
 	// Sanitize the entire struct dynamically
-	if err := s.commonSanitizer.SanitizeStruct(s.doc); err != nil {
+	if err := s.baseSanitizer.SanitizeStruct(s.doc); err != nil {
 		return nil, err
 	}
 

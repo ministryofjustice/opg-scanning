@@ -8,8 +8,8 @@ import (
 )
 
 type Validator struct {
-	doc             *lp1f_types.LP1FDocument
-	commonValidator *parser.Validator
+	doc           *lp1f_types.LP1FDocument
+	baseValidator *parser.BaseValidator
 }
 
 func NewValidator() *Validator {
@@ -24,33 +24,33 @@ func (v *Validator) Setup(doc interface{}) error {
 	}
 
 	v.doc = doc.(*lp1f_types.LP1FDocument)
-	v.commonValidator = parser.NewValidator(v.doc)
+	v.baseValidator = parser.NewBaseValidator(v.doc)
 
 	return nil
 }
 
 func (v *Validator) Validate() error {
 	// Common witness validations
-	v.commonValidator.WitnessSignatureFullNameAddressValidator("Page10", "Section9")
+	v.baseValidator.WitnessSignatureFullNameAddressValidator("Page10", "Section9")
 
 	// Section validations
-	v.commonValidator.ValidateSignatureDate("Page10", "Section9", "Donor")
-	v.commonValidator.ValidateSignatureDate("Page11", "Section10", "")
+	v.baseValidator.ValidateSignatureDate("Page10", "Section9", "Donor")
+	v.baseValidator.ValidateSignatureDate("Page11", "Section10", "")
 
 	// Iterate over each instance of Page12 (since its an array)
 	// and validate them individually
 	for i := range v.doc.Page12 {
-		v.commonValidator.WitnessSignatureFullNameAddressValidator(fmt.Sprintf("Page12[%d]", i), "Section11")
-		v.commonValidator.ValidateSignatureDate(fmt.Sprintf("Page12[%d]", i), "Section11", "Attorney")
+		v.baseValidator.WitnessSignatureFullNameAddressValidator(fmt.Sprintf("Page12[%d]", i), "Section11")
+		v.baseValidator.ValidateSignatureDate(fmt.Sprintf("Page12[%d]", i), "Section11", "Attorney")
 	}
 
 	// Applicant validation iterations
 	for i := range v.doc.Page20 {
-		v.commonValidator.ApplicantSignatureValidator(fmt.Sprintf("Page20[%d]", i))
+		v.baseValidator.ApplicantSignatureValidator(fmt.Sprintf("Page20[%d]", i))
 	}
 
 	// Return errors if any
-	if messages := v.commonValidator.GetValidatorErrorMessages(); len(messages) > 0 {
+	if messages := v.baseValidator.GetValidatorErrorMessages(); len(messages) > 0 {
 		return fmt.Errorf("failed to validate LP1F document: %v", messages)
 	}
 	return nil

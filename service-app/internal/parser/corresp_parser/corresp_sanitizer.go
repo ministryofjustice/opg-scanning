@@ -8,8 +8,8 @@ import (
 )
 
 type Sanitizer struct {
-	doc             *corresp_types.Correspondence
-	commonSanitizer *parser.Sanitizer
+	doc           *corresp_types.Correspondence
+	baseSanitizer *parser.BaseSanitizer
 }
 
 func NewSanitizer() *Sanitizer {
@@ -24,13 +24,13 @@ func (v *Sanitizer) Setup(doc interface{}) error {
 	}
 
 	v.doc = doc.(*corresp_types.Correspondence)
-	v.commonSanitizer = parser.NewSanitizer(v.doc)
+	v.baseSanitizer = parser.NewBaseSanitizer(v.doc)
 
 	return nil
 }
 
 func (s *Sanitizer) Sanitize() (interface{}, error) {
-	if err := s.commonSanitizer.SanitizeStruct(s.doc); err != nil {
+	if err := s.baseSanitizer.SanitizeStruct(s.doc); err != nil {
 		return nil, err
 	}
 

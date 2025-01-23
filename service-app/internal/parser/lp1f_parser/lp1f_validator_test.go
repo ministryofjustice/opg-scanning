@@ -22,7 +22,7 @@ func TestInvalidXML(t *testing.T) {
 	err := validator.Validate()
 	require.Error(t, err, "Expected validation errors due to date ordering but got none")
 
-	messages := validator.(*Validator).commonValidator.GetValidatorErrorMessages()
+	messages := validator.(*Validator).baseValidator.GetValidatorErrorMessages()
 
 	expectedErrMsgs := []string{
 		"(?i)^Page10 Section9 Witness Signature not set",
@@ -60,7 +60,7 @@ func TestInvalidDateOrderXML(t *testing.T) {
 	err := validator.Validate()
 	require.Error(t, err, "Expected validation errors due to date ordering but got none")
 
-	messages := validator.(*Validator).commonValidator.GetValidatorErrorMessages()
+	messages := validator.(*Validator).baseValidator.GetValidatorErrorMessages()
 	found := util.Contains(messages, "all form dates must be before the earliest applicant signature date")
 	require.True(t, found, "Expected date ordering validation error not found")
 }
