@@ -8,6 +8,19 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 )
 
+func DocumentParser(data []byte, doc interface{}) (interface{}, error) {
+	if err := xml.Unmarshal(data, doc); err != nil {
+		return nil, err
+	}
+
+	// Validate required fields based on struct tags
+	if err := ValidateStruct(doc); err != nil {
+		return nil, err
+	}
+
+	return doc, nil
+}
+
 func BaseParserXml(data []byte) (*types.BaseSet, error) {
 	var parsed types.BaseSet
 	if err := xml.Unmarshal(data, &parsed); err != nil {
@@ -17,7 +30,6 @@ func BaseParserXml(data []byte) (*types.BaseSet, error) {
 	return &parsed, nil
 }
 
-// TODO: Check if this is needed due to manual validation overrides.
 // ValidateStruct checks if the provided struct or its nested structs
 // have all fields marked with the "required" tag present and non-empty.
 // It supports pointer dereferencing and recursive validation for nested structs.

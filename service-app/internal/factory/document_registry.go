@@ -3,17 +3,9 @@ package factory
 import (
 	"fmt"
 
+	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
-	"github.com/ministryofjustice/opg-scanning/internal/parser/corresp_parser"
-	"github.com/ministryofjustice/opg-scanning/internal/parser/lp1f_parser"
 )
-
-// Component defines a registry entry for a document type.
-type Component struct {
-	Parser    func([]byte) (interface{}, error)
-	Validator parser.CommonValidator
-	Sanitizer parser.CommonSanitizer
-}
 
 // Defines the behavior for a document registry.
 type RegistryInterface interface {
@@ -28,25 +20,24 @@ type Registry struct {
 }
 
 // Initializes the registry with doc type handlers.
-func NewRegistry() *Registry {
-	return &Registry{
-		components: map[string]Component{
-			"LP1F": {
-				Parser: func(data []byte) (interface{}, error) {
-					return lp1f_parser.Parse(data)
-				},
-				Validator: lp1f_parser.NewValidator(),
-				Sanitizer: lp1f_parser.NewSanitizer(),
-			},
-			"Correspondence": {
-				Parser: func(data []byte) (interface{}, error) {
-					return corresp_parser.Parse(data)
-				},
-				Validator: corresp_parser.NewValidator(),
-				Sanitizer: corresp_parser.NewSanitizer(),
-			},
-		},
+func NewRegistry() (*Registry, error) {
+	components := make(map[string]Component)
+
+	// List of supported document types
+	docTypes := constants.SupprotedDocumentTypes
+
+	// Populate the registry using the utility function
+	for _, docType := range docTypes {
+		component, err := GetComponent(docType)
+		if err != nil {
+			return nil, fmt.Errorf("error getting component for %s: %v", docType, err)
+		}
+		components[docType] = component
 	}
+
+	return &Registry{
+		components: components,
+	}, nil
 }
 
 func (r *Registry) GetParser(docType string) (func([]byte) (interface{}, error), error) {
