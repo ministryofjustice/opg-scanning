@@ -8,7 +8,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
-	"github.com/ministryofjustice/opg-scanning/internal/types/lpf1_types"
+	"github.com/ministryofjustice/opg-scanning/internal/types/lp1f_types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,7 +29,9 @@ func TestProcessDocument_LP1F(t *testing.T) {
 	}
 
 	// Create a new DocumentProcessor using the factory
-	registry := NewRegistry()
+	registry, err := NewRegistry()
+	require.NoError(t, err, "Failed create Registry")
+
 	cfg := config.NewConfig()
 	logger := logger.NewLogger(cfg)
 	processor, err := NewDocumentProcessor(doc, doc.Type, "XML", registry, logger)
@@ -39,8 +41,8 @@ func TestProcessDocument_LP1F(t *testing.T) {
 	processedDoc, err := processor.Process()
 	require.NoError(t, err, "Document processing failed")
 
-	lp1fDoc, ok := processedDoc.(*lpf1_types.LP1FDocument)
-	require.True(t, ok, "expected processedDoc to be of type *lp1f_types.LP1FDocument")
+	lp1fDoc, ok := processedDoc.(*lp1f_types.LP1FDocument)
+	require.True(t, ok, "Expected processedDoc to be of type *lp1f_types.LP1FDocument")
 
 	assert.Equal(t, "ANDREW ROBERT", lp1fDoc.Page1.Section1.FirstName, "FirstName mismatch")
 	assert.Equal(t, "HEPBURN", lp1fDoc.Page1.Section1.LastName, "LastName mismatch")
@@ -48,6 +50,6 @@ func TestProcessDocument_LP1F(t *testing.T) {
 
 func loadXMLFile(t *testing.T, filepath string) string {
 	data, err := os.ReadFile(filepath)
-	require.NoError(t, err, "failed to read XML file")
+	require.NoError(t, err, "Failed to read XML file")
 	return base64.StdEncoding.EncodeToString(data)
 }
