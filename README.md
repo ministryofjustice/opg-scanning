@@ -1,2 +1,3 @@
-# opg-template-repository
-Github "template" repository, from which to create new OPG Repositories: Managed by opg-org-infra &amp; Terraform
+# OPG Scanning
+
+This codebase covers the scanning api connector replacement to align with the replacement scanning system to be used by OPG.
