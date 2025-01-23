@@ -1,20 +1,20 @@
-package lp1f_parser
+package lp1h_parser
 
 import (
 	"fmt"
 
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
-	"github.com/ministryofjustice/opg-scanning/internal/types/lp1f_types"
+	"github.com/ministryofjustice/opg-scanning/internal/types/lp1h_types"
 )
 
 type Sanitizer struct {
-	doc           *lp1f_types.LP1FDocument
+	doc           *lp1h_types.LP1HDocument
 	baseSanitizer *parser.BaseSanitizer
 }
 
 func NewSanitizer() *Sanitizer {
 	return &Sanitizer{
-		doc: &lp1f_types.LP1FDocument{},
+		doc: &lp1h_types.LP1HDocument{},
 	}
 }
 
@@ -23,7 +23,7 @@ func (v *Sanitizer) Setup(doc interface{}) error {
 		return fmt.Errorf("document is nil")
 	}
 
-	v.doc = doc.(*lp1f_types.LP1FDocument)
+	v.doc = doc.(*lp1h_types.LP1HDocument)
 	v.baseSanitizer = parser.NewBaseSanitizer(v.doc)
 
 	return nil

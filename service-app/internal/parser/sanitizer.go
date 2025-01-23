@@ -6,12 +6,12 @@ import (
 	"strings"
 )
 
-type Sanitizer struct {
+type BaseSanitizer struct {
 	doc *interface{}
 }
 
-func NewSanitizer(doc interface{}) *Sanitizer {
-	return &Sanitizer{
+func NewBaseSanitizer(doc interface{}) *BaseSanitizer {
+	return &BaseSanitizer{
 		doc: &doc,
 	}
 }
@@ -20,7 +20,7 @@ func NewSanitizer(doc interface{}) *Sanitizer {
 // recursively sanitizing nested structs. The function uses reflection to access
 // the fields of the struct and sanitizes only the exported fields. If a field
 // has a 'sanitize' tag set to 'false', the field is skipped.
-func (s *Sanitizer) SanitizeStruct(input interface{}) error {
+func (s *BaseSanitizer) SanitizeStruct(input interface{}) error {
 	val := reflect.ValueOf(input)
 
 	// Check if val is a pointer and dereference it
