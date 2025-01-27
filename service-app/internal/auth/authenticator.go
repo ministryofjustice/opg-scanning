@@ -12,7 +12,7 @@ import (
 
 type Authenticator interface {
 	Authenticate(w http.ResponseWriter, r *http.Request) (context.Context, error)
-	ValidateCredentials(ctx context.Context, creds User) (context.Context, error)
+	ValidateCredentials(ctx context.Context, creds UserLogin) (context.Context, error)
 }
 
 type BasicAuthAuthenticator struct {
@@ -30,7 +30,7 @@ func NewBasicAuthAuthenticator(awsClient aws.AwsClientInterface, cookieHelper Co
 }
 
 func (a *BasicAuthAuthenticator) Authenticate(w http.ResponseWriter, r *http.Request) (context.Context, error) {
-	var creds User
+	var creds UserLogin
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&creds); err != nil {
@@ -57,7 +57,8 @@ func (a *BasicAuthAuthenticator) Authenticate(w http.ResponseWriter, r *http.Req
 	return ctx, nil
 }
 
-func (a *BasicAuthAuthenticator) ValidateCredentials(ctx context.Context, creds User) (context.Context, error) {
+func (a *BasicAuthAuthenticator) ValidateCredentials(ctx context.Context, user UserLogin) (context.Context, error) {
+	var creds = user.User
 	if creds.Email == "" || creds.Password == "" {
 		return nil, fmt.Errorf("missing email or password")
 	}
