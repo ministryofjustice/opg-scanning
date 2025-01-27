@@ -17,22 +17,26 @@ func TestAuthenticatorCredentials(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		creds   User
+		creds   UserLogin
 		isValid bool
 	}{
 		{
 			"Valid creds",
-			User{
-				Email:    cfg.Auth.ApiUsername,
-				Password: "password",
+			UserLogin{
+				User: User{
+					Email:    cfg.Auth.ApiUsername,
+					Password: "password",
+				},
 			},
 			true,
 		},
 		{
 			"Invalid creds",
-			User{
-				Email:    cfg.Auth.ApiUsername,
-				Password: "",
+			UserLogin{
+				User: User{
+					Email:    cfg.Auth.ApiUsername,
+					Password: "",
+				},
 			},
 			false,
 		},
