@@ -1,0 +1,48 @@
+<LPC xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:noNamespaceSchemaLocation="example.xsd">
+    <Page1>
+        <ContinuationSheet1>
+            <Attorney>
+                <Attorney>true</Attorney>
+                <ReplacementAttorney>false</ReplacementAttorney>
+                <PersonToNotify>false</PersonToNotify>
+                <Title>Mr</Title>
+                <FirstName>John</FirstName>
+                <LastName>Doe</LastName>
+                <DOB>1970-01-01</DOB>
+                <Address>
+                    <Address1>1 Example Road</Address1>
+                    <Address2>Example Town</Address2>
+                    <Address3>Example County</Address3>
+                    <Postcode>EX4 MPL</Postcode>
+                </Address>
+                <Email>john.doe@example.com</Email>
+            </Attorney>
+            <Attorney>
+                <Attorney>false</Attorney>
+                <ReplacementAttorney>true</ReplacementAttorney>
+                <PersonToNotify>false</PersonToNotify>
+                <Title>Mrs</Title>
+                <FirstName>Mary</FirstName>
+                <LastName>Smith</LastName>
+                <DOB>1975-05-05</DOB>
+                <Address>
+                    <Address1>2 Example Avenue</Address1>
+                    <Address2>Example Town</Address2>
+                    <Address3>Example County</Address3>
+                    <Postcode>EX4 MPL</Postcode>
+                </Address>
+                <Email>mary.smith@example.com</Email>
+            </Attorney>
+
+            <!-- Required Donor block -->
+            <Donor>
+                <FullName>Jane Donor</FullName>
+                <Signature>true</Signature>
+                <Date>2025-01-29</Date>
+            </Donor>
+        </ContinuationSheet1>
+        <BURN>Some text here</BURN>
+        <PhysicalPage>1</PhysicalPage>
+    </Page1>
+</LPC>

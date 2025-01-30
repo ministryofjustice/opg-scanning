@@ -1,0 +1,31 @@
+<LPC xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:noNamespaceSchemaLocation="example.xsd">
+    <Page1>
+        <ContinuationSheet1>
+            <!-- Only ONE Attorney here, which violates minOccurs="2" -->
+            <Attorney>
+                <Attorney>true</Attorney>
+                <ReplacementAttorney>false</ReplacementAttorney>
+                <PersonToNotify>false</PersonToNotify>
+                <Title>Mr</Title>
+                <FirstName>Harry</FirstName>
+                <LastName>Potter</LastName>
+                <DOB>1980-07-31</DOB>
+                <Address>
+                    <Address1>4 Privet Drive</Address1>
+                    <Address2>Little Whinging</Address2>
+                    <Address3>Surrey</Address3>
+                    <Postcode>HP1 1HP</Postcode>
+                </Address>
+                <Email>harry@example.com</Email>
+            </Attorney>
+
+            <!-- Donor is missing entirely. The XSD requires <Donor> here. -->
+        </ContinuationSheet1>
+
+        <!-- BURN is present but spelled incorrectly: "BURNN" (typo) -->
+        <BURNN>Typo in element name</BURNN>
+
+        <!-- Missing <PhysicalPage> altogether -->
+    </Page1>
+</LPC>
