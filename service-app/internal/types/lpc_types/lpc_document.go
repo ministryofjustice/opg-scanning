@@ -35,7 +35,8 @@ type AttorneyContinuation1 struct {
 	LastName            string `xml:"LastName"`
 	DOB                 string `xml:"DOB"`
 	Address             lp1f_types.Address
-	Email               string `xml:"Email"`
+	Email               string        `xml:"Email"`
+	Relationship        *Relationship `xml:"Relationship,omitempty"`
 }
 
 type Page2 struct {
@@ -80,4 +81,13 @@ type Page4 struct {
 type ContinuationSheet4 struct {
 	CompanyRegistration string                        `xml:"CompanyRegistration"`
 	AuthorisedPerson    []lp1f_types.AuthorisedPerson `xml:"AuthorisedPerson"`
+}
+
+type Relationship struct {
+	CivilPartnerSpouse bool   `xml:"CivilPartnerSpouse"`
+	Child              bool   `xml:"Child"`
+	Solicitor          bool   `xml:"Solicitor"`
+	Other              bool   `xml:"Other"`
+	OtherProfessional  bool   `xml:"OtherProfessional"`
+	OtherName          string `xml:"OtherName,omitempty"`
 }

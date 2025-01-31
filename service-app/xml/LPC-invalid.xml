@@ -2,30 +2,48 @@
      xsi:noNamespaceSchemaLocation="example.xsd">
     <Page1>
         <ContinuationSheet1>
-            <!-- Only ONE Attorney here, which violates minOccurs="2" -->
+            <!-- only one attorney block to trigger the failure -->
             <Attorney>
-                <Attorney>true</Attorney>
+                <Attorney>false</Attorney>
                 <ReplacementAttorney>false</ReplacementAttorney>
                 <PersonToNotify>false</PersonToNotify>
                 <Title>Mr</Title>
-                <FirstName>Harry</FirstName>
-                <LastName>Potter</LastName>
-                <DOB>1980-07-31</DOB>
+                <FirstName>John</FirstName>
+                <LastName>Doe</LastName>
+                <DOB>1970-01-01</DOB>
                 <Address>
-                    <Address1>4 Privet Drive</Address1>
-                    <Address2>Little Whinging</Address2>
-                    <Address3>Surrey</Address3>
-                    <Postcode>HP1 1HP</Postcode>
+                    <Address1>1 Example Road</Address1>
+                    <Address2>Example Town</Address2>
+                    <Address3>Example County</Address3>
+                    <Postcode>EX4 MPL</Postcode>
                 </Address>
-                <Email>harry@example.com</Email>
+                <Email>john.doe@example.com</Email>
             </Attorney>
-
-            <!-- Donor is missing entirely. The XSD requires <Donor> here. -->
         </ContinuationSheet1>
-
-        <!-- BURN is present but spelled incorrectly: "BURNN" (typo) -->
-        <BURNN>Typo in element name</BURNN>
-
-        <!-- Missing <PhysicalPage> altogether -->
     </Page1>
+
+    <Page3>
+        <ContinuationSheet3>
+            <!-- only one Witness, triggers failure -->
+            <Witnesses>
+                <Signature>false</Signature>
+                <FullName></FullName>
+            </Witnesses>
+        </ContinuationSheet3>
+        <BURN></BURN>
+        <PhysicalPage>invalid</PhysicalPage>
+    </Page3>
+
+    <Page4>
+        <ContinuationSheet4>
+            <!-- only one AuthorisedPerson triggers failure -->
+            <AuthorisedPerson>
+                <Signature>false</Signature>
+                <FullName></FullName>
+                <Date></Date>
+            </AuthorisedPerson>
+        </ContinuationSheet4>
+        <BURN></BURN>
+        <PhysicalPage>invalid</PhysicalPage>
+    </Page4>
 </LPC>

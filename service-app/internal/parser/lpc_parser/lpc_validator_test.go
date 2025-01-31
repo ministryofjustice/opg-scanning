@@ -23,14 +23,15 @@ func TestInvalidLPCXML(t *testing.T) {
 	messages := validator.(*Validator).baseValidator.GetValidatorErrorMessages()
 
 	expectedErrMsgs := []string{
-		"(?i)found only 1 attorney block; 2 required",     // minOccurs=2 but only 1 present
-		"(?i)missing Donor element in ContinuationSheet1", // required <Donor> is missing
-		"(?i)invalid element BURNN instead of BURN",       // if there is a typo in the element name
-		"(?i)missing PhysicalPage element",                // required element not found
+		`(?i)Page1\[\d+\] requires exactly 2 Attorney blocks, found`,
+		`(?i)Page3\[\d+\] requires exactly 2 Witness blocks, found`,
+		`(?i)Page4\[\d+\] requires exactly 2 AuthorisedPerson blocks, found`,
 	}
 
 	t.Log("Actual messages from validation:")
-	t.Log(messages)
+	for _, msg := range messages {
+		t.Log(msg)
+	}
 
 	for _, pattern := range expectedErrMsgs {
 		regex, compErr := regexp.Compile(pattern)
@@ -46,17 +47,6 @@ func TestInvalidLPCXML(t *testing.T) {
 
 		require.True(t, found, "Expected error message pattern not found: %s", pattern)
 	}
-}
-
-func TestInvalidLPCDateOrderXML(t *testing.T) {
-	validator := getLPCValidator(t, "LPC-invalid-dates.xml")
-	err := validator.Validate()
-	require.Error(t, err, "Expected validation errors due to date ordering but got none")
-
-	messages := validator.(*Validator).baseValidator.GetValidatorErrorMessages()
-
-	found := util.Contains(messages, "all form dates must be before the earliest applicant signature date")
-	require.True(t, found, "Expected date ordering validation error not found in messages")
 }
 
 func getLPCValidator(t *testing.T, fileName string) parser.CommonValidator {

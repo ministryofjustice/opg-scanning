@@ -18,6 +18,7 @@
                 </Address>
                 <Email>john.doe@example.com</Email>
             </Attorney>
+
             <Attorney>
                 <Attorney>false</Attorney>
                 <ReplacementAttorney>true</ReplacementAttorney>
@@ -35,14 +36,67 @@
                 <Email>mary.smith@example.com</Email>
             </Attorney>
 
-            <!-- Required Donor block -->
             <Donor>
                 <FullName>Jane Donor</FullName>
                 <Signature>true</Signature>
                 <Date>2025-01-29</Date>
             </Donor>
         </ContinuationSheet1>
-        <BURN>Some text here</BURN>
+        <BURN>Valid BURN text</BURN>
         <PhysicalPage>1</PhysicalPage>
     </Page1>
+
+    <Page2>
+        <ContinuationSheet2>
+            <Donor>
+                <FullName>John Donor</FullName>
+                <Signature>true</Signature>
+                <Date>2025-01-29</Date>
+            </Donor>
+        </ContinuationSheet2>
+        <BURN>Valid BURN text</BURN>
+        <PhysicalPage>2</PhysicalPage>
+    </Page2>
+
+    <Page3>
+        <ContinuationSheet3>
+            <Signatory>
+                <Signature>true</Signature>
+                <FullName>James Signatory</FullName>
+                <Date>2025-01-29</Date>
+            </Signatory>
+
+            <Witnesses>
+                <Signature>true</Signature>
+                <FullName>Witness 1</FullName>
+            </Witnesses>
+
+            <Witnesses>
+                <Signature>true</Signature>
+                <FullName>Witness 2</FullName>
+            </Witnesses>
+        </ContinuationSheet3>
+        <BURN>Valid BURN text</BURN>
+        <PhysicalPage>3</PhysicalPage>
+    </Page3>
+
+    <Page4>
+        <ContinuationSheet4>
+            <CompanyRegistration>Company12345</CompanyRegistration>
+
+            <AuthorisedPerson>
+                <Signature>true</Signature>
+                <FullName>Authorized Person 1</FullName>
+                <Date>2025-01-29</Date>
+            </AuthorisedPerson>
+
+            <AuthorisedPerson>
+                <Signature>true</Signature>
+                <FullName>Authorized Person 2</FullName>
+                <Date>2025-01-29</Date>
+            </AuthorisedPerson>
+        </ContinuationSheet4>
+        <BURN>Valid BURN text</BURN>
+        <PhysicalPage>4</PhysicalPage>
+    </Page4>
 </LPC>
