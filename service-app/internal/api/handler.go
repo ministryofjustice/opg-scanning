@@ -145,7 +145,9 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	// Queue each document for further processing
-	c.logger.Info("Queueing documents for processing", nil)
+	c.logger.Info("Queueing documents for processing", map[string]interface{}{
+		"Header": parsedBaseXml.Header,
+	})
 
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
