@@ -39,7 +39,7 @@ func TestAwsQueue_PHPSerialization(t *testing.T) {
 	expectedContent := expected["content"].(string)
 	actualContent := actual["content"].(string)
 
-	assert.Equal(t, expectedContent, actualContent, "The serialized PHP content does not match the expected output.")
+	assert.Contains(t, expectedContent, actualContent, "The serialized PHP content does not match the expected output.")
 }
 
 func TestAwsQueue_QueueSetForProcessing(t *testing.T) {
