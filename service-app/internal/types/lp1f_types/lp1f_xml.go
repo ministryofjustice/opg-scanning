@@ -18,11 +18,6 @@ type Salutation struct {
 	OtherName string `xml:"OtherName,omitempty"`
 }
 
-type Signatory struct {
-	FullName string `xml:"FullName"`
-	Declaration
-}
-
 type PersonName struct {
 	Salutation     Salutation `xml:"Salutation"`
 	LastName       string     `xml:"LastName"`
@@ -304,9 +299,9 @@ type ContinuationSheet2 struct {
 }
 
 type ContinuationSheet3 struct {
-	Donor     PersonName `xml:"Donor"`
-	Signatory Signatory  `xml:"Signatory"`
-	Witnesses []Witness  `xml:"Witnesses"`
+	Donor     PersonName       `xml:"Donor"`
+	Signatory AuthorisedPerson `xml:"Signatory"`
+	Witnesses []Witness        `xml:"Witnesses"`
 }
 
 type ContinuationSheet4 struct {

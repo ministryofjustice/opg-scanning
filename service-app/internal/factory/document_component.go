@@ -7,6 +7,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/parser/corresp_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lp1f_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lp1h_parser"
+	"github.com/ministryofjustice/opg-scanning/internal/parser/lpc_parser"
 )
 
 // Component defines a registry entry for a document type.
@@ -41,6 +42,14 @@ func GetComponent(docType string) (Component, error) {
 			},
 			Validator: corresp_parser.NewValidator(),
 			Sanitizer: corresp_parser.NewSanitizer(),
+		}, nil
+	case "LPC":
+		return Component{
+			Parser: func(data []byte) (interface{}, error) {
+				return lpc_parser.Parse(data)
+			},
+			Validator: lpc_parser.NewValidator(),
+			Sanitizer: lpc_parser.NewSanitizer(),
 		}, nil
 	default:
 		return Component{}, fmt.Errorf("unsupported docType: %s", docType)
