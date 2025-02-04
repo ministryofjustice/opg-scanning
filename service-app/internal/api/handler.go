@@ -270,7 +270,7 @@ func (c *IndexController) validateAndSanitizeXML(bodyStr string) (*types.BaseSet
 }
 
 func (c *IndexController) processAndPersist(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) (fileName string, err error) {
-	// Convert processedDoc to XML (without the XML header)
+	// Convert processedDoc to XML
 	xmlBytes, err := xml.MarshalIndent(processedDoc, "", "  ")
 	if err != nil {
 		return "", err
