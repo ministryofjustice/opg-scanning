@@ -1,8 +1,10 @@
 package factory
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
@@ -57,8 +59,10 @@ func NewDocumentProcessor(data *types.BaseDocument, docType, format string, regi
 }
 
 // Process validates and sanitizes the document.
-func (p *DocumentProcessor) Process() (interface{}, error) {
+func (p *DocumentProcessor) Process(ctx context.Context) (interface{}, error) {
 	// Validate the document
+	p.logger.Info("Context", nil, ctx.Value(constants.TraceIDKey))
+
 	p.validator.Setup(p.doc)
 	if err := p.validator.Validate(); err != nil {
 		p.logger.Error("Validation failed: "+err.Error(), nil)

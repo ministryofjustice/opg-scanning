@@ -14,6 +14,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/auth"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
+	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
@@ -88,12 +89,7 @@ func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) {
-	// Extract claims from context
-	// _, ok := r.Context().Value("claims").(jwt.MapClaims)
-	// if !ok {
-	// 	c.respondWithError(w, http.StatusUnauthorized, "Unauthorized: Unable to extract claims", nil)
-	// 	return
-	// }
+	reqID, _ := r.Context().Value(constants.TraceIDKey).(string)
 
 	if r.Method != http.MethodPost {
 		c.respondWithError(w, http.StatusMethodNotAllowed, "Invalid HTTP method", nil)
@@ -145,11 +141,13 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	// Queue each document for further processing
-	c.logger.Info("Queueing documents for processing", nil)
+	c.logger.Info("Queueing documents for processing", map[string]interface{}{
+		"Header": parsedBaseXml.Header,
+	})
 
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
-		c.Queue.AddToQueue(doc, "xml", func(processedDoc interface{}, originalDoc *types.BaseDocument) {
+		c.Queue.AddToQueue(ctx, doc, "xml", func(processedDoc interface{}, originalDoc *types.BaseDocument) {
 			// Create a new context
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.config.HTTP.Timeout)*time.Second)
 			defer cancel()
@@ -160,6 +158,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			attchResp, docErr := service.AttachDocuments(ctx, scannedCaseResponse)
 			if docErr != nil {
 				c.logger.Error("Failed to attach document", map[string]interface{}{
+					"Trace ID":      reqID,
 					"Set UID":       scannedCaseResponse.UID,
 					"Document type": originalDoc.Type,
 					"Error":         docErr.Error(),
@@ -171,6 +170,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			fileName, persistErr := c.processAndPersist(ctx, processedDoc, originalDoc)
 			if persistErr != nil {
 				c.logger.Error("Failed to persist document", map[string]interface{}{
+					"Trace ID":      reqID,
 					"Set UID":       scannedCaseResponse.UID,
 					"Document type": originalDoc.Type,
 					"Error":         persistErr.Error(),
@@ -186,6 +186,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			messageID, err := AwsQueue.QueueSetForProcessing(ctx, scannedCaseResponse, fileName)
 			if err != nil {
 				c.logger.Error("Failed to queue document for processing", map[string]interface{}{
+					"Trace ID":      reqID,
 					"Set UID":       scannedCaseResponse.UID,
 					"Document type": originalDoc.Type,
 					"Error":         err.Error(),
@@ -194,6 +195,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			}
 
 			c.logger.Info("Job processing completed for document", map[string]interface{}{
+				"Trace ID":      reqID,
 				"File name":     fileName,
 				"Job queue ID":  messageID,
 				"Set UID":       scannedCaseResponse.UID,
@@ -203,6 +205,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 
 		})
 		c.logger.Info("Document queued for processing", map[string]interface{}{
+			"Trace ID":      reqID,
 			"Set UID":       scannedCaseResponse.UID,
 			"Document type": doc.Type,
 		})

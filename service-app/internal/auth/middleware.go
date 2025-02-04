@@ -2,8 +2,10 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
+	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 )
 
@@ -44,7 +46,16 @@ func (m *Middleware) CheckAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), userContextKey, token)
+		ctx := context.WithValue(r.Context(), constants.UserContextKey, token)
+
+		// Get existing  X-Amzn-Trace-Id header
+		traceID := r.Header.Get(constants.XAmznTraceIDHeader)
+		if traceID == "" {
+			m.logger.Info("Missing X-Amzn-Trace-Id header", nil)
+		}
+
+		ctx = context.WithValue(ctx, constants.TraceIDKey, traceID)
+		m.logger.Info(fmt.Sprintf("Incoming request: %s %s (TraceID: %s)", r.Method, r.URL.Path, traceID), nil)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
