@@ -5,18 +5,15 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/google/uuid"
+	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 )
-
-type reqContextKey string
 
 type Middleware struct {
 	Authenticator  Authenticator
 	TokenGenerator TokenGenerator
 	CookieHelper   CookieHelper
 	logger         *logger.Logger
-	RequestIDKey   reqContextKey
 }
 
 func NewMiddleware(authenticator Authenticator, tokenGenerator TokenGenerator, cookieHelper CookieHelper, logger *logger.Logger) *Middleware {
@@ -25,7 +22,6 @@ func NewMiddleware(authenticator Authenticator, tokenGenerator TokenGenerator, c
 		TokenGenerator: tokenGenerator,
 		CookieHelper:   cookieHelper,
 		logger:         logger,
-		RequestIDKey:   "requestID",
 	}
 }
 
@@ -50,13 +46,16 @@ func (m *Middleware) CheckAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), userContextKey, token)
+		ctx := context.WithValue(r.Context(), constants.UserContextKey, token)
 
-		// Generate a new UUID for the request
-		reqID := uuid.New().String()
-		ctx = context.WithValue(ctx, m.RequestIDKey, reqID)
-		w.Header().Set("X-Request-ID", reqID)
-		m.logger.Info(fmt.Sprintf("Incoming request: %s %s (RequestID: %s)", r.Method, r.URL.Path, reqID), nil)
+		// Get existing  X-Amzn-Trace-Id header
+		traceID := r.Header.Get(constants.XAmznTraceIDHeader)
+		if traceID == "" {
+			m.logger.Info("Missing X-Amzn-Trace-Id header", nil)
+		}
+
+		ctx = context.WithValue(ctx, constants.TraceIDKey, traceID)
+		m.logger.Info(fmt.Sprintf("Incoming request: %s %s (TraceID: %s)", r.Method, r.URL.Path, traceID), nil)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
