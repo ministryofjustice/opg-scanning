@@ -276,6 +276,9 @@ func (c *IndexController) processAndPersist(ctx context.Context, processedDoc in
 		return "", err
 	}
 
+	xmlHeader := []byte(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>` + "\n")
+	xmlBytes = append(xmlHeader, xmlBytes...)
+
 	// Persist the XML
 	xmlReader := bytes.NewReader(xmlBytes)
 	fileName, awsErr := c.AwsClient.PersistFormData(ctx, xmlReader, originalDoc.Type)
