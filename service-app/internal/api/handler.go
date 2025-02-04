@@ -270,11 +270,14 @@ func (c *IndexController) validateAndSanitizeXML(bodyStr string) (*types.BaseSet
 }
 
 func (c *IndexController) processAndPersist(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) (fileName string, err error) {
-	// Convert processedDoc to XML
+	// Convert processedDoc to XML (without the XML header)
 	xmlBytes, err := xml.MarshalIndent(processedDoc, "", "  ")
 	if err != nil {
 		return "", err
 	}
+
+	xmlHeader := []byte(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>` + "\n")
+	xmlBytes = append(xmlHeader, xmlBytes...)
 
 	// Persist the XML
 	xmlReader := bytes.NewReader(xmlBytes)
