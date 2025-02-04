@@ -2,16 +2,23 @@ package api
 
 import (
 	"bytes"
+	"context"
+	"encoding/xml"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/auth"
+	"github.com/ministryofjustice/opg-scanning/internal/aws"
 	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
+	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 var xmlPayload = `
@@ -94,5 +101,42 @@ func TestIngestHandler_InvalidXML(t *testing.T) {
 	resp := w.Result()
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Errorf("expected status %d; got %d", http.StatusBadRequest, resp.StatusCode)
+	}
+}
+
+func TestProcessAndPersist_IncludesXMLDeclaration(t *testing.T) {
+	controller := setupController()
+
+	var setPayload types.BaseSet
+	err := xml.Unmarshal([]byte(xmlPayload), &setPayload)
+	require.NoError(t, err, "failed to unmarshal xmlPayload")
+
+	originalDoc := &types.BaseDocument{
+		Type: "LP1F",
+	}
+
+	var capturedXML []byte
+
+	mockAws := new(aws.MockAwsClient)
+	controller.AwsClient = mockAws
+
+	// Set expectation on PersistFormData.
+	mockAws.
+		On("PersistFormData", mock.Anything, mock.AnythingOfType("*bytes.Reader"), "LP1F").
+		Return("testFileName", nil).
+		Run(func(args mock.Arguments) {
+			bodyReader := args.Get(1).(io.Reader)
+			var err error
+			capturedXML, err = io.ReadAll(bodyReader)
+			require.NoError(t, err)
+		})
+	fileName, err := controller.processAndPersist(context.Background(), setPayload, originalDoc)
+	require.NoError(t, err)
+	require.Equal(t, "testFileName", fileName)
+
+	// Verify that the captured XML starts with the XML declaration.
+	expectedHeader := `<?xml version="1.0" encoding="UTF-8" standalone="no"?>`
+	if !strings.HasPrefix(string(capturedXML), expectedHeader) {
+		t.Errorf("expected XML to begin with header %q, got: %s", expectedHeader, string(capturedXML))
 	}
 }
