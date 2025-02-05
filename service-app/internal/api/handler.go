@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"io"
 	"net/http"
@@ -157,7 +156,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			// Attach documents to case
 			// Set the documents original and processed entities before attaching
 			service.originalDoc = originalDoc
-			attchResp, docErr := service.AttachDocuments(ctx, scannedCaseResponse)
+			attchResp, decodedXML, docErr := service.AttachDocuments(ctx, scannedCaseResponse)
 			if docErr != nil {
 				c.logger.Error("Failed to attach document", map[string]interface{}{
 					"Set UID":       scannedCaseResponse.UID,
@@ -168,7 +167,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			}
 
 			// Persist form data in S3 bucket
-			fileName, persistErr := c.processAndPersist(ctx, processedDoc, originalDoc)
+			fileName, persistErr := c.processAndPersist(ctx, decodedXML, originalDoc)
 			if persistErr != nil {
 				c.logger.Error("Failed to persist document", map[string]interface{}{
 					"Set UID":       scannedCaseResponse.UID,
@@ -269,18 +268,9 @@ func (c *IndexController) validateAndSanitizeXML(bodyStr string) (*types.BaseSet
 	return parsedBaseXml, nil
 }
 
-func (c *IndexController) processAndPersist(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) (fileName string, err error) {
-	// Convert processedDoc to XML
-	xmlBytes, err := xml.MarshalIndent(processedDoc, "", "  ")
-	if err != nil {
-		return "", err
-	}
-
-	xmlHeader := []byte(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>` + "\n")
-	xmlBytes = append(xmlHeader, xmlBytes...)
-
+func (c *IndexController) processAndPersist(ctx context.Context, decodedXML []byte, originalDoc *types.BaseDocument) (fileName string, err error) {
 	// Persist the XML
-	xmlReader := bytes.NewReader(xmlBytes)
+	xmlReader := bytes.NewReader(decodedXML)
 	fileName, awsErr := c.AwsClient.PersistFormData(ctx, xmlReader, originalDoc.Type)
 	if awsErr != nil {
 		return "", awsErr
