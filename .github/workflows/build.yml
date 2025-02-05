@@ -23,18 +23,18 @@ jobs:
   # generate a branch name
   branch_name:
     name: "Generate a safe branch name"
-    uses: ministryofjustice/opg-github-workflows/.github/workflows/data-parse-branch-name.yml@v3.1.0
+    uses: ministryofjustice/opg-github-workflows/.github/workflows/data-parse-branch-name.yml@v3.5.0
 
   # generate workspace name
   workspace_name:
     name: "Generate the workspace name"
-    uses: ministryofjustice/opg-github-workflows/.github/workflows/data-parse-workspace.yml@v3.1.0
+    uses: ministryofjustice/opg-github-workflows/.github/workflows/data-parse-workspace.yml@v3.5.0
 
   # SAST
   # codeql for go
   codeql_analysis:
     name: "Run CodeQL against the code base"
-    uses: ministryofjustice/opg-github-workflows/.github/workflows/analysis-application-codeql-sast-to-github-security.yml@v3.1.0
+    uses: ministryofjustice/opg-github-workflows/.github/workflows/analysis-application-codeql-sast-to-github-security.yml@v3.5.0
     with:
       application_languages: '["go"]'
 
@@ -42,7 +42,7 @@ jobs:
   semver_tag:
     needs: [branch_name, codeql_analysis]
     name: "Generate the semver tag value"
-    uses: ministryofjustice/opg-github-workflows/.github/workflows/data-parse-semver-tag.yml@v3.1.0
+    uses: ministryofjustice/opg-github-workflows/.github/workflows/data-parse-semver-tag.yml@v3.5.0
     with:
       branch_name: ${{ needs.branch_name.outputs.parsed }}
     secrets: inherit
