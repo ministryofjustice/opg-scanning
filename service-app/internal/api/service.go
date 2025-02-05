@@ -33,15 +33,14 @@ func NewService(client *Client, set *types.BaseSet) *Service {
 func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.ScannedCaseResponse) (*types.ScannedDocumentResponse, []byte, error) {
 	var documentSubType string
 
-	decodedXML := []byte(nil)
+	// Decode the base64-encoded XML
+	decodedXML, err := base64.StdEncoding.DecodeString(s.originalDoc.EmbeddedXML)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to decode base64-encoded XML: %w", err)
+	}
 
 	// Check for Correspondence or SupCorrespondence and extract SubType
 	if util.Contains([]string{"Correspondence", "SupCorrespondence"}, s.originalDoc.Type) {
-		// Decode the base64-encoded XML
-		decodedXML, err := base64.StdEncoding.DecodeString(s.originalDoc.EmbeddedXML)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to decode base64-encoded XML: %w", err)
-		}
 		// Parse the XML
 		correspDoc, err := corresp_parser.Parse([]byte(decodedXML))
 		if err != nil {
