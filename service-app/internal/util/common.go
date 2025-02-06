@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/xml"
 	"fmt"
 	"log"
 	"os"
@@ -85,4 +86,12 @@ func PhpSerialize(data map[string]interface{}) string {
 
 	sb.WriteString("}")
 	return sb.String()
+}
+
+func IsValidXML(data []byte) error {
+	var v interface{}
+	if err := xml.Unmarshal(data, &v); err != nil {
+		return fmt.Errorf("xml unmarshal error: %w", err)
+	}
+	return nil
 }
