@@ -77,11 +77,12 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 		mock.Anything).Return(mockResponseBytes, nil)
 
 	ctx := context.Background()
-	response, err := service.AttachDocuments(ctx, caseResponse)
+	response, decodedXML, err := service.AttachDocuments(ctx, caseResponse)
 	if err != nil {
 		t.Fatalf("AttachDocuments returned error: %v", err)
 	}
 	assert.NotNil(t, response, "Expected non-nil response")
 	assert.Equal(t, mockResponse, response, "Expected response to match mock response")
+	assert.Equal(t, xmlStringData, decodedXML)
 	mockHttpClient.AssertExpectations(t)
 }

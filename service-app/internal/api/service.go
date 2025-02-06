@@ -30,20 +30,21 @@ func NewService(client *Client, set *types.BaseSet) *Service {
 }
 
 // Attach documents to cases
-func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.ScannedCaseResponse) (*types.ScannedDocumentResponse, error) {
+func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.ScannedCaseResponse) (*types.ScannedDocumentResponse, []byte, error) {
 	var documentSubType string
+
+	// Decode the base64-encoded XML
+	decodedXML, err := base64.StdEncoding.DecodeString(s.originalDoc.EmbeddedXML)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to decode base64-encoded XML: %w", err)
+	}
 
 	// Check for Correspondence or SupCorrespondence and extract SubType
 	if util.Contains([]string{"Correspondence", "SupCorrespondence"}, s.originalDoc.Type) {
-		// Decode the base64-encoded XML
-		decodedXML, err := base64.StdEncoding.DecodeString(s.originalDoc.EmbeddedXML)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode base64-encoded XML: %w", err)
-		}
 		// Parse the XML
 		correspDoc, err := corresp_parser.Parse([]byte(decodedXML))
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse correspondence for document %s: %w", s.originalDoc.Type, err)
+			return nil, nil, fmt.Errorf("failed to parse correspondence for document %s: %w", s.originalDoc.Type, err)
 		}
 		documentSubType = correspDoc.SubType
 	}
@@ -62,16 +63,16 @@ func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.Scann
 
 	resp, err := s.Client.ClientRequest(ctx, request, url)
 	if err != nil {
-		return nil, fmt.Errorf("failed to attach document %s: %w", s.originalDoc.Type, err)
+		return nil, nil, fmt.Errorf("failed to attach document %s: %w", s.originalDoc.Type, err)
 	}
 
 	var scannedResponse types.ScannedDocumentResponse
 	err = json.Unmarshal(*resp, &scannedResponse)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+		return nil, nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	return &scannedResponse, nil
+	return &scannedResponse, decodedXML, nil
 }
 
 // Create a case stub
