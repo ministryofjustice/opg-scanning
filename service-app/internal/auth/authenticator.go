@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
+	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -78,6 +79,6 @@ func (a *BasicAuthAuthenticator) ValidateCredentials(ctx context.Context, user U
 		return nil, fmt.Errorf("invalid credentials")
 	}
 
-	ctx = context.WithValue(ctx, userContextKey, creds.Email)
+	ctx = context.WithValue(ctx, constants.UserContextKey, creds.Email)
 	return ctx, nil
 }

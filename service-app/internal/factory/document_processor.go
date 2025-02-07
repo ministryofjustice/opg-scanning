@@ -1,8 +1,10 @@
 package factory
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
@@ -57,11 +59,12 @@ func NewDocumentProcessor(data *types.BaseDocument, docType, format string, regi
 }
 
 // Process validates and sanitizes the document.
-func (p *DocumentProcessor) Process() (interface{}, error) {
-	// Validate the document
+func (p *DocumentProcessor) Process(ctx context.Context) (interface{}, error) {
 	p.validator.Setup(p.doc)
 	if err := p.validator.Validate(); err != nil {
-		p.logger.Error("Validation failed: "+err.Error(), nil)
+		p.logger.Error("Validation failed: "+err.Error(), map[string]interface{}{
+			"AWS Trace ID": ctx.Value(constants.TraceIDKey).(string),
+		})
 	}
 
 	// Sanitize the document
