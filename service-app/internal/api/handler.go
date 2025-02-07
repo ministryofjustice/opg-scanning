@@ -157,7 +157,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			attchResp, decodedXML, docErr := service.AttachDocuments(ctx, scannedCaseResponse)
 			if docErr != nil {
 				c.logger.Error("Failed to attach document", map[string]interface{}{
-					"Trace ID":      reqID,
+					"AWS Trace ID":  reqID,
 					"Set UID":       scannedCaseResponse.UID,
 					"Document type": originalDoc.Type,
 					"Error":         docErr.Error(),
@@ -169,7 +169,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			fileName, persistErr := c.processAndPersist(ctx, decodedXML, originalDoc)
 			if persistErr != nil {
 				c.logger.Error("Failed to persist document", map[string]interface{}{
-					"Trace ID":      reqID,
+					"AWS Trace ID":  reqID,
 					"Set UID":       scannedCaseResponse.UID,
 					"Document type": originalDoc.Type,
 					"Error":         persistErr.Error(),
@@ -185,7 +185,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			messageID, err := AwsQueue.QueueSetForProcessing(ctx, scannedCaseResponse, fileName)
 			if err != nil {
 				c.logger.Error("Failed to queue document for processing", map[string]interface{}{
-					"Trace ID":      reqID,
+					"AWS Trace ID":  reqID,
 					"Set UID":       scannedCaseResponse.UID,
 					"Document type": originalDoc.Type,
 					"Error":         err.Error(),
@@ -194,23 +194,23 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			}
 
 			c.logger.Info("Job processing completed for document", map[string]interface{}{
-				"Trace ID":      reqID,
-				"File name":     fileName,
-				"Job queue ID":  messageID,
+				"AWS Trace ID":  reqID,
 				"Set UID":       scannedCaseResponse.UID,
 				"PDF UUID":      attchResp.UUID,
+				"Job queue ID":  messageID,
+				"File name":     fileName,
 				"Document type": originalDoc.Type,
 			})
 
 		})
 		c.logger.Info("Document queued for processing", map[string]interface{}{
-			"Trace ID":      reqID,
+			"AWS Trace ID":  reqID,
 			"Set UID":       scannedCaseResponse.UID,
 			"Document type": doc.Type,
 		})
 	}
 
-	// Send the UUID response
+	// Send the UID response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	if err := json.NewEncoder(w).Encode(scannedCaseResponse); err != nil {

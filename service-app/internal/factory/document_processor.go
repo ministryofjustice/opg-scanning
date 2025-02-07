@@ -60,12 +60,11 @@ func NewDocumentProcessor(data *types.BaseDocument, docType, format string, regi
 
 // Process validates and sanitizes the document.
 func (p *DocumentProcessor) Process(ctx context.Context) (interface{}, error) {
-	// Validate the document
-	p.logger.Info("Context", nil, ctx.Value(constants.TraceIDKey))
-
 	p.validator.Setup(p.doc)
 	if err := p.validator.Validate(); err != nil {
-		p.logger.Error("Validation failed: "+err.Error(), nil)
+		p.logger.Error("Validation failed: "+err.Error(), map[string]interface{}{
+			"AWS Trace ID": ctx.Value(constants.TraceIDKey).(string),
+		})
 	}
 
 	// Sanitize the document
