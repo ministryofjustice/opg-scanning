@@ -1,6 +1,7 @@
 package factory
 
 import (
+	"context"
 	"encoding/base64"
 	"os"
 	"testing"
@@ -38,7 +39,8 @@ func TestProcessDocument_LP1F(t *testing.T) {
 	require.NoError(t, err, "NewDocumentProcessor returned an error")
 
 	// Process the document
-	processedDoc, err := processor.Process()
+	ctx := context.Background()
+	processedDoc, err := processor.Process(ctx)
 	require.NoError(t, err, "Document processing failed")
 
 	lp1fDoc, ok := processedDoc.(*lp1f_types.LP1FDocument)

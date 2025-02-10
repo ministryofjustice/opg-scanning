@@ -115,7 +115,6 @@ func (tg *JWTTokenGenerator) EnsureToken(ctx context.Context) error {
 	tg.mu.RUnlock()
 
 	if tokenValid {
-		tg.logger.Info("Using cached JWT token.", nil)
 		return nil
 	}
 
