@@ -32,12 +32,18 @@ func TestPersistFormData_LocalStack(t *testing.T) {
 	awsClient, err := NewAwsClient(ctx, cfg, appConfig)
 	assert.NoError(t, err, "Failed to load AWS client")
 
+	// Test PersistFormData valid
 	docType := "TestDoc"
-	body := bytes.NewReader([]byte("test data"))
-
+	body := bytes.NewReader([]byte("<?xml version=\"1.0\" encoding=\"UTF-8\"?><test>test</test>"))
 	fileName, err := awsClient.PersistFormData(ctx, body, docType)
 	assert.NoError(t, err, "PersistFormData should not return an error")
 	assert.Contains(t, fileName, "FORM_DDC_", "Expected file name to start with 'FORM_DDC_'")
+
+	// Test PersistFormData invalid
+	docType = "TestDoc"
+	body = bytes.NewReader([]byte("invalid xml"))
+	_, err = awsClient.PersistFormData(ctx, body, docType)
+	assert.Error(t, err, "PersistFormData should return an error for invalid XML")
 
 	currentTime := time.Now().Format("20060102150405")
 	expectedKey := fmt.Sprintf("FORM_DDC_%s_%s.xml", currentTime, docType)

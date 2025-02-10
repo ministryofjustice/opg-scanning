@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/ministryofjustice/opg-scanning/config"
+	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
 type AwsClientInterface interface {
@@ -96,11 +98,23 @@ func (a *AwsClient) PersistFormData(ctx context.Context, body io.Reader, docType
 	currentTime := time.Now().Format("20060102150405")
 	fileName := fmt.Sprintf("FORM_DDC_%s_%s.xml", currentTime, docType)
 
+	// Check body is valid XML before S3 input
+	bodyBytes, bodyErr := io.ReadAll(body)
+	if bodyErr != nil {
+		return "", fmt.Errorf("failed to read body: %w", bodyErr)
+	}
+	if bodyErr = util.IsValidXML(bodyBytes); bodyErr != nil {
+		return "", fmt.Errorf("invalid XML: %w", bodyErr)
+	}
+
+	// Since we consume the reader for validation, create a new reader from the buffered data
+	readerForS3 := bytes.NewReader(bodyBytes)
+
 	// Create the S3 input
 	input := &s3.PutObjectInput{
 		Bucket:               &bucketName,
 		Key:                  &fileName,
-		Body:                 body,
+		Body:                 readerForS3,
 		ServerSideEncryption: types.ServerSideEncryptionAwsKms,
 		SSEKMSKeyId:          &a.config.Aws.JobsQueueBucketKmsKey,
 	}
