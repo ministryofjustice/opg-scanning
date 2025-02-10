@@ -63,7 +63,7 @@ func (p *DocumentProcessor) Process(ctx context.Context) (interface{}, error) {
 	p.validator.Setup(p.doc)
 	if err := p.validator.Validate(); err != nil {
 		p.logger.Error("Validation failed: "+err.Error(), map[string]interface{}{
-			"AWS Trace ID": ctx.Value(constants.TraceIDKey).(string),
+			"trace_id": ctx.Value(constants.TraceIDKey).(string),
 		})
 	}
 

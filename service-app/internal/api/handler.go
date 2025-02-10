@@ -157,10 +157,10 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			attchResp, decodedXML, docErr := service.AttachDocuments(ctx, scannedCaseResponse)
 			if docErr != nil {
 				c.logger.Error("Failed to attach document", map[string]interface{}{
-					"AWS Trace ID":  reqID,
-					"Set UID":       scannedCaseResponse.UID,
-					"Document type": originalDoc.Type,
-					"Error":         docErr.Error(),
+					"trace_id":      reqID,
+					"set_uid":       scannedCaseResponse.UID,
+					"document_type": originalDoc.Type,
+					"error":         docErr.Error(),
 				})
 				return
 			}
@@ -169,10 +169,10 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			fileName, persistErr := c.processAndPersist(ctx, decodedXML, originalDoc)
 			if persistErr != nil {
 				c.logger.Error("Failed to persist document", map[string]interface{}{
-					"AWS Trace ID":  reqID,
-					"Set UID":       scannedCaseResponse.UID,
-					"Document type": originalDoc.Type,
-					"Error":         persistErr.Error(),
+					"trace_id":      reqID,
+					"set_uid":       scannedCaseResponse.UID,
+					"document_type": originalDoc.Type,
+					"error":         persistErr.Error(),
 				})
 				return
 			}
@@ -185,28 +185,28 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			messageID, err := AwsQueue.QueueSetForProcessing(ctx, scannedCaseResponse, fileName)
 			if err != nil {
 				c.logger.Error("Failed to queue document for processing", map[string]interface{}{
-					"AWS Trace ID":  reqID,
-					"Set UID":       scannedCaseResponse.UID,
-					"Document type": originalDoc.Type,
-					"Error":         err.Error(),
+					"trace_id":      reqID,
+					"set_uid":       scannedCaseResponse.UID,
+					"document_type": originalDoc.Type,
+					"error":         err.Error(),
 				})
 				return
 			}
 
 			c.logger.Info("Job processing completed for document", map[string]interface{}{
-				"AWS Trace ID":  reqID,
-				"Set UID":       scannedCaseResponse.UID,
-				"PDF UUID":      attchResp.UUID,
-				"Job queue ID":  messageID,
-				"File name":     fileName,
-				"Document type": originalDoc.Type,
+				"trace_id":      reqID,
+				"set_uid":       scannedCaseResponse.UID,
+				"pdf_uuid":      attchResp.UUID,
+				"job_queue_id":  messageID,
+				"filename":      fileName,
+				"document_type": originalDoc.Type,
 			})
 
 		})
 		c.logger.Info("Document queued for processing", map[string]interface{}{
-			"AWS Trace ID":  reqID,
-			"Set UID":       scannedCaseResponse.UID,
-			"Document type": doc.Type,
+			"trace_id":      reqID,
+			"set_uid":       scannedCaseResponse.UID,
+			"document_type": doc.Type,
 		})
 	}
 
