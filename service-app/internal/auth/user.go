@@ -1,6 +1,10 @@
 package auth
 
-import "context"
+import (
+	"context"
+
+	"github.com/ministryofjustice/opg-scanning/internal/constants"
+)
 
 type UserLogin struct {
 	User User `json:"user"`
@@ -11,12 +15,8 @@ type User struct {
 	Password string `json:"password"`
 }
 
-type contextKey string
-
-const userContextKey = contextKey("auth-user")
-
 // Retrieves the users identity from the context
 func UserFromContext(ctx context.Context) (string, bool) {
-	user, ok := ctx.Value(userContextKey).(string)
+	user, ok := ctx.Value(constants.UserContextKey).(string)
 	return user, ok
 }
