@@ -18,6 +18,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
+	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
 type IndexController struct {
@@ -173,6 +174,18 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 					"set_uid":       scannedCaseResponse.UID,
 					"document_type": originalDoc.Type,
 					"error":         persistErr.Error(),
+				})
+				return
+			}
+
+			// Check if the document is a correspondence type; if so do not send to the job queue
+			if util.Contains([]string{"Correspondence", "SupCorrespondence"}, originalDoc.Type) {
+				c.logger.Info("Skipping external job processing, checks completed for document", map[string]interface{}{
+					"trace_id":      reqID,
+					"set_uid":       scannedCaseResponse.UID,
+					"pdf_uuid":      attchResp.UUID,
+					"filename":      fileName,
+					"document_type": originalDoc.Type,
 				})
 				return
 			}
