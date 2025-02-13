@@ -269,7 +269,7 @@ func (c *IndexController) validateAndSanitizeXML(bodyStr string) (*types.BaseSet
 }
 
 func (c *IndexController) processAndPersist(ctx context.Context, decodedXML []byte, originalDoc *types.BaseDocument) (fileName string, err error) {
-	// Persist the XML
+	// Persist the decoded XML data in its original form as represented in the origin request.
 	xmlReader := bytes.NewReader(decodedXML)
 	fileName, awsErr := c.AwsClient.PersistFormData(ctx, xmlReader, originalDoc.Type)
 	if awsErr != nil {

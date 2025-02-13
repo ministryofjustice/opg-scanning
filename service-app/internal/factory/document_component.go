@@ -7,6 +7,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/parser/corresp_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lp1f_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lp1h_parser"
+	"github.com/ministryofjustice/opg-scanning/internal/parser/lpa120_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lpc_parser"
 )
 
@@ -50,6 +51,12 @@ func GetComponent(docType string) (Component, error) {
 			},
 			Validator: lpc_parser.NewValidator(),
 			Sanitizer: lpc_parser.NewSanitizer(),
+		}, nil
+	case "LPA120":
+		return Component{
+			Parser: func(data []byte) (interface{}, error) {
+				return lpa120_parser.Parse(data)
+			},
 		}, nil
 	default:
 		return Component{}, fmt.Errorf("unsupported docType: %s", docType)

@@ -1,4 +1,4 @@
-package lpa120_document
+package lpa120_types
 
 import (
 	"encoding/xml"
