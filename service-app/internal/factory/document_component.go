@@ -18,47 +18,37 @@ type Component struct {
 	Sanitizer parser.CommonSanitizer
 }
 
+// Stores the mapping of document types to their respective components.
+var componentRegistry = map[string]Component{
+	"LP1H": {
+		Parser:    lp1h_parser.Parse,
+		Validator: lp1h_parser.NewValidator(),
+		Sanitizer: lp1h_parser.NewSanitizer(),
+	},
+	"LP1F": {
+		Parser:    lp1f_parser.Parse,
+		Validator: lp1f_parser.NewValidator(),
+		Sanitizer: lp1f_parser.NewSanitizer(),
+	},
+	"Correspondence": {
+		Parser:    corresp_parser.Parse,
+		Validator: corresp_parser.NewValidator(),
+		Sanitizer: corresp_parser.NewSanitizer(),
+	},
+	"LPC": {
+		Parser:    lpc_parser.Parse,
+		Validator: lpc_parser.NewValidator(),
+		Sanitizer: lpc_parser.NewSanitizer(),
+	},
+	"LPA120": {
+		Parser: lpa120_parser.Parse,
+	},
+}
+
+// Returns the component for the specified document type.
 func GetComponent(docType string) (Component, error) {
-	switch docType {
-	case "LP1H":
-		return Component{
-			Parser: func(data []byte) (interface{}, error) {
-				return lp1h_parser.Parse(data)
-			},
-			Validator: lp1h_parser.NewValidator(),
-			Sanitizer: lp1h_parser.NewSanitizer(),
-		}, nil
-	case "LP1F":
-		return Component{
-			Parser: func(data []byte) (interface{}, error) {
-				return lp1f_parser.Parse(data)
-			},
-			Validator: lp1f_parser.NewValidator(),
-			Sanitizer: lp1f_parser.NewSanitizer(),
-		}, nil
-	case "Correspondence":
-		return Component{
-			Parser: func(data []byte) (interface{}, error) {
-				return corresp_parser.Parse(data)
-			},
-			Validator: corresp_parser.NewValidator(),
-			Sanitizer: corresp_parser.NewSanitizer(),
-		}, nil
-	case "LPC":
-		return Component{
-			Parser: func(data []byte) (interface{}, error) {
-				return lpc_parser.Parse(data)
-			},
-			Validator: lpc_parser.NewValidator(),
-			Sanitizer: lpc_parser.NewSanitizer(),
-		}, nil
-	case "LPA120":
-		return Component{
-			Parser: func(data []byte) (interface{}, error) {
-				return lpa120_parser.Parse(data)
-			},
-		}, nil
-	default:
-		return Component{}, fmt.Errorf("unsupported docType: %s", docType)
+	if component, exists := componentRegistry[docType]; exists {
+		return component, nil
 	}
+	return Component{}, fmt.Errorf("unsupported docType: %s", docType)
 }
