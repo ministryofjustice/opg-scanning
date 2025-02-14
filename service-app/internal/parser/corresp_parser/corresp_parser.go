@@ -8,7 +8,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/types/corresp_types"
 )
 
-func Parse(data []byte) (*corresp_types.Correspondence, error) {
+func Parse(data []byte) (interface{}, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("correspondence data is empty")
 	}
