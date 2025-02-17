@@ -8,6 +8,7 @@ import (
 
 	"github.com/ministryofjustice/opg-scanning/internal/parser/corresp_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
+	"github.com/ministryofjustice/opg-scanning/internal/types/corresp_types"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
@@ -42,11 +43,15 @@ func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.Scann
 	// Check for Correspondence or SupCorrespondence and extract SubType
 	if util.Contains([]string{"Correspondence", "SupCorrespondence"}, s.originalDoc.Type) {
 		// Parse the XML
-		correspDoc, err := corresp_parser.Parse([]byte(decodedXML))
+		correspInterface, err := corresp_parser.Parse([]byte(decodedXML))
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to parse correspondence for document %s: %w", s.originalDoc.Type, err)
 		}
-		documentSubType = correspDoc.SubType
+		corresp, ok := correspInterface.(*corresp_types.Correspondence)
+		if !ok {
+			return nil, nil, fmt.Errorf("failed to cast correspInterface to corresp_types.Correspondence")
+		}
+		documentSubType = corresp.SubType
 	}
 
 	// Prepare the request payload
