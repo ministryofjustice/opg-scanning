@@ -380,6 +380,9 @@
                                         <xs:element name="CaseNumber" type="xs:string"/>
                                         <xs:element name="OnlineLPA" type="xs:boolean" minOccurs="0"/>
                                         <xs:element name="OnlineLPAID" type="xs:string" minOccurs="0"/>
+                                        <xs:element name="OfficePaymentReference" type="xs:string" minOccurs="0"/>
+                                        <xs:element name="OfficePaymentDate" type="xs:string" minOccurs="0"/>
+                                        <xs:element name="OfficePaymentAmount" type="xs:string" minOccurs="0"/>
                                     </xs:sequence>
                                 </xs:complexType>
                             </xs:element>
