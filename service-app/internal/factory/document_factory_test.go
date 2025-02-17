@@ -11,6 +11,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/types/corresp_types"
 	"github.com/ministryofjustice/opg-scanning/internal/types/lp1f_types"
 	"github.com/ministryofjustice/opg-scanning/internal/types/lp1h_types"
+	"github.com/ministryofjustice/opg-scanning/internal/types/lpa120_types"
 	"github.com/ministryofjustice/opg-scanning/internal/types/lpc_types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -50,14 +51,19 @@ func TestProcessDocument_LPC(t *testing.T) {
 	processedDoc := prepareDocument(t, "LPC", "LPC-valid")
 
 	lpc, ok := processedDoc.(*lpc_types.LPCDocument)
-	require.True(t, ok, "Expected processedDoc to be of type *corresp_types.Correspondence")
+	require.True(t, ok, "Expected processedDoc to be of type *lpc_types.LPCDocument")
 
 	assert.Equal(t, "Jack", lpc.Page1[0].ContinuationSheet1.Attorneys[0].FirstName, "FirstName mismatch")
 	assert.Equal(t, "Jones", lpc.Page1[0].ContinuationSheet1.Attorneys[0].LastName, "LastName mismatch")
 }
 
 func TestProcessDocument_LPA120(t *testing.T) {
-	// TODO Add test
+	processedDoc := prepareDocument(t, "LPA120", "LPA120-valid")
+
+	lpa120, ok := processedDoc.(*lpa120_types.LPA120Document)
+	require.True(t, ok, "Expected processedDoc to be of type *corresp_types.Correspondence")
+
+	assert.Equal(t, "John Doe", lpa120.Page3.Section1.FullName, "FullName mismatch")
 }
 
 func prepareDocument(t *testing.T, docType string, fileName string) interface{} {

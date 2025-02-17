@@ -58,6 +58,11 @@ func NewDocumentProcessor(data *types.BaseDocument, docType, format string, regi
 
 // Process validates and sanitizes the document.
 func (p *DocumentProcessor) Process() (interface{}, error) {
+	// If the document type doesn't declare a validator or sanitizer, skip.
+	if p.validator == nil || p.sanitizer == nil {
+		return p.doc, nil
+	}
+
 	// Validate the document
 	p.validator.Setup(p.doc)
 	if err := p.validator.Validate(); err != nil {
