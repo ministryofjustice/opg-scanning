@@ -27,6 +27,11 @@ var (
 		DocumentTypeLP1F,
 		DocumentTypeLP1H,
 		DocumentCorresp,
+		DocumentTypeLPA002,
+		DocumentTypeLPAPA,
+		DocumentTypeLPAPW,
+		DocumentTypeLPA114,
+		DocumentTypeLPA117,
 	}
 
 	LPATypeDocuments = []string{
