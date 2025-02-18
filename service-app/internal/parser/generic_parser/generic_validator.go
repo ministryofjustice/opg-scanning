@@ -1,20 +1,19 @@
-package corresp_parser
+package generic_parser
 
 import (
 	"fmt"
 
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
-	"github.com/ministryofjustice/opg-scanning/internal/types/corresp_types"
 )
 
 type Validator struct {
-	doc           *corresp_types.Correspondence
+	doc           interface{}
 	baseValidator *parser.BaseValidator
 }
 
 func NewValidator() *Validator {
 	return &Validator{
-		doc: &corresp_types.Correspondence{},
+		doc: struct{}{},
 	}
 }
 
@@ -23,7 +22,6 @@ func (v *Validator) Setup(doc interface{}) error {
 		return fmt.Errorf("document is nil")
 	}
 
-	v.doc = doc.(*corresp_types.Correspondence)
 	v.baseValidator = parser.NewBaseValidator(v.doc)
 
 	return nil
@@ -32,7 +30,7 @@ func (v *Validator) Setup(doc interface{}) error {
 func (v *Validator) Validate() error {
 	// Return errors if any
 	if messages := v.baseValidator.GetValidatorErrorMessages(); len(messages) > 0 {
-		return fmt.Errorf("failed to validate correspondence document: %v", messages)
+		return fmt.Errorf("failed to validate generic document: %v", messages)
 	}
 	return nil
 }
