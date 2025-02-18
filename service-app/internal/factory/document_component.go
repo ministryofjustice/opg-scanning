@@ -3,8 +3,10 @@ package factory
 import (
 	"fmt"
 
+	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/corresp_parser"
+	"github.com/ministryofjustice/opg-scanning/internal/parser/generic_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lp1f_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lp1h_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lpc_parser"
@@ -50,6 +52,14 @@ func GetComponent(docType string) (Component, error) {
 			},
 			Validator: lpc_parser.NewValidator(),
 			Sanitizer: lpc_parser.NewSanitizer(),
+		}, nil
+	case constants.DocumentTypeLPA002, constants.DocumentTypeLPAPA, constants.DocumentTypeLPAPW, constants.DocumentTypeLPA114, constants.DocumentTypeLPA117, constants.DocumentTypeLP2, constants.DocumentTypeEP2PG:
+		return Component{
+			Parser: func(data []byte) (interface{}, error) {
+				return generic_parser.Parse(data)
+			},
+			Validator: generic_parser.NewValidator(),
+			Sanitizer: generic_parser.NewSanitizer(),
 		}, nil
 	default:
 		return Component{}, fmt.Errorf("unsupported docType: %s", docType)

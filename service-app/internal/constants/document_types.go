@@ -27,6 +27,13 @@ var (
 		DocumentTypeLP1F,
 		DocumentTypeLP1H,
 		DocumentCorresp,
+		DocumentTypeLPA002,
+		DocumentTypeLPAPA,
+		DocumentTypeLPAPW,
+		DocumentTypeLPA114,
+		DocumentTypeLPA117,
+		DocumentTypeEP2PG,
+		DocumentTypeLP2,
 	}
 
 	LPATypeDocuments = []string{
@@ -41,33 +48,13 @@ var (
 		DocumentTypeEPA,
 	}
 
-	Instruments = []string{
-		DocumentTypeEPA,
-		DocumentTypeLPAPW,
-		DocumentTypeLPAPA,
-		DocumentTypeLPA114,
-		DocumentTypeLPA117,
-		DocumentTypeLP1F,
-		DocumentTypeLP1H,
-	}
-
-	Applications = []string{
+	NewCaseDocuments = []string{
 		DocumentTypeEP2PG,
 		DocumentTypeLPA002,
 		DocumentTypeLP0002R,
 		DocumentTypeLP2,
-	}
-
-	CourtOrderDocuments = []string{
-		DocumentTypeCOPORD,
-	}
-
-	StandaloneInstruments = []string{
 		DocumentTypeLP1F,
 		DocumentTypeLP1H,
-	}
-
-	ExemptApplications = []string{
-		DocumentTypeLP0002R,
+		DocumentTypeCOPORD,
 	}
 )
