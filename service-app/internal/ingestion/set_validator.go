@@ -27,23 +27,23 @@ func (v *Validator) ValidateSet(parsedSet *types.BaseSet) error {
 	}
 
 	// Validate combinations of instruments and applications
-	instrumentsDiscovered := v.getEmbeddedDocumentTypes(parsedSet, constants.Instruments)
-	applicationsDiscovered := v.getEmbeddedDocumentTypes(parsedSet, constants.Applications)
+	// instrumentsDiscovered := v.getEmbeddedDocumentTypes(parsedSet, constants.Instruments)
+	// applicationsDiscovered := v.getEmbeddedDocumentTypes(parsedSet, constants.Applications)
 
-	if parsedSet.Header.CaseNo != "" {
-		// Validate document combinations if CaseNo exists
-		if err := v.validateDocCombosWithCaseNo(instrumentsDiscovered, applicationsDiscovered); err != nil {
-			return err
-		}
-	} else {
-		// Validate document instruments if no CaseNo exists
-		if err := v.validateInstrumentCountWithoutCaseNo(instrumentsDiscovered); err != nil {
-			return err
-		}
-		if err := v.validateInstrumentApplications(instrumentsDiscovered, applicationsDiscovered); err != nil {
-			return err
-		}
-	}
+	// if parsedSet.Header.CaseNo != "" {
+	// 	// Validate document combinations if CaseNo exists
+	// 	if err := v.validateDocCombosWithCaseNo(instrumentsDiscovered, applicationsDiscovered); err != nil {
+	// 		return err
+	// 	}
+	// } else {
+	// 	// Validate document instruments if no CaseNo exists
+	// 	if err := v.validateInstrumentCountWithoutCaseNo(instrumentsDiscovered); err != nil {
+	// 		return err
+	// 	}
+	// 	if err := v.validateInstrumentApplications(instrumentsDiscovered, applicationsDiscovered); err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	// Validate Body and Documents
 	if len(parsedSet.Body.Documents) == 0 {
