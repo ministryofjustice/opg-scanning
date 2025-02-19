@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -143,9 +144,11 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
-		c.Queue.AddToQueue(doc, "xml", func(processedDoc interface{}, originalDoc *types.BaseDocument) {
-			// Create a new context
-			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.config.HTTP.Timeout)*time.Second)
+		// r.Context() carries the enriched logger injected by the middleware.
+    	c.Queue.AddToQueue(r.Context(), doc, "xml", func(processedDoc interface{}, originalDoc *types.BaseDocument) {
+			// We want the enriched context in the request, however we should independly manage the context
+			// beond the request lifecycle. Hence we create a new context with a timeout.
+			ctx, cancel := context.WithTimeout(r.Context(), time.Duration(c.config.HTTP.Timeout)*time.Second)
 			defer cancel()
 
 			// Attach documents to case
@@ -153,7 +156,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			service.originalDoc = originalDoc
 			attchResp, decodedXML, docErr := service.AttachDocuments(ctx, scannedCaseResponse)
 			if docErr != nil {
-				c.logger.Error("Failed to attach document", map[string]interface{}{
+				c.logger.ErrorWithContext(ctx, "Failed to attach document", map[string]interface{}{
 					"set_uid":       scannedCaseResponse.UID,
 					"document_type": originalDoc.Type,
 					"error":         docErr.Error(),
@@ -164,7 +167,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			// Persist form data in S3 bucket
 			fileName, persistErr := c.processAndPersist(ctx, decodedXML, originalDoc)
 			if persistErr != nil {
-				c.logger.Error("Failed to persist document", map[string]interface{}{
+				c.logger.ErrorWithContext(ctx, "Failed to persist document", map[string]interface{}{
 					"set_uid":       scannedCaseResponse.UID,
 					"document_type": originalDoc.Type,
 					"error":         persistErr.Error(),
@@ -174,7 +177,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 
 			// Check if the document is a correspondence type; if so do not send to the job queue
 			if util.Contains([]string{"Correspondence", "SupCorrespondence"}, originalDoc.Type) {
-				c.logger.Info("Skipping external job processing, checks completed for document", map[string]interface{}{
+				c.logger.InfoWithContext(ctx, "Skipping external job processing, checks completed for document", map[string]interface{}{
 					"set_uid":       scannedCaseResponse.UID,
 					"pdf_uuid":      attchResp.UUID,
 					"filename":      fileName,
@@ -186,11 +189,11 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			// Persist external aws job queue with UID+fileName
 			AwsQueue, err := aws.NewAwsQueue(c.config)
 			if err != nil {
-				c.logger.Error("Failed to create AWS queue", nil, err)
+				c.logger.ErrorWithContext(ctx, "Failed to create AWS queue", nil, err)
 			}
 			messageID, err := AwsQueue.QueueSetForProcessing(ctx, scannedCaseResponse, fileName)
 			if err != nil {
-				c.logger.Error("Failed to queue document for processing", map[string]interface{}{
+				c.logger.ErrorWithContext(ctx, "Failed to queue document for processing", map[string]interface{}{
 					"set_uid":       scannedCaseResponse.UID,
 					"document_type": originalDoc.Type,
 					"error":         err.Error(),
@@ -198,7 +201,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 				return
 			}
 
-			c.logger.Info("Job processing completed for document", map[string]interface{}{
+			c.logger.InfoWithContext(ctx, "Job processing completed for document", map[string]interface{}{
 				"set_uid":       scannedCaseResponse.UID,
 				"pdf_uuid":      attchResp.UUID,
 				"job_queue_id":  messageID,
@@ -207,7 +210,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			})
 
 		})
-		c.logger.Info("Document queued for processing", map[string]interface{}{
+		c.logger.InfoWithContext(ctx, "Document queued for processing", map[string]interface{}{
 			"set_uid":       scannedCaseResponse.UID,
 			"document_type": doc.Type,
 		})
@@ -235,7 +238,7 @@ func (c *IndexController) respondWithError(w http.ResponseWriter, statusCode int
 // Helper Method: Read Request Body
 func (c *IndexController) readRequestBody(r *http.Request) (string, error) {
 	if r.Body == nil {
-		return "", fmt.Errorf("request body is empty")
+		return "", errors.New("request body is empty")
 	}
 	body, err := io.ReadAll(r.Body)
 	if err != nil {

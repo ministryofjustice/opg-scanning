@@ -44,38 +44,61 @@ func LoggerFromContext(ctx context.Context) *slog.Logger {
 }
 
 func (l *Logger) WithFields(fields map[string]interface{}) *Logger {
-	if len(fields) == 0 {
-		return l
-	}
-	newSlogLogger := l.SlogLogger.With(convertFieldsToAny(fields)...)
 	return &Logger{
 		cfg:        l.cfg,
-		SlogLogger: newSlogLogger,
+		SlogLogger: l.SlogLogger.With(anyFromAttrs(attrsFromMap(fields))...),
 	}
 }
 
 func (l *Logger) Info(message string, fields map[string]interface{}, args ...any) {
 	if fields != nil {
-		l.WithFields(fields).SlogLogger.Info(message)
+		l.SlogLogger.Info(message, anyFromAttrs(attrsFromMap(fields))...)
 	} else {
-		logMessage := fmt.Sprintf(message, args...)
-		l.SlogLogger.Info(logMessage)
+		l.SlogLogger.Info(fmt.Sprintf(message, args...))
+	}
+}
+
+func (l *Logger) InfoWithContext(ctx context.Context, message string, fields map[string]interface{}, args ...any) {
+	if ctxLogger := LoggerFromContext(ctx); ctxLogger != nil {
+		ctxLogger.Info(message, anyFromAttrs(attrsFromMap(fields))...)
+	} else {
+		l.Info(message, fields, args...)
 	}
 }
 
 func (l *Logger) Error(message string, fields map[string]interface{}, args ...any) {
 	if fields != nil {
-		l.WithFields(fields).SlogLogger.Error(message)
+		l.SlogLogger.Error(message, anyFromAttrs(attrsFromMap(fields))...)
 	} else {
-		logMessage := fmt.Sprintf(message, args...)
-		l.SlogLogger.Error(logMessage)
+		l.SlogLogger.Error(fmt.Sprintf(message, args...))
 	}
 }
 
-func convertFieldsToAny(fields map[string]interface{}) []any {
-	anySlice := make([]any, 0, len(fields)*2)
-	for key, value := range fields {
-		anySlice = append(anySlice, key, value)
+func (l *Logger) ErrorWithContext(ctx context.Context, message string, fields map[string]interface{}, args ...any) {
+	if ctxLogger := LoggerFromContext(ctx); ctxLogger != nil {
+		ctxLogger.Error(message, anyFromAttrs(attrsFromMap(fields))...)
+	} else {
+		l.Error(message, fields, args...)
 	}
-	return anySlice
+}
+
+// converts a map[string]interface{} to a slice of slog.Attr.
+func attrsFromMap(fields map[string]interface{}) []slog.Attr {
+	if fields == nil {
+		return nil
+	}
+	attrs := make([]slog.Attr, 0, len(fields))
+	for key, value := range fields {
+		attrs = append(attrs, slog.Any(key, value))
+	}
+	return attrs
+}
+
+// converts a slice of slog.Attr to a slice of any.
+func anyFromAttrs(attrs []slog.Attr) []any {
+	anys := make([]any, len(attrs))
+	for i, a := range attrs {
+		anys[i] = a
+	}
+	return anys
 }

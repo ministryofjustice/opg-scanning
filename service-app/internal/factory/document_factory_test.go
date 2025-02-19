@@ -1,6 +1,7 @@
 package factory
 
 import (
+	"context"
 	"encoding/base64"
 	"os"
 	"testing"
@@ -114,7 +115,8 @@ func prepareDocument(t *testing.T, docType string, fileName string) interface{} 
 	require.NoError(t, err, "NewDocumentProcessor returned an error")
 
 	// Process the document
-	processedDoc, err := processor.Process()
+	ctx := context.Background()
+	processedDoc, err := processor.Process(ctx)
 	require.NoError(t, err, "Document processing failed")
 
 	return processedDoc

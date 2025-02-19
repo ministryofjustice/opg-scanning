@@ -1,6 +1,7 @@
 package factory
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
@@ -57,7 +58,7 @@ func NewDocumentProcessor(data *types.BaseDocument, docType, format string, regi
 }
 
 // Process validates and sanitizes the document.
-func (p *DocumentProcessor) Process() (interface{}, error) {
+func (p *DocumentProcessor) Process(ctx context.Context) (interface{}, error) {
 	// If the document type doesn't declare a validator or sanitizer, skip.
 	if p.validator == nil || p.sanitizer == nil {
 		return p.doc, nil
