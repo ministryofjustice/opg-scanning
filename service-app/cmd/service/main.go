@@ -3,41 +3,43 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
-	"github.com/ministryofjustice/opg-go-common/telemetry"
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/api"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
+	"github.com/ministryofjustice/opg-scanning/internal/logger"
 )
 
 func main() {
-	// Set up logging
-	logger := telemetry.NewLogger("opg-scanning-service")
-
 	// Initialize the tracer provider
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	shutdownTracer, err := telemetry.StartTracerProvider(ctx, logger, true)
+	// Initialize configuration
+	appConfig := config.NewConfig()
+
+	// Set up logging
+	logWrapper := logger.NewLogger(appConfig)
+	slogLogger := logWrapper.SlogLogger
+
+	shutdownTracer, err := logger.StartTracerProvider(ctx, slogLogger, true)
 	if err != nil {
-		logger.Error("Failed to start tracer provider", "error", err)
+		slogLogger.Error("Failed to start tracer provider", slog.String("error", err.Error()))
 		return
 	}
 	defer shutdownTracer()
-
-	// Initialize configuration
-	appConfig := config.NewConfig()
 
 	// Load AWS configuration
 	cfg, err := awsConfig.LoadDefaultConfig(ctx,
 		awsConfig.WithRegion(appConfig.Aws.Region),
 	)
 	if err != nil {
-		logger.Error("Failed to load AWS config", "error", err)
+		slogLogger.Error("Failed to load AWS config", "error", err)
 		return
 	}
 	// Initialize AwsClient
@@ -48,7 +50,7 @@ func main() {
 
 	controller := api.NewIndexController(awsClient, appConfig)
 	controller.Queue.StartWorkerPool(ctx, 3)
-	logger.Info("Service started...")
+	slogLogger.Info("Service started...")
 
 	go func() {
 		controller.HandleRequests()
@@ -60,8 +62,8 @@ func main() {
 	<-stop
 
 	// Start shutdown sequence
-	logger.Info("Shutting down gracefully...")
+	slogLogger.Info("Shutting down gracefully...")
 	cancel()
 	controller.Queue.Close()
-	logger.Info("All jobs processed. Exiting.")
+	slogLogger.Info("All jobs processed. Exiting.")
 }
