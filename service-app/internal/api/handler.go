@@ -143,7 +143,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
-		c.Queue.AddToQueue(ctx, doc, "xml", func(processedDoc interface{}, originalDoc *types.BaseDocument) {
+		c.Queue.AddToQueue(doc, "xml", func(processedDoc interface{}, originalDoc *types.BaseDocument) {
 			// Create a new context
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.config.HTTP.Timeout)*time.Second)
 			defer cancel()
