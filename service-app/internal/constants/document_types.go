@@ -7,9 +7,11 @@ const (
 	DocumentTypeLPAPW   = "LPA-PW"
 	DocumentTypeLPA114  = "LPA114"
 	DocumentTypeLPA117  = "LPA117"
+	DocumentTypeLPA120  = "LPA120"
 	DocumentTypeLP1F    = "LP1F"
 	DocumentTypeLP1H    = "LP1H"
 	DocumentTypeLP2     = "LP2"
+	DocumentTypeLPC     = "LPC"
 	DocumentCorresp     = "Correspondence"
 )
 
@@ -27,6 +29,8 @@ var (
 		DocumentTypeLP1F,
 		DocumentTypeLP1H,
 		DocumentCorresp,
+		DocumentTypeLPC,
+		DocumentTypeLPA120,
 	}
 
 	LPATypeDocuments = []string{
