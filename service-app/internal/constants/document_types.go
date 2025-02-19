@@ -25,12 +25,19 @@ const (
 )
 
 var (
-	SupprotedDocumentTypes = []string{
+	SupportedDocumentTypes = []string{
 		DocumentTypeLP1F,
 		DocumentTypeLP1H,
 		DocumentCorresp,
 		DocumentTypeLPC,
 		DocumentTypeLPA120,
+		DocumentTypeLPA002,
+		DocumentTypeLPAPA,
+		DocumentTypeLPAPW,
+		DocumentTypeLPA114,
+		DocumentTypeLPA117,
+		DocumentTypeEP2PG,
+		DocumentTypeLP2,
 	}
 
 	LPATypeDocuments = []string{

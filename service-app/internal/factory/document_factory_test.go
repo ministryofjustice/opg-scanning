@@ -67,6 +67,34 @@ func TestProcessDocument_LPA120(t *testing.T) {
 	assert.Equal(t, "John Doe", lpa120.Page3.Section1.FullName, "FullName mismatch")
 }
 
+func TestProcessDocument_LP2(t *testing.T) {
+	prepareDocument(t, "LP2", "LP2-valid")
+}
+
+func TestProcessDocument_LPA002(t *testing.T) {
+	prepareDocument(t, "LPA002", "LPA002-valid")
+}
+
+func TestProcessDocument_LPAPA(t *testing.T) {
+	prepareDocument(t, "LPA-PA", "LPA-PA-valid")
+}
+
+func TestProcessDocument_LPAPW(t *testing.T) {
+	prepareDocument(t, "LPA-PW", "LPA-PW-valid")
+}
+
+func TestProcessDocument_LPA114(t *testing.T) {
+	prepareDocument(t, "LPA114", "LPA114-valid")
+}
+
+func TestProcessDocument_LPA117(t *testing.T) {
+	prepareDocument(t, "LPA117", "LPA117-valid")
+}
+
+func TestProcessDocument_EP2PG(t *testing.T) {
+	prepareDocument(t, "EP2PG", "EP2PG-valid")
+}
+
 func prepareDocument(t *testing.T, docType string, fileName string) interface{} {
 	// Load the sample XML from the xml directory
 	encodedXML := loadXMLFile(t, "../../xml/"+fileName+".xml")

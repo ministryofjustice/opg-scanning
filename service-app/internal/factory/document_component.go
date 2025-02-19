@@ -3,8 +3,10 @@ package factory
 import (
 	"fmt"
 
+	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/corresp_parser"
+	"github.com/ministryofjustice/opg-scanning/internal/parser/generic_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lp1f_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lp1h_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lpa120_parser"
@@ -42,6 +44,27 @@ var componentRegistry = map[string]Component{
 	},
 	"LPA120": {
 		Parser: lpa120_parser.Parse,
+	},
+	constants.DocumentTypeLP2: {
+		Parser: generic_parser.Parse,
+	},
+	constants.DocumentTypeLPA002: {
+		Parser: generic_parser.Parse,
+	},
+	constants.DocumentTypeLPAPA: {
+		Parser: generic_parser.Parse,
+	},
+	constants.DocumentTypeLPAPW: {
+		Parser: generic_parser.Parse,
+	},
+	constants.DocumentTypeLPA114: {
+		Parser: generic_parser.Parse,
+	},
+	constants.DocumentTypeLPA117: {
+		Parser: generic_parser.Parse,
+	},
+	constants.DocumentTypeEP2PG: {
+		Parser: generic_parser.Parse,
 	},
 }
 
