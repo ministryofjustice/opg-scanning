@@ -28,6 +28,18 @@
                 <LastName>Heidenreich</LastName>
                 <DOB>18021996</DOB>
             </Attorney>
+            <Attorney>
+                <Title></Title>
+                <FirstName></FirstName>
+                <LastName></LastName>
+                <DOB></DOB>
+            </Attorney>
+            <Attorney>
+                <Title></Title>
+                <FirstName></FirstName>
+                <LastName></LastName>
+                <DOB></DOB>
+            </Attorney>
         </Section2>
         <BURN>string</BURN>
         <PhysicalPage>2</PhysicalPage>
@@ -114,6 +126,30 @@
                     <Postcode>IK5 7QT</Postcode>
                 </Address>
                 <EmailAddress>jjheidenreich@business.example</EmailAddress>
+            </Addresses>
+            <Addresses>
+                <Title></Title>
+                <FirstName></FirstName>
+                <LastName></LastName>
+                <Address>
+                    <Address1></Address1>
+                    <Address2></Address2>
+                    <Address3></Address3>
+                    <Postcode></Postcode>
+                </Address>
+                <EmailAddress></EmailAddress>
+            </Addresses>
+            <Addresses>
+                <Title></Title>
+                <FirstName></FirstName>
+                <LastName></LastName>
+                <Address>
+                    <Address1></Address1>
+                    <Address2></Address2>
+                    <Address3></Address3>
+                    <Postcode></Postcode>
+                </Address>
+                <EmailAddress></EmailAddress>
             </Addresses>
         </Section6>
         <BURN>string</BURN>
