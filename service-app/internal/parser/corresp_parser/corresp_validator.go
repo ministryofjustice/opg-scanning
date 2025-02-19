@@ -30,12 +30,9 @@ func (v *Validator) Setup(doc interface{}) error {
 }
 
 func (v *Validator) Validate() error {
-	// Common witness validations
-	v.baseValidator.WitnessSignatureFullNameAddressValidator("Page10", "Section9")
-
 	// Return errors if any
 	if messages := v.baseValidator.GetValidatorErrorMessages(); len(messages) > 0 {
-		return fmt.Errorf("failed to validate LP1F document: %v", messages)
+		return fmt.Errorf("failed to validate Correspondence document: %v", messages)
 	}
 	return nil
 }
