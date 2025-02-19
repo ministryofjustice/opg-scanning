@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LP2 xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
+    xsi:noNamespaceSchemaLocation="schema.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <Page1>
+        <Section1>
+            <Title>Prof</Title>
+            <FirstName>Flavio</FirstName>
+            <LastName>Miller</LastName>
+            <PropertyFinancialAffairs>0</PropertyFinancialAffairs>
+            <HealthWelfare>1</HealthWelfare>
+        </Section1>
+        <BURN>string</BURN>
+        <PhysicalPage>1</PhysicalPage>
+    </Page1>
+    <Page2>
+        <Section2>
+            <DonorRegisteration>true</DonorRegisteration>
+            <AttorneyRegisteration>false</AttorneyRegisteration>
+            <Attorney>
+                <Title>Mrs</Title>
+                <FirstName>Margret</FirstName>
+                <LastName>Jenkins-Barrows</LastName>
+                <DOB>24061963</DOB>
+            </Attorney>
+            <Attorney>
+                <Title>Mr</Title>
+                <FirstName>Julius Jaden</FirstName>
+                <LastName>Heidenreich</LastName>
+                <DOB>18021996</DOB>
+            </Attorney>
+        </Section2>
+        <BURN>string</BURN>
+        <PhysicalPage>2</PhysicalPage>
+    </Page2>
+    <Page3>
+        <Section3>
+            <TheDonor>true</TheDonor>
+            <AnAttorney>false</AnAttorney>
+            <Other>false</Other>
+            <Title></Title>
+            <FirstName></FirstName>
+            <LastName></LastName>
+            <Company></Company>
+            <Address>
+                <Address1></Address1>
+                <Address2></Address2>
+                <Address3></Address3>
+                <Postcode></Postcode>
+            </Address>
+            <Post>true</Post>
+            <Phone>false</Phone>
+            <PhoneNumber></PhoneNumber>
+            <Email>false</Email>
+            <EmailAddress></EmailAddress>
+            <Welsh>false</Welsh>
+        </Section3>
+        <BURN>string</BURN>
+        <PhysicalPage>3</PhysicalPage>
+    </Page3>
+    <Page4>
+        <Section4>
+            <Cheque>false</Cheque>
+            <Card>true</Card>
+            <PhoneNumber>018310 31295</PhoneNumber>
+            <ReducedFee>false</ReducedFee>
+        </Section4>
+        <BURN>string</BURN>
+        <PhysicalPage>4</PhysicalPage>
+    </Page4>
+    <Page5>
+        <Section5>
+            <Attorney>
+                <Signature>true</Signature>
+                <Date>18022025</Date>
+            </Attorney>
+            <Attorney>
+                <Signature>true</Signature>
+                <Date>18022025</Date>
+            </Attorney>
+            <Attorney>
+                <Signature>false</Signature>
+                <Date></Date>
+            </Attorney>
+            <Attorney>
+                <Signature>false</Signature>
+                <Date></Date>
+            </Attorney>
+        </Section5>
+        <BURN>string</BURN>
+        <PhysicalPage>5</PhysicalPage>
+    </Page5>
+    <Page6>
+        <Section6>
+            <Addresses>
+                <Title>Mrs</Title>
+                <FirstName>Margret</FirstName>
+                <LastName>Jenkins-Barrows</LastName>
+                <Address>
+                    <Address1>77 Jaskolski Field</Address1>
+                    <Address2>Konopelski-on-Christiansen</Address2>
+                    <Address3>Cronaley</Address3>
+                    <Postcode>KB24 4KY</Postcode>
+                </Address>
+                <EmailAddress></EmailAddress>
+            </Addresses>
+            <Addresses>
+                <Title>Mr</Title>
+                <FirstName>Julius Jaden</FirstName>
+                <LastName>Heidenreich</LastName>
+                <Address>
+                    <Address1>304 Dakota Brae</Address1>
+                    <Address2>St. Dickihill</Address2>
+                    <Address3></Address3>
+                    <Postcode>IK5 7QT</Postcode>
+                </Address>
+                <EmailAddress>jjheidenreich@business.example</EmailAddress>
+            </Addresses>
+        </Section6>
+        <BURN>string</BURN>
+        <PhysicalPage>6</PhysicalPage>
+    </Page6>
+    <InfoPage>
+        <BURN>string</BURN>
+        <PhysicalPage>7</PhysicalPage>
+    </InfoPage>
+</LP2>
