@@ -2,9 +2,12 @@ package factory
 
 import (
 	"fmt"
+	"slices"
 
+	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/corresp_parser"
+	"github.com/ministryofjustice/opg-scanning/internal/parser/generic_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lp1f_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lp1h_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lpa120_parser"
@@ -50,5 +53,12 @@ func GetComponent(docType string) (Component, error) {
 	if component, exists := componentRegistry[docType]; exists {
 		return component, nil
 	}
+
+	if slices.Contains(constants.SupportedDocumentTypes, docType) {
+		return Component{
+			Parser: generic_parser.Parse,
+		}, nil
+	}
+
 	return Component{}, fmt.Errorf("unsupported docType: %s", docType)
 }
