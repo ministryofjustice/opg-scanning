@@ -79,13 +79,39 @@ func (c *IndexController) HandleRequests() {
 
 func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
 	// Authenticate user credentials and issue JWT token
-	_, err := c.authMiddleware.Authenticator.Authenticate(w, r)
+	ctx, err := c.authMiddleware.Authenticator.Authenticate(w, r)
 	if err != nil {
 		c.respondWithError(w, http.StatusUnauthorized, "Authentication failed", err)
 		return
 	}
 
-	w.Write([]byte("Authentication successful"))
+	// Retrieve user from context
+	userFromCtx, ok := auth.UserFromContext(ctx)
+	if !ok {
+		c.respondWithError(w, http.StatusInternalServerError, "Failed to retrieve user from context", nil)
+		return
+	}
+
+	// Get token
+	token := c.authMiddleware.TokenGenerator.GetToken()
+
+	// Build response with email / token
+	resp := struct {
+        Email string `json:"email"`
+        Token string `json:"authentication_token"`
+		UserId string `json:"userId"`
+    }{
+        Email: userFromCtx.Email,
+        Token: token,
+		// For now hardcode userId
+		UserId: "0",
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    if err := json.NewEncoder(w).Encode(resp); err != nil {
+        c.respondWithError(w, http.StatusInternalServerError, "Failed to encode response", err)
+        return
+    }
 }
 
 func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) {

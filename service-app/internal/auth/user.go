@@ -16,7 +16,7 @@ type User struct {
 }
 
 // Retrieves the users identity from the context
-func UserFromContext(ctx context.Context) (string, bool) {
-	user, ok := ctx.Value(constants.UserContextKey).(string)
+func UserFromContext(ctx context.Context) (User, bool) {
+	user, ok := ctx.Value(constants.UserContextKey).(User)
 	return user, ok
 }
