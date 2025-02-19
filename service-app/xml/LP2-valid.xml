@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LP2 xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
-    xsi:noNamespaceSchemaLocation="schema.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    xsi:noNamespaceSchemaLocation="LP2.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <Page1>
         <Section1>
             <Title>Prof</Title>

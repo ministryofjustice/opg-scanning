@@ -38,6 +38,7 @@ var (
 		DocumentTypeLPA117,
 		DocumentTypeEP2PG,
 		DocumentTypeLP2,
+		DocumentTypeEPA,
 	}
 
 	LPATypeDocuments = []string{
