@@ -25,7 +25,7 @@
       <RepeatLPAApplicationFee>false</RepeatLPAApplicationFee>
       <LPAHealthWelfare>true</LPAHealthWelfare>
       <LPAPropertyFinance>false</LPAPropertyFinance>
-      <EPA>true</EPA>
+      <EPA>false</EPA>
     </Section1>
     <Section2>
       <Relationship>
