@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LPA120>
+  <Page1>
+    <BURN>DummyBurn1</BURN>
+    <PhysicalPage>1</PhysicalPage>
+  </Page1>
+  <Page2>
+    <BURN>DummyBurn2</BURN>
+    <PhysicalPage>2</PhysicalPage>
+  </Page2>
+  <Page3>
+    <Section1>
+      <FullName>John Doe</FullName>
+      <Address>
+        <Address1>123 Fake Street</Address1>
+        <Address2>Suite 100</Address2>
+        <Address3>Building A</Address3>
+        <TownCity>Faketown</TownCity>
+        <County>Fakeshire</County>
+        <Postcode>FA1 2KE</Postcode>
+      </Address>
+      <CaseReference>CR123456</CaseReference>
+      <LPAApplicationFee>true</LPAApplicationFee>
+      <EPAApplicationFee>false</EPAApplicationFee>
+      <RepeatLPAApplicationFee>false</RepeatLPAApplicationFee>
+      <LPAHealthWelfare>true</LPAHealthWelfare>
+      <LPAPropertyFinance>false</LPAPropertyFinance>
+      <EPA>false</EPA>
+    </Section1>
+    <Section2>
+      <Relationship>
+        <Donor>true</Donor>
+        <Attorney>false</Attorney>
+        <Other>false</Other>
+        <OtherDetail>N/A</OtherDetail>
+      </Relationship>
+      <Salutation>
+        <Mr>true</Mr>
+        <Mrs>false</Mrs>
+        <Ms>false</Ms>
+        <Miss>false</Miss>
+        <Other>false</Other>
+        <OtherName>N/A</OtherName>
+      </Salutation>
+      <FirstName>Jane</FirstName>
+      <LastName>Smith</LastName>
+      <Address>
+        <Address1>456 Sample Road</Address1>
+        <Address2>Floor 2</Address2>
+        <Address3>Unit 5</Address3>
+        <TownCity>Sampleville</TownCity>
+        <County>Samplestate</County>
+        <Postcode>SM4 5PL</Postcode>
+      </Address>
+      <Telephone>0123456789</Telephone>
+      <Mobile>0987654321</Mobile>
+      <Email>jane.smith@example.com</Email>
+      <FeePaidTo>Example Recipient</FeePaidTo>
+    </Section2>
+    <BURN>DummyBurn3</BURN>
+    <PhysicalPage>3</PhysicalPage>
+  </Page3>
+  <Page4>
+    <Section3>
+      <DonorReceivesBenefits>
+        <YesorNo>
+          <Yes>true</Yes>
+          <No>false</No>
+        </YesorNo>
+      </DonorReceivesBenefits>
+      <DonorAwardedInjuries>
+        <YesorNo>
+          <Yes>false</Yes>
+          <No>true</No>
+        </YesorNo>
+      </DonorAwardedInjuries>
+    </Section3>
+    <Section4>
+      <DonorOver12000>
+        <YesorNo>
+          <Yes>false</Yes>
+          <No>true</No>
+        </YesorNo>
+      </DonorOver12000>
+      <DonorReceivesUniversalCredit>
+        <YesorNo>
+          <Yes>true</Yes>
+          <No>false</No>
+        </YesorNo>
+      </DonorReceivesUniversalCredit>
+    </Section4>
+    <Section5>
+      <Declaration>
+        <Signed>true</Signed>
+        <Date>2025-02-17</Date>
+      </Declaration>
+    </Section5>
+    <BURN>DummyBurn4</BURN>
+    <PhysicalPage>4</PhysicalPage>
+  </Page4>
+  <InfoPage>
+    <BURN>DummyBurnInfo</BURN>
+    <PhysicalPage>5</PhysicalPage>
+  </InfoPage>
+</LPA120>
