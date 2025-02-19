@@ -1,0 +1,496 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<LPA002 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="LPA002.xsd">
+    <Page1>
+        <Part1>
+            <Name>
+                <Salutation>
+                    <Mr>false</Mr>
+                    <Mrs>false</Mrs>
+                    <Ms>true</Ms>
+                    <Miss>false</Miss>
+                    <Other>false</Other>
+                    <OtherName />
+                </Salutation>
+                <LastName>Hartford</LastName>
+                <FirstName>Anne</FirstName>
+                <MiddleName />
+            </Name>
+            <Address>
+                <Address1>76 Ockham Road</Address1>
+                <Address2>East Molesey</Address2>
+                <Address3>UK</Address3>
+                <TownCity />
+                <County />
+                <Postcode>KT83LU</Postcode>
+            </Address>
+            <Telephone />
+            <DOB>05091949</DOB>
+            <Email />
+            <PaymentStamp>false</PaymentStamp>
+        </Part1>
+        <BURN />
+        <PhysicalPage>1</PhysicalPage>
+    </Page1>
+    <Page2>
+        <Part2>
+            <DonorLastingPower>false</DonorLastingPower>
+            <AttorneyLastingPower>false</AttorneyLastingPower>
+        </Part2>
+        <Part3>
+            <OneAttorney>false</OneAttorney>
+            <AttorneyJointlySeverally>false</AttorneyJointlySeverally>
+            <AttorneyJointly>false</AttorneyJointly>
+            <AttorneyJointlyJointlySeverally>false</AttorneyJointlyJointlySeverally>
+        </Part3>
+        <BURN />
+        <PhysicalPage>0</PhysicalPage>
+    </Page2>
+    <Page3>
+        <Part4>
+            <Attorney>
+                <AttorneyRegistering>false</AttorneyRegistering>
+                <Name>
+                    <Salutation>
+                        <Mr>false</Mr>
+                        <Mrs>false</Mrs>
+                        <Ms>false</Ms>
+                        <Miss>false</Miss>
+                        <Other>false</Other>
+                        <OtherName />
+                    </Salutation>
+                    <LastName />
+                    <FirstName />
+                    <MiddleName />
+                </Name>
+                <CompanyName />
+                <Address>
+                    <Address1 />
+                    <Address2 />
+                    <Address3 />
+                    <TownCity />
+                    <County />
+                    <Postcode />
+                </Address>
+                <DXDetails>
+                    <DXNumber />
+                    <DXExchange />
+                </DXDetails>
+                <DOB />
+                <Telephone />
+                <Occupation />
+                <Email />
+                <Relationship>
+                    <CivilPartnerSpouse>false</CivilPartnerSpouse>
+                    <Child>false</Child>
+                    <Solicitor>false</Solicitor>
+                    <Other>false</Other>
+                    <OtherProfessional>false</OtherProfessional>
+                    <OtherName />
+                </Relationship>
+            </Attorney>
+        </Part4>
+        <BURN />
+        <PhysicalPage>0</PhysicalPage>
+    </Page3>
+    <Page4>
+        <Part4>
+            <Attorney>
+                <AttorneyRegistering>false</AttorneyRegistering>
+                <Name>
+                    <Salutation>
+                        <Mr>false</Mr>
+                        <Mrs>false</Mrs>
+                        <Ms>false</Ms>
+                        <Miss>false</Miss>
+                        <Other>false</Other>
+                        <OtherName />
+                    </Salutation>
+                    <LastName />
+                    <FirstName />
+                    <MiddleName />
+                </Name>
+                <CompanyName />
+                <Address>
+                    <Address1 />
+                    <Address2 />
+                    <Address3 />
+                    <TownCity />
+                    <County />
+                    <Postcode />
+                </Address>
+                <DXDetails>
+                    <DXNumber />
+                    <DXExchange />
+                </DXDetails>
+                <DOB />
+                <Telephone />
+                <Occupation />
+                <Email />
+                <Relationship>
+                    <CivilPartnerSpouse>false</CivilPartnerSpouse>
+                    <Child>false</Child>
+                    <Solicitor>false</Solicitor>
+                    <Other>false</Other>
+                    <OtherProfessional>false</OtherProfessional>
+                    <OtherName />
+                </Relationship>
+            </Attorney>
+        </Part4>
+        <BURN />
+        <PhysicalPage>0</PhysicalPage>
+    </Page4>
+    <Page5>
+        <Part4>
+            <Attorney>
+                <AttorneyRegistering>false</AttorneyRegistering>
+                <Name>
+                    <Salutation>
+                        <Mr>false</Mr>
+                        <Mrs>false</Mrs>
+                        <Ms>false</Ms>
+                        <Miss>false</Miss>
+                        <Other>false</Other>
+                        <OtherName />
+                    </Salutation>
+                    <LastName />
+                    <FirstName />
+                    <MiddleName />
+                </Name>
+                <CompanyName />
+                <Address>
+                    <Address1 />
+                    <Address2 />
+                    <Address3 />
+                    <TownCity />
+                    <County />
+                    <Postcode />
+                </Address>
+                <DXDetails>
+                    <DXNumber />
+                    <DXExchange />
+                </DXDetails>
+                <DOB />
+                <Telephone />
+                <Occupation />
+                <Email />
+                <Relationship>
+                    <CivilPartnerSpouse>false</CivilPartnerSpouse>
+                    <Child>false</Child>
+                    <Solicitor>false</Solicitor>
+                    <Other>false</Other>
+                    <OtherProfessional>false</OtherProfessional>
+                    <OtherName />
+                </Relationship>
+            </Attorney>
+        </Part4>
+        <BURN />
+        <PhysicalPage>0</PhysicalPage>
+    </Page5>
+    <Page6>
+        <Part4>
+            <Attorney>
+                <AttorneyRegistering>false</AttorneyRegistering>
+                <Name>
+                    <Salutation>
+                        <Mr>false</Mr>
+                        <Mrs>false</Mrs>
+                        <Ms>false</Ms>
+                        <Miss>false</Miss>
+                        <Other>false</Other>
+                        <OtherName />
+                    </Salutation>
+                    <LastName />
+                    <FirstName />
+                    <MiddleName />
+                </Name>
+                <CompanyName />
+                <Address>
+                    <Address1 />
+                    <Address2 />
+                    <Address3 />
+                    <TownCity />
+                    <County />
+                    <Postcode />
+                </Address>
+                <DXDetails>
+                    <DXNumber />
+                    <DXExchange />
+                </DXDetails>
+                <DOB />
+                <Telephone />
+                <Occupation />
+                <Email />
+                <Relationship>
+                    <CivilPartnerSpouse>false</CivilPartnerSpouse>
+                    <Child>false</Child>
+                    <Solicitor>false</Solicitor>
+                    <Other>false</Other>
+                    <OtherProfessional>false</OtherProfessional>
+                    <OtherName />
+                </Relationship>
+            </Attorney>
+        </Part4>
+        <BURN />
+        <PhysicalPage>0</PhysicalPage>
+    </Page6>
+    <Page7>
+        <Part5>
+            <NoneSpecified>false</NoneSpecified>
+            <IorWe>
+                <I>false</I>
+                <We>false</We>
+            </IorWe>
+            <Notification>
+                <NoticeDate />
+                <LastName />
+                <FirstName />
+                <Address>
+                    <Address1 />
+                    <Address2 />
+                    <Address3 />
+                    <TownCity />
+                    <County />
+                    <Postcode />
+                </Address>
+            </Notification>
+        </Part5>
+        <BURN />
+        <PhysicalPage>0</PhysicalPage>
+    </Page7>
+    <Page8>
+        <Part5>
+            <Notification>
+                <NoticeDate />
+                <LastName />
+                <FirstName />
+                <Address>
+                    <Address1 />
+                    <Address2 />
+                    <Address3 />
+                    <TownCity />
+                    <County />
+                    <Postcode />
+                </Address>
+            </Notification>
+            <Notification>
+                <NoticeDate />
+                <LastName />
+                <FirstName />
+                <Address>
+                    <Address1 />
+                    <Address2 />
+                    <Address3 />
+                    <TownCity />
+                    <County />
+                    <Postcode />
+                </Address>
+            </Notification>
+        </Part5>
+        <BURN />
+        <PhysicalPage>0</PhysicalPage>
+    </Page8>
+    <Page9>
+        <Part5>
+            <Notification>
+                <NoticeDate />
+                <LastName />
+                <FirstName />
+                <Address>
+                    <Address1 />
+                    <Address2 />
+                    <Address3 />
+                    <TownCity />
+                    <County />
+                    <Postcode />
+                </Address>
+            </Notification>
+            <Notification>
+                <NoticeDate />
+                <LastName />
+                <FirstName />
+                <Address>
+                    <Address1 />
+                    <Address2 />
+                    <Address3 />
+                    <TownCity />
+                    <County />
+                    <Postcode />
+                </Address>
+            </Notification>
+        </Part5>
+        <BURN />
+        <PhysicalPage>0</PhysicalPage>
+    </Page9>
+    <Page10>
+        <Part6>
+            <PayCC>
+                <YesorNo>
+                    <Yes>false</Yes>
+                    <No>false</No>
+                </YesorNo>
+            </PayCC>
+            <PayCheque>
+                <YesorNo>
+                    <Yes>false</Yes>
+                    <No>false</No>
+                </YesorNo>
+            </PayCheque>
+            <PayExemption>
+                <YesorNo>
+                    <Yes>false</Yes>
+                    <No>false</No>
+                </YesorNo>
+            </PayExemption>
+            <PayRemission>
+                <YesorNo>
+                    <Yes>true</Yes>
+                    <No>false</No>
+                </YesorNo>
+            </PayRemission>
+            <ContactDetails />
+        </Part6>
+        <Part7>
+            <ApplyToLPA>
+                <IorWe>
+                    <I>false</I>
+                    <We>false</We>
+                </IorWe>
+            </ApplyToLPA>
+            <PropertyFinancial>true</PropertyFinancial>
+            <HealthWelfare>false</HealthWelfare>
+            <Date />
+            <OtherEPAorLPA>
+                <YesorNo>
+                    <Yes>false</Yes>
+                    <No>false</No>
+                </YesorNo>
+            </OtherEPAorLPA>
+            <EPALPADetails />
+        </Part7>
+        <BURN />
+        <PhysicalPage>0</PhysicalPage>
+    </Page10>
+    <Page11>
+        <Part8>
+            <Declaration>
+                <Signed>false</Signed>
+                <Date />
+                <LastName />
+                <FirstName />
+            </Declaration>
+        </Part8>
+        <Part9>
+            <ApplyToRegister>
+                <IorWe>
+                    <I>false</I>
+                    <We>false</We>
+                </IorWe>
+            </ApplyToRegister>
+            <CertifyCorrect>
+                <IorWe>
+                    <I>false</I>
+                    <We>false</We>
+                </IorWe>
+            </CertifyCorrect>
+            <CompletedApplication>
+                <IorWe>
+                    <I>false</I>
+                    <We>false</We>
+                </IorWe>
+            </CompletedApplication>
+            <Declaration>
+                <Signed>false</Signed>
+                <Date />
+                <LastName />
+                <FirstName />
+            </Declaration>
+            <Declaration>
+                <Signed>false</Signed>
+                <Date />
+                <LastName />
+                <FirstName />
+            </Declaration>
+        </Part9>
+        <BURN />
+        <PhysicalPage>0</PhysicalPage>
+    </Page11>
+    <Page12>
+        <Part9>
+            <Declaration>
+                <Signed>false</Signed>
+                <Date />
+                <LastName />
+                <FirstName />
+            </Declaration>
+            <Declaration>
+                <Signed>false</Signed>
+                <Date />
+                <LastName />
+                <FirstName />
+            </Declaration>
+            <Declaration>
+                <Signed>false</Signed>
+                <Date />
+                <LastName />
+                <FirstName />
+            </Declaration>
+        </Part9>
+        <Part10>
+            <IorWe>
+                <I>false</I>
+                <We>false</We>
+            </IorWe>
+            <CompanyName />
+            <SigPerson1>false</SigPerson1>
+            <SigPerson2>false</SigPerson2>
+            <CompanySeal>false</CompanySeal>
+            <LastName />
+            <FirstName />
+        </Part10>
+        <BURN />
+        <PhysicalPage>0</PhysicalPage>
+    </Page12>
+    <Page13>
+        <Part11>
+            <Name>
+                <Salutation>
+                    <Mr>false</Mr>
+                    <Mrs>false</Mrs>
+                    <Ms>false</Ms>
+                    <Miss>false</Miss>
+                    <Other>false</Other>
+                    <OtherName />
+                </Salutation>
+                <LastName />
+                <FirstName />
+                <MiddleName />
+            </Name>
+            <CompanyName />
+            <CompanyReference />
+            <Address>
+                <Address1 />
+                <Address2 />
+                <Address3 />
+                <TownCity />
+                <County />
+                <Postcode />
+            </Address>
+            <DXDetails>
+                <DXNumber />
+                <DXExchange />
+            </DXDetails>
+            <Telephone />
+            <Email />
+        </Part11>
+        <BURN />
+        <PhysicalPage>0</PhysicalPage>
+    </Page13>
+    <Page14>
+        <Part12>
+            <AdditionalInfo />
+        </Part12>
+        <BURN />
+        <PhysicalPage>0</PhysicalPage>
+    </Page14>
+</LPA002>

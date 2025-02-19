@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<LPA114 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="LPA114.xsd">
+    <Page1>
+        <PartA>
+            <Attorneys>One</Attorneys>
+            <ReplacementAttorneys>None</ReplacementAttorneys>
+            <PeopleTold>None</PeopleTold>
+        </PartA>
+        <PartB>
+            <CertificateProviders>
+                <One>true</One>
+                <Two>false</Two>
+            </CertificateProviders>
+            <SheetA1>0</SheetA1>
+            <SheetA2>0</SheetA2>
+            <SheetA3>0</SheetA3>
+            <SheetB>0</SheetB>
+            <Total>0</Total>
+        </PartB>
+        <BURN />
+        <PhysicalPage>1</PhysicalPage>
+    </Page1>
+    <Page2>
+        <BURN />
+        <PhysicalPage>2</PhysicalPage>
+    </Page2>
+    <Page3>
+        <PartA1>
+            <Salutation>
+                <Mr>true</Mr>
+                <Mrs>false</Mrs>
+                <Ms>false</Ms>
+                <Miss>false</Miss>
+                <OtherName></OtherName>
+            </Salutation>
+            <FirstName>Oren</FirstName>
+            <LastName>Larkin</LastName>
+            <DOB>25081961</DOB>
+            <Address>
+                <Address1>1 Beech Grove</Address1>
+                <Address2>North Bergnaumridge</Address2>
+                <Address3>Morissetteham</Address3>
+                <Address4>Staffordshire</Address4>
+                <Postcode>GM85 8TB</Postcode>
+            </Address>
+            <OtherKnownNames></OtherKnownNames>
+        </PartA1>
+        <PartA2>
+            <Attorney1>
+                <Salutation>
+                    <Mr>false</Mr>
+                    <Mrs>true</Mrs>
+                    <Ms>false</Ms>
+                    <Miss>false</Miss>
+                    <OtherName></OtherName>
+                </Salutation>
+                <FirstName>Kyla Angel</FirstName>
+                <LastName>Gorczany</LastName>
+                <DOB>10071995</DOB>
+                <Address>
+                    <Address1>460 Jaclyn Place</Address1>
+                    <Address2>Yundt-upon-Miller</Address2>
+                    <Address3>East Sussex</Address3>
+                    <Address4 />
+                    <Postcode>TA9 6AC</Postcode>
+                </Address>
+            </Attorney1>
+            <Attorney2>
+                <Salutation>
+                    <Mr>false</Mr>
+                    <Mrs>false</Mrs>
+                    <Ms>false</Ms>
+                    <Miss>false</Miss>
+                    <OtherName />
+                </Salutation>
+                <FirstName></FirstName>
+                <LastName></LastName>
+                <DOB></DOB>
+                <Address>
+                    <Address1></Address1>
+                    <Address2></Address2>
+                    <Address3></Address3>
+                    <Address4 />
+                    <Postcode></Postcode>
+                </Address>
+            </Attorney2>
+            <NumberAttorneys>P3N</NumberAttorneys>
+        </PartA2>
+        <BURN />
+        <PhysicalPage>3</PhysicalPage>
+    </Page3>
+    <Page4>
+        <PartA3>
+            <Salutation>
+                <Mr>false</Mr>
+                <Mrs>false</Mrs>
+                <Ms>false</Ms>
+                <Miss>false</Miss>
+                <OtherName></OtherName>
+            </Salutation>
+            <FirstName></FirstName>
+            <LastName></LastName>
+            <DOB></DOB>
+            <Address>
+                <Address1></Address1>
+                <Address2></Address2>
+                <Address3></Address3>
+                <Address4 />
+                <Postcode></Postcode>
+            </Address>
+            <NumberReplacements></NumberReplacements>
+        </PartA3>
+        <BURN />
+        <PhysicalPage>4</PhysicalPage>
+    </Page4>
+    <Page5>
+        <Part4>
+            <Jointly>true</Jointly>
+            <JointlySeverally>false</JointlySeverally>
+            <JointlySome>false</JointlySome>
+            <AdditionalInfo></AdditionalInfo>
+        </Part4>
+        <BURN />
+        <PhysicalPage>5</PhysicalPage>
+    </Page5>
+    <Page6>
+        <Part5>
+            <OptionA>
+                <Signature>true</Signature>
+                <Date>19022025</Date>
+            </OptionA>
+            <OptionB>
+                <Signature>false</Signature>
+                <Date></Date>
+            </OptionB>
+            <Witness>
+                <Signature>true</Signature>
+                <FullName>Kavon Windler</FullName>
+                <Address>
+                    <Address1>157 Caroline Brae</Address1>
+                    <Address2>Lower Schneiderworth</Address2>
+                    <Address3>Humberside</Address3>
+                    <Address4 />
+                    <Postcode>GP82 3SM</Postcode>
+                </Address>
+            </Witness>
+        </Part5>
+        <BURN />
+        <PhysicalPage>6</PhysicalPage>
+    </Page6>
+    <Page7>
+        <Part6>
+            <Restrictions></Restrictions>
+        </Part6>
+        <Part7>
+            <Guidance></Guidance>
+        </Part7>
+        <Part8>
+            <Charges></Charges>
+        </Part8>
+        <BURN />
+        <PhysicalPage>7</PhysicalPage>
+    </Page7>
+    <Page8>
+        <Part9>
+            <FirstPerson>
+                <Salutation>
+                    <Mr>false</Mr>
+                    <Mrs>false</Mrs>
+                    <Ms>false</Ms>
+                    <Miss>false</Miss>
+                    <OtherName></OtherName>
+                </Salutation>
+                <FirstName></FirstName>
+                <LastName></LastName>
+                <Address>
+                    <Address1></Address1>
+                    <Address2></Address2>
+                    <Address3></Address3>
+                    <Address4 />
+                    <Postcode></Postcode>
+                </Address>
+            </FirstPerson>
+            <SecondPerson>
+                <Salutation>
+                    <Mr>false</Mr>
+                    <Mrs>false</Mrs>
+                    <Ms>false</Ms>
+                    <Miss>false</Miss>
+                    <OtherName></OtherName>
+                </Salutation>
+                <FirstName></FirstName>
+                <LastName></LastName>
+                <Address>
+                    <Address1></Address1>
+                    <Address2></Address2>
+                    <Address3></Address3>
+                    <Address4 />
+                    <Postcode></Postcode>
+                </Address>
+            </SecondPerson>
+            <NumberOthers></NumberOthers>
+        </Part9>
+        <BURN />
+        <PhysicalPage>8</PhysicalPage>
+    </Page8>
+    <Page9>
+        <Part10>
+            <POADeclaration>
+                <Signature>true</Signature>
+                <Date>19022025</Date>
+            </POADeclaration>
+            <WitnessDeclaration>
+                <Signature>true</Signature>
+                <FullName>Kavon Windler</FullName>
+                <Address>
+                    <Address1>157 Caroline Brae</Address1>
+                    <Address2>Lower Schneiderworth</Address2>
+                    <Address3>Humberside</Address3>
+                    <Address4 />
+                    <Postcode>GP82 3SM</Postcode>
+                </Address>
+            </WitnessDeclaration>
+        </Part10>
+        <BURN />
+        <PhysicalPage>9</PhysicalPage>
+    </Page9>
+    <Page10>
+        <PartB>
+            <DonorKnowledge></DonorKnowledge>
+            <Relevantskills></Relevantskills>
+        </PartB>
+        <BURN />
+        <PhysicalPage>10</PhysicalPage>
+    </Page10>
+    <Page11>
+        <PartB>
+            <Signature>true</Signature>
+            <Date>19022025</Date>
+            <Salutation>
+                <Mr>false</Mr>
+                <Mrs>false</Mrs>
+                <Ms>true</Ms>
+                <Miss>false</Miss>
+                <OtherName></OtherName>
+            </Salutation>
+            <FirstName>Arlene</FirstName>
+            <LastName>Block-Mosciski</LastName>
+            <Address>
+                <Address1>68 Quarry Lane</Address1>
+                <Address2>Dyfed</Address2>
+                <Address3></Address3>
+                <Address4 />
+                <Postcode>CJ99 3WM</Postcode>
+            </Address>
+        </PartB>
+        <BURN />
+        <PhysicalPage>11</PhysicalPage>
+    </Page11>
+    <Page12>
+        <PartC>
+            <AttorneyStatement>
+                <Signature>true</Signature>
+                <FullName>Kyla Angel Gorczany</FullName>
+                <Date>19022025</Date>
+            </AttorneyStatement>
+            <Witness>
+                <Signature>false</Signature>
+                <FullName>Kavon Windler</FullName>
+                <Address>
+                    <Address1>157 Caroline Brae</Address1>
+                    <Address2>Lower Schneiderworth</Address2>
+                    <Address3>Humberside</Address3>
+                    <Address4 />
+                    <Postcode>GP82 3SM</Postcode>
+                </Address>
+            </Witness>
+        </PartC>
+        <BURN />
+        <PhysicalPage>12</PhysicalPage>
+    </Page12>
+</LPA114>
