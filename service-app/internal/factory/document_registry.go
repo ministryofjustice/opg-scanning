@@ -24,7 +24,7 @@ func NewRegistry() (*Registry, error) {
 	components := make(map[string]Component)
 
 	// List of supported document types
-	docTypes := constants.SupprotedDocumentTypes
+	docTypes := constants.SupportedDocumentTypes
 
 	// Populate the registry using the utility function
 	for _, docType := range docTypes {
