@@ -67,32 +67,27 @@ func TestProcessDocument_LPA120(t *testing.T) {
 	assert.Equal(t, "John Doe", lpa120.Page3.Section1.FullName, "FullName mismatch")
 }
 
-func TestProcessDocument_LP2(t *testing.T) {
-	prepareDocument(t, "LP2", "LP2-valid")
-}
 
-func TestProcessDocument_LPA002(t *testing.T) {
-	prepareDocument(t, "LPA002", "LPA002-valid")
-}
+func TestProcessGenericDocuments(t *testing.T) {
+	testCases := []struct {
+			name    string
+			docType string
+			valid   string
+	}{
+			{"LP2", "LP2", "LP2-valid"},
+			{"LPA002", "LPA002", "LPA002-valid"},
+			{"LPA-PA", "LPA-PA", "LPA-PA-valid"},
+			{"LPA-PW", "LPA-PW", "LPA-PW-valid"},
+			{"LPA114", "LPA114", "LPA114-valid"},
+			{"LPA117", "LPA117", "LPA117-valid"},
+			{"EP2PG", "EP2PG", "EP2PG-valid"},
+	}
 
-func TestProcessDocument_LPAPA(t *testing.T) {
-	prepareDocument(t, "LPA-PA", "LPA-PA-valid")
-}
-
-func TestProcessDocument_LPAPW(t *testing.T) {
-	prepareDocument(t, "LPA-PW", "LPA-PW-valid")
-}
-
-func TestProcessDocument_LPA114(t *testing.T) {
-	prepareDocument(t, "LPA114", "LPA114-valid")
-}
-
-func TestProcessDocument_LPA117(t *testing.T) {
-	prepareDocument(t, "LPA117", "LPA117-valid")
-}
-
-func TestProcessDocument_EP2PG(t *testing.T) {
-	prepareDocument(t, "EP2PG", "EP2PG-valid")
+	for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+					prepareDocument(t, tc.docType, tc.valid)
+			})
+	}
 }
 
 func prepareDocument(t *testing.T, docType string, fileName string) interface{} {

@@ -2,6 +2,7 @@ package factory
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
@@ -45,27 +46,6 @@ var componentRegistry = map[string]Component{
 	"LPA120": {
 		Parser: lpa120_parser.Parse,
 	},
-	constants.DocumentTypeLP2: {
-		Parser: generic_parser.Parse,
-	},
-	constants.DocumentTypeLPA002: {
-		Parser: generic_parser.Parse,
-	},
-	constants.DocumentTypeLPAPA: {
-		Parser: generic_parser.Parse,
-	},
-	constants.DocumentTypeLPAPW: {
-		Parser: generic_parser.Parse,
-	},
-	constants.DocumentTypeLPA114: {
-		Parser: generic_parser.Parse,
-	},
-	constants.DocumentTypeLPA117: {
-		Parser: generic_parser.Parse,
-	},
-	constants.DocumentTypeEP2PG: {
-		Parser: generic_parser.Parse,
-	},
 }
 
 // Returns the component for the specified document type.
@@ -73,5 +53,12 @@ func GetComponent(docType string) (Component, error) {
 	if component, exists := componentRegistry[docType]; exists {
 		return component, nil
 	}
+
+	if slices.Contains(constants.SupportedDocumentTypes, docType) {
+		return Component{
+			Parser: generic_parser.Parse,
+		}, nil
+	}
+
 	return Component{}, fmt.Errorf("unsupported docType: %s", docType)
 }
