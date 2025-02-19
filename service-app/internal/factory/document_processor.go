@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
@@ -66,14 +65,11 @@ func (p *DocumentProcessor) Process(ctx context.Context) (interface{}, error) {
 	}
 
 	// Validate the document
-	traceID, _ := ctx.Value(constants.TraceIDKey).(string)
 	p.validator.Setup(p.doc)
 	if err := p.validator.Validate(); err != nil {
-		p.logger.Error("Validation failed: "+err.Error(), map[string]interface{}{
-			"trace_id": traceID,
-		})
+		p.logger.Error("Validation failed: %v", nil, err)
 	}
-
+	
 	// Sanitize the document
 	p.sanitizer.Setup(p.doc)
 	sanitizedDoc, err := p.sanitizer.Sanitize()
