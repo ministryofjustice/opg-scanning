@@ -18,5 +18,3 @@ _Any tips and tricks, blog posts or tools which helped you._
 * [ ] I have added relevant logging with appropriate levels to my code
 * [ ] I have updated documentation where relevant
 * [ ] I have added tests to prove my work
-* [ ] I have run an accessibility tool against the changes and applied fixes
-* [ ] The team have tested these changes
