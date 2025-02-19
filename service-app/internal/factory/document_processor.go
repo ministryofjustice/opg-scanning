@@ -1,10 +1,8 @@
 package factory
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
@@ -59,21 +57,18 @@ func NewDocumentProcessor(data *types.BaseDocument, docType, format string, regi
 }
 
 // Process validates and sanitizes the document.
-func (p *DocumentProcessor) Process(ctx context.Context) (interface{}, error) {
+func (p *DocumentProcessor) Process() (interface{}, error) {
 	// If the document type doesn't declare a validator or sanitizer, skip.
 	if p.validator == nil || p.sanitizer == nil {
 		return p.doc, nil
 	}
 
 	// Validate the document
-	traceID, _ := ctx.Value(constants.TraceIDKey).(string)
 	p.validator.Setup(p.doc)
 	if err := p.validator.Validate(); err != nil {
-		p.logger.Error("Validation failed: "+err.Error(), map[string]interface{}{
-			"trace_id": traceID,
-		})
+		p.logger.Error("Validation failed: %v", nil, err)
 	}
-
+	
 	// Sanitize the document
 	p.sanitizer.Setup(p.doc)
 	sanitizedDoc, err := p.sanitizer.Sanitize()

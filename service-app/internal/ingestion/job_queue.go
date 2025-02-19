@@ -12,7 +12,6 @@ import (
 )
 
 type Job struct {
-	ctx        context.Context
 	Data       *types.BaseDocument
 	format     string
 	onComplete func(processedDoc interface{}, originalDoc *types.BaseDocument)
@@ -33,8 +32,8 @@ func NewJobQueue(config *config.Config) *JobQueue {
 	return queue
 }
 
-func (q *JobQueue) AddToQueue(ctx context.Context, data *types.BaseDocument, format string, onComplete func(interface{}, *types.BaseDocument)) {
-	job := Job{ctx: ctx, Data: data, format: format, onComplete: onComplete}
+func (q *JobQueue) AddToQueue(data *types.BaseDocument, format string, onComplete func(interface{}, *types.BaseDocument)) {
+	job := Job{Data: data, format: format, onComplete: onComplete}
 	q.wg.Add(1)
 	q.Jobs <- job
 }
@@ -70,7 +69,7 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 						}
 
 						// Process the document
-						parsedDoc, err := processor.Process(job.ctx)
+						parsedDoc, err := processor.Process()
 						if err != nil {
 							q.logger.Error("Worker %d failed to process job: %v\n", nil, workerID, err)
 							return
