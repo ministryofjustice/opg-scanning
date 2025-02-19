@@ -2,11 +2,9 @@ package ingestion
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
 type Validator struct {
@@ -26,23 +24,8 @@ func (v *Validator) ValidateSet(parsedSet *types.BaseSet) error {
 		return errors.New("missing required Header element")
 	}
 
-	// Validate combinations of instruments and applications
-	instrumentsDiscovered := v.getEmbeddedDocumentTypes(parsedSet, constants.Instruments)
-	applicationsDiscovered := v.getEmbeddedDocumentTypes(parsedSet, constants.Applications)
-
-	if parsedSet.Header.CaseNo != "" {
-		// Validate document combinations if CaseNo exists
-		if err := v.validateDocCombosWithCaseNo(instrumentsDiscovered, applicationsDiscovered); err != nil {
-			return err
-		}
-	} else {
-		// Validate document instruments if no CaseNo exists
-		if err := v.validateInstrumentCountWithoutCaseNo(instrumentsDiscovered); err != nil {
-			return err
-		}
-		if err := v.validateInstrumentApplications(instrumentsDiscovered, applicationsDiscovered); err != nil {
-			return err
-		}
+	if parsedSet.Header.Schedule == "" {
+		return errors.New("missing required Schedule attribute on Header")
 	}
 
 	// Validate Body and Documents
@@ -52,49 +35,32 @@ func (v *Validator) ValidateSet(parsedSet *types.BaseSet) error {
 
 	for _, doc := range parsedSet.Body.Documents {
 		if doc.Type == "" {
-			return fmt.Errorf("document Type attribute is missing")
+			return errors.New("document Type attribute is missing")
 		}
 		if doc.NoPages <= 0 {
-			return fmt.Errorf("document NoPages attribute is missing or invalid")
+			return errors.New("document NoPages attribute is missing or invalid")
 		}
 	}
 
-	return nil
-}
+	// Validate combinations of instruments and applications
+	newCaseDocuments := v.getEmbeddedDocumentTypes(parsedSet, constants.NewCaseDocuments)
 
-func (v *Validator) validateDocCombosWithCaseNo(instruments []string, applications []string) error {
-	if len(instruments) == 0 && len(applications) == 0 {
-		return nil
-	}
-
-	if len(applications) == 1 && v.isExemptApplication(applications[0]) {
-		return nil
+	if len(newCaseDocuments) > 1 {
+		return errors.New("Set cannot contain multiple cases which would create a case")
 	}
 
-	fullList := append(instruments, applications...)
-	return fmt.Errorf("document(s) %s cannot be used if you have set a CaseNo in the Header", fullList)
-}
+	if len(newCaseDocuments) > 0 {
+		// Sets that create new cases must not have a case number
+		if parsedSet.Header.CaseNo != "" {
+			return errors.New("must not supply a case number when creating a new case")
+		}
+	} else {
+		// Sets that don't create new cases must have a case number
+		if parsedSet.Header.CaseNo == "" {
+			return errors.New("must supply a case number when not creating a new case")
+		}
+	}
 
-func (v *Validator) validateInstrumentCountWithoutCaseNo(instruments []string) error {
-	if len(instruments) == 0 {
-		return fmt.Errorf("no instrument found. Valid instruments are %s", constants.Instruments)
-	}
-	if len(instruments) > 1 {
-		return fmt.Errorf("too many instruments found. You may only supply one instrument. Set contained %s", instruments)
-	}
-	return nil
-}
-
-func (v *Validator) validateInstrumentApplications(instruments []string, applications []string) error {
-	if len(instruments) == 0 {
-		return nil
-	}
-	if v.isStandaloneInstrument(instruments[0]) && len(applications) > 0 {
-		return fmt.Errorf("instrument %s must not be accompanied by an application (%s)", instruments[0], applications)
-	}
-	if !v.isStandaloneInstrument(instruments[0]) && len(applications) != 1 {
-		return fmt.Errorf("instrument %s must be accompanied by one application. Found applications: %s", instruments[0], applications)
-	}
 	return nil
 }
 
@@ -109,12 +75,4 @@ func (v *Validator) getEmbeddedDocumentTypes(parsedSet *types.BaseSet, validType
 		}
 	}
 	return typesDiscovered
-}
-
-func (v *Validator) isExemptApplication(application string) bool {
-	return util.Contains(constants.ExemptApplications, application)
-}
-
-func (v *Validator) isStandaloneInstrument(instrument string) bool {
-	return util.Contains(constants.StandaloneInstruments, instrument)
 }
