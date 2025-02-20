@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
 	"io"
@@ -183,5 +184,60 @@ func TestProcessAndPersist_IncludesXMLDeclaration(t *testing.T) {
 	expectedHeader := regexp.MustCompile(`^<\?xml\s+version="1\.0"(?:\s+encoding="UTF-8")?.*\?>\n?`)
 	if !expectedHeader.Match(capturedXML) {
 		t.Errorf("expected XML header to match regex %q, got: %s", expectedHeader.String(), string(capturedXML))
+	}
+}
+
+func TestValidateDocumentHandlesErrorCases(t *testing.T) {
+	testCases := []struct {
+		name string
+		XML  string
+		err  string
+	}{
+		{
+			name: "not XML",
+			XML:  "not XML",
+			err:  "failed to extract schema from TestDocumentType",
+		},
+		{
+			name: "no schema",
+			XML:  "<my-doc></my-doc>",
+			err:  "failed to extract schema from TestDocumentType",
+		},
+		{
+			name: "invalid schema",
+			XML:  `<my-doc xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="MY-DOC.xsd"></my-doc>`,
+			err:  "failed to load schema MY-DOC.xsd",
+		},
+		{
+			name: "does not match schema",
+			XML:  `<my-doc xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="LP2.xsd"></my-doc>`,
+			err:  "XML for TestDocumentType failed XSD validation",
+		},
+		{
+			name: "ok",
+			XML:  `<EPA xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="EPA.xsd"><Page><BURN/><PhysicalPage>1</PhysicalPage></Page></EPA>`,
+			err:  "",
+		},
+	}
+
+	c := setupController()
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			encodedXML := base64.StdEncoding.EncodeToString([]byte(tc.XML))
+
+			document := types.BaseDocument{
+				Type:        "TestDocumentType",
+				EmbeddedXML: encodedXML,
+			}
+
+			err := c.validateDocument(document)
+
+			if tc.err == "" {
+				assert.Nil(t, err)
+			} else {
+				assert.Contains(t, err.Error(), tc.err)
+			}
+		})
 	}
 }

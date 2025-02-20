@@ -45,6 +45,8 @@ type responseData struct {
 	ValidationErrors []string `json:"validationErrors,omitempty"`
 }
 
+var uidReplacementRegex = regexp.MustCompile(`^7[0-9]{3}-[0-9]{4}-[0-9]{4}$`)
+
 func NewIndexController(awsClient aws.AwsClientInterface, appConfig *config.Config) *IndexController {
 	logger := logger.NewLogger(appConfig)
 
@@ -242,7 +244,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusAccepted)
 
 	uid := scannedCaseResponse.UID
-	if matched, err := regexp.MatchString("^7[0-9]{3}-[0-9]{4}-[0-9]{4}$", uid); matched && err == nil {
+	if uidReplacementRegex.MatchString(uid) {
 		uid = strings.ReplaceAll(uid, "-", "")
 	}
 
@@ -329,39 +331,47 @@ func (c *IndexController) validateAndSanitizeXML(bodyStr string) (*types.BaseSet
 
 	// Validate embedded documents
 	for _, document := range parsedBaseXml.Body.Documents {
-		decodedXML, err := util.DecodeEmbeddedXML(document.EmbeddedXML)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode XML data from %s: %w", document.Type, err)
-		}
-
-		schemaLocation, err := ingestion.ExtractSchemaLocation(string(decodedXML))
-		if err != nil {
-			return nil, fmt.Errorf("failed to extract schema from %s: %w", document.Type, err)
-		}
-
-		xsdValidator, err := ingestion.NewXSDValidator(c.config.App.ProjectFullPath+"/xsd/"+schemaLocation, string(decodedXML))
-		if err != nil {
-			return nil, fmt.Errorf("failed to load schema %s: %w", schemaLocation, err)
-		}
-
-		if err := xsdValidator.ValidateXsd(); err != nil {
-			if schemaValidationError, ok := err.(xsd.SchemaValidationError); ok {
-				var validationErrors []string
-				for _, error := range schemaValidationError.Errors() {
-					validationErrors = append(validationErrors, error.Error())
-				}
-
-				return nil, Problem{
-					Title:            fmt.Sprintf("XML for %s failed XSD validation", document.Type),
-					ValidationErrors: validationErrors,
-				}
-			}
-
-			return nil, fmt.Errorf("failed XSD validation: %w", err)
+		if err := c.validateDocument(document); err != nil {
+			return nil, err
 		}
 	}
 
 	return parsedBaseXml, nil
+}
+
+func (c *IndexController) validateDocument(document types.BaseDocument) error {
+	decodedXML, err := util.DecodeEmbeddedXML(document.EmbeddedXML)
+	if err != nil {
+		return fmt.Errorf("failed to decode XML data from %s: %w", document.Type, err)
+	}
+
+	schemaLocation, err := ingestion.ExtractSchemaLocation(string(decodedXML))
+	if err != nil {
+		return fmt.Errorf("failed to extract schema from %s: %w", document.Type, err)
+	}
+
+	xsdValidator, err := ingestion.NewXSDValidator(c.config.App.ProjectFullPath+"/xsd/"+schemaLocation, string(decodedXML))
+	if err != nil {
+		return fmt.Errorf("failed to load schema %s: %w", schemaLocation, err)
+	}
+
+	if err := xsdValidator.ValidateXsd(); err != nil {
+		if schemaValidationError, ok := err.(xsd.SchemaValidationError); ok {
+			var validationErrors []string
+			for _, error := range schemaValidationError.Errors() {
+				validationErrors = append(validationErrors, error.Error())
+			}
+
+			return Problem{
+				Title:            fmt.Sprintf("XML for %s failed XSD validation", document.Type),
+				ValidationErrors: validationErrors,
+			}
+		}
+
+		return fmt.Errorf("failed XSD validation: %w", err)
+	}
+
+	return nil
 }
 
 func (c *IndexController) processAndPersist(ctx context.Context, decodedXML []byte, originalDoc *types.BaseDocument) (fileName string, err error) {
