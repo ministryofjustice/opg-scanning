@@ -1,0 +1,156 @@
+openapi: "3.0.0"
+paths:
+  /api/public/v1/scanned-cases:
+    post:
+      description: Create a case stub from a scanned document
+      operationId: createScannedCase
+      requestBody:
+        description: Details of the scan
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - batchId
+                - caseType
+                - receiptDate
+              properties:
+                batchId:
+                  type: string
+                  examples:
+                    - "01-0001269-20160909174222"
+                caseType:
+                  type: string
+                  enum:
+                    - epa
+                    - lpa
+                    - order
+                courtReference:
+                  type: string
+                  description: Required when creating new orders
+                receiptDate:
+                  type: string
+                  formate: date-time
+      responses:
+        "201":
+          description: Scanned case created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - uid
+                properties:
+                  uid:
+                    type: string
+                    example: 7000-1234-1234
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Case not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/public/v1/scanned-documents/scanned-documents:
+    post:
+      description: Attach a scanned document to a case
+      operationId: createScannedDocument
+      requestBody:
+        description: The scanned document
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - caseReference
+                - content
+                - documentType
+                - scannedDate
+              properties:
+                caseReference:
+                  type: string
+                  examples:
+                    - "7000-1209-2049"
+                    - "M-123F-29JF-EI93"
+                content:
+                  type: string
+                  description: Base-64 encoded content of the file
+                documentType:
+                  type: string
+                  pattern: "^[a-zA-Z0-9_\\-]+$"
+                  description: Type attribute on Document element of Set
+                  examples:
+                    - LP1F
+                    - Correspondence
+                    - FINDOCS
+                documentSubType:
+                  type: string
+                  description: SubType element of decoded XML for Correspondence
+                  examples:
+                    - safeguarding concern
+                scannedDate:
+                  type: string
+                  format: date-time
+      responses:
+        "201":
+          description: Scanned document created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - uuid
+                properties:
+                  uuid:
+                    type: string
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Case not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    Error:
+      type: object
+      required:
+        - type
+        - status
+        - detail
+        - validation_errors
+      properties:
+        type:
+          type: string
+          enum: ["http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html"]
+        title:
+          type: string
+          description: A string representation of the status code
+          examples:
+            - Bad Request
+        status:
+          type: string
+          description: The HTTP status code
+          examples:
+            - "400"
+        detail:
+          type: string
+          description: A human-readable description of the error. Can be shown to a user
+          examples:
+            - Payload failed validation
+        validation_errors:
+          type: object
+          description: Validation errors for specific fields. A map with invalid field names as keys and values which are themselves maps from validation error ID to human-readable message.
+          examples:
+            - caseUid:
+                invalidFormat: The UID was not in a recognised format
