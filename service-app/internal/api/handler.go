@@ -81,37 +81,40 @@ func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
 	// Authenticate user credentials and issue JWT token
 	ctx, err := c.authMiddleware.Authenticator.Authenticate(w, r)
 	if err != nil {
-		c.respondWithError(w, http.StatusUnauthorized, "Authentication failed", err)
+		errMsg := fmt.Sprintf("Authentication failed: %v", err)
+		c.logger.Error(errMsg, nil)
+		c.authResponse(w, map[string]string{"error": errMsg})
 		return
 	}
 
 	// Retrieve user from context
 	userFromCtx, ok := auth.UserFromContext(ctx)
 	if !ok {
-		c.respondWithError(w, http.StatusInternalServerError, "Failed to retrieve user from context", nil)
+		errMsg := "Failed to retrieve user from context"
+		c.logger.Error(errMsg, nil)
+		c.authResponse(w, map[string]string{"error": errMsg})
 		return
 	}
 
-	// Get token
 	token := c.authMiddleware.TokenGenerator.GetToken()
 
-	// Build response with email / token
+	// Build response with email and token
 	resp := struct {
-        Email string `json:"email"`
-        Token string `json:"authentication_token"`
-		UserId string `json:"userId"`
-    }{
-        Email: userFromCtx.Email,
-        Token: token,
-		// For now hardcode userId
-		UserId: "0",
-    }
+		Email string `json:"email"`
+		Token string `json:"authentication_token"`
+	}{
+		Email: userFromCtx.Email,
+		Token: token,
+	}
 
-    w.Header().Set("Content-Type", "application/json")
-    if err := json.NewEncoder(w).Encode(resp); err != nil {
-        c.respondWithError(w, http.StatusInternalServerError, "Failed to encode response", err)
-        return
-    }
+	c.authResponse(w, resp)
+}
+
+func (c *IndexController) authResponse(w http.ResponseWriter, resp interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		c.respondWithError(w, http.StatusInternalServerError, "Failed to encode response", err)
+	}
 }
 
 func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) {
