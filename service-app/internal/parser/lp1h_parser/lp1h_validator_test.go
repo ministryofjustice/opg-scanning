@@ -5,6 +5,7 @@ import (
 
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,5 +23,9 @@ func getValidator(t *testing.T, fileName string) parser.CommonValidator {
 	require.NoError(t, err)
 	validator := NewValidator()
 	validator.Setup(doc)
+
+	err = validator.Setup(doc)
+	assert.Nil(t, err)
+
 	return validator
 }
