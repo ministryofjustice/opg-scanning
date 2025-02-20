@@ -81,6 +81,7 @@ func TestProcessGenericDocuments(t *testing.T) {
 			{"LPA114", "LPA114", "LPA114-valid"},
 			{"LPA117", "LPA117", "LPA117-valid"},
 			{"EP2PG", "EP2PG", "EP2PG-valid"},
+			{"EPA", "EPA", "EPA-valid"},
 	}
 
 	for _, tc := range testCases {

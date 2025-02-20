@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<EPA xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="EPA.xsd">
+    <Page>
+        <BURN />
+        <PhysicalPage>1</PhysicalPage>
+    </Page>
+    <Page>
+        <BURN />
+        <PhysicalPage>2</PhysicalPage>
+    </Page>
+    <Page>
+        <BURN />
+        <PhysicalPage>3</PhysicalPage>
+    </Page>
+    <Page>
+        <BURN />
+        <PhysicalPage>4</PhysicalPage>
+    </Page>
+</EPA>
