@@ -79,6 +79,6 @@ func (a *BasicAuthAuthenticator) ValidateCredentials(ctx context.Context, user U
 		return nil, fmt.Errorf("invalid credentials")
 	}
 
-	ctx = context.WithValue(ctx, constants.UserContextKey, creds.Email)
+	ctx = context.WithValue(ctx, constants.UserContextKey, creds)
 	return ctx, nil
 }
