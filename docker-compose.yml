@@ -80,3 +80,10 @@ services:
       timeout: 10s
       retries: 5
     restart: unless-stopped
+
+  gosec:
+    image: securego/gosec:latest
+    working_dir: /app
+    volumes:
+      - ./service-app:/app
+    command: -exclude-dir=.gocache -fmt=sarif -out=/app/test-results/gosec.sarif -stdout -verbose=text /app/...
