@@ -22,7 +22,6 @@ func getValidator(t *testing.T, fileName string) parser.CommonValidator {
 	doc, err := Parse(xml)
 	require.NoError(t, err)
 	validator := NewValidator()
-	validator.Setup(doc)
 
 	err = validator.Setup(doc)
 	assert.Nil(t, err)
