@@ -33,12 +33,16 @@ func StartTracerProvider(ctx context.Context, logger *slog.Logger, exportTraces 
 	return telemetry.StartTracerProvider(ctx, logger, exportTraces)
 }
 
-// Returns the opg-go-common/telemetry packages HTTP middleware.
 func LoggingMiddleware(logger *slog.Logger) func(next http.Handler) http.Handler {
 	return telemetry.Middleware(logger)
 }
 
-// Retrieves the logger from the context using the opg-go-common/telemetry packages helper.
+// Returns the ContextWithLogger using the opg-go-common/telemetry packages.
+func ContextWithLogger(ctx context.Context, logger *slog.Logger) context.Context {
+	return telemetry.ContextWithLogger(ctx, logger)
+}
+
+// Retrieves the LoggerFromContext using the opg-go-common/telemetry packages.
 func LoggerFromContext(ctx context.Context) *slog.Logger {
 	return telemetry.LoggerFromContext(ctx)
 }

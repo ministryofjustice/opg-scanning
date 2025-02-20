@@ -142,13 +142,18 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		"Header": parsedBaseXml.Header,
 	})
 
+	reqCtx := r.Context()
+
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
 		// r.Context() carries the enriched logger injected by the middleware.
-    	c.Queue.AddToQueue(r.Context(), doc, "xml", func(processedDoc interface{}, originalDoc *types.BaseDocument) {
-			// We want the enriched context in the request, however we should independly manage the context
-			// beond the request lifecycle. Hence we create a new context with a timeout.
-			ctx, cancel := context.WithTimeout(r.Context(), time.Duration(c.config.HTTP.Timeout)*time.Second)
+    	c.Queue.AddToQueue(reqCtx, doc, "xml", func(processedDoc interface{}, originalDoc *types.BaseDocument) {
+			// Extract the enriched logger from the original request context.
+			enrichedLogger := logger.LoggerFromContext(reqCtx)
+			// Create a new context starting with context.Background() and inject the enriched logger.
+			loggerCtx := logger.ContextWithLogger(context.Background(), enrichedLogger)
+			// Then apply your timeout on the new context.
+			ctx, cancel := context.WithTimeout(loggerCtx, time.Duration(c.config.HTTP.Timeout)*time.Second)
 			defer cancel()
 
 			// Attach documents to case
