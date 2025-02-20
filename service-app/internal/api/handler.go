@@ -78,12 +78,17 @@ func (c *IndexController) HandleRequests() {
 }
 
 func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
+	// Define response error struct
+	type ErrorResponse struct {
+		Error string `json:"error"`
+	}
+
 	// Authenticate user credentials and issue JWT token
 	ctx, err := c.authMiddleware.Authenticator.Authenticate(w, r)
 	if err != nil {
 		errMsg := fmt.Sprintf("Authentication failed: %v", err)
 		c.logger.Error(errMsg, nil)
-		c.authResponse(w, map[string]string{"error": errMsg})
+		c.authResponse(w, ErrorResponse{Error: errMsg})
 		return
 	}
 
@@ -92,7 +97,7 @@ func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		errMsg := "Failed to retrieve user from context"
 		c.logger.Error(errMsg, nil)
-		c.authResponse(w, map[string]string{"error": errMsg})
+		c.authResponse(w, ErrorResponse{Error: errMsg})
 		return
 	}
 
