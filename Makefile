@@ -26,5 +26,8 @@ clean:
 	@echo "Stopping and cleaning up Docker Compose resources..."
 	@docker-compose down --remove-orphans --volumes || { echo "Failed to clean up resources"; exit 1; }
 
-gosec:
+setup-directories:
+	mkdir -p -m 0777 test-results
+
+gosec: setup-directories
 	docker compose run --rm gosec
