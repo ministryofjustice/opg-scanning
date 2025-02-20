@@ -85,5 +85,5 @@ services:
     image: securego/gosec:latest
     working_dir: /app
     volumes:
-      - .:/app
+      - ./service-app:/app
     command: -exclude-dir=.gocache -fmt=sarif -out=/app/test-results/gosec.sarif -stdout -verbose=text /app/...
