@@ -93,7 +93,13 @@ func (c *IndexController) HandleRequests() {
 	))
 
 	c.logger.Info("Starting server on :"+c.config.HTTP.Port, nil)
-	if err := http.ListenAndServe(":"+c.config.HTTP.Port, nil); err != nil {
+
+	server := &http.Server{
+		Addr:              ":" + c.config.HTTP.Port,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	if err := server.ListenAndServe(); err != nil {
 		c.logger.Error(err.Error(), nil)
 	}
 }
