@@ -161,8 +161,14 @@ jobs:
           ECR_REPOSITORY: sirius/scanning/app
         run: |
           docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.SEMVER_TAG }}
-          docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
+          if [ "${{ needs.identify.outputs.branch }}" == "main" ]; then
+            docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:latest
+            docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:main-${{ env.SEMVER_TAG }}
+            docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:main-${{ env.SEMVER_TAG }}-$(date +"%Y%m%d%H%M%S")
+            docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
+          else
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.SEMVER_TAG }}
+          fi
 
   end:
     name: "End of workflow"
