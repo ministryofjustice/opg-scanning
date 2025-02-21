@@ -90,7 +90,7 @@ jobs:
         # services to scan over
         data:
           - docker_build_directory: "./service-app"
-            image_app_name: "helloworld"
+            image_app_name: "service-app"
             test_command: "go test ./..."
     # we use these a few times, so its easier to generate them once and env
     # vars are visible in the output, so helps with debug
@@ -161,7 +161,7 @@ jobs:
           ECR_REPOSITORY: sirius/scanning/app
         run: |
           docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.SEMVER_TAG }}
-          if [ "${{ needs.identify.outputs.branch }}" == "main" ]; then
+          if [ "${{ needs.branch_name.outputs.branch_name }}" == "main" ]; then
             docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:latest
             docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:main-${{ env.SEMVER_TAG }}
             docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:main-${{ env.SEMVER_TAG }}-$(date +"%Y%m%d%H%M%S")
