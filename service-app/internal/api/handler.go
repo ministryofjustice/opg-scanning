@@ -8,8 +8,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
+	"strings"
 	"time"
 
+	"github.com/lestrrat-go/libxml2/xsd"
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/auth"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
@@ -29,6 +32,19 @@ type IndexController struct {
 	Queue          *ingestion.JobQueue
 	AwsClient      aws.AwsClientInterface
 }
+
+type response struct {
+	Data responseData `json:"data"`
+}
+
+type responseData struct {
+	Success          bool     `json:"success"`
+	Message          string   `json:"message"`
+	Uid              string   `json:"uid,omitempty"`
+	ValidationErrors []string `json:"validationErrors,omitempty"`
+}
+
+var uidReplacementRegex = regexp.MustCompile(`^7[0-9]{3}-[0-9]{4}-[0-9]{4}$`)
 
 func NewIndexController(awsClient aws.AwsClientInterface, appConfig *config.Config) *IndexController {
 	logger := logger.NewLogger(appConfig)
@@ -77,14 +93,48 @@ func (c *IndexController) HandleRequests() {
 }
 
 func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
+	// Define response error struct
+	type ErrorResponse struct {
+		Error string `json:"error"`
+	}
+
 	// Authenticate user credentials and issue JWT token
-	_, err := c.authMiddleware.Authenticator.Authenticate(w, r)
+	ctx, err := c.authMiddleware.Authenticator.Authenticate(w, r)
 	if err != nil {
-		c.respondWithError(w, http.StatusUnauthorized, "Authentication failed", err)
+		errMsg := fmt.Sprintf("Authentication failed: %v", err)
+		c.logger.Error(errMsg, nil)
+		c.authResponse(w, ErrorResponse{Error: errMsg})
 		return
 	}
 
-	w.Write([]byte("Authentication successful"))
+	// Retrieve user from context
+	userFromCtx, ok := auth.UserFromContext(ctx)
+	if !ok {
+		errMsg := "Failed to retrieve user from context"
+		c.logger.Error(errMsg, nil)
+		c.authResponse(w, ErrorResponse{Error: errMsg})
+		return
+	}
+
+	token := c.authMiddleware.TokenGenerator.GetToken()
+
+	// Build response with email and token
+	resp := struct {
+		Email string `json:"email"`
+		Token string `json:"authentication_token"`
+	}{
+		Email: userFromCtx.Email,
+		Token: token,
+	}
+
+	c.authResponse(w, resp)
+}
+
+func (c *IndexController) authResponse(w http.ResponseWriter, resp interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		c.respondWithError(w, http.StatusInternalServerError, "Failed to encode response", err)
+	}
 }
 
 func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) {
@@ -224,7 +274,21 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	// Send the UID response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
-	if err := json.NewEncoder(w).Encode(scannedCaseResponse); err != nil {
+
+	uid := scannedCaseResponse.UID
+	if uidReplacementRegex.MatchString(uid) {
+		uid = strings.ReplaceAll(uid, "-", "")
+	}
+
+	resp := response{
+		Data: responseData{
+			Success: true,
+			Message: fmt.Sprintf("The document set for case %s has been queued for processing", uid),
+			Uid:     uid,
+		},
+	}
+
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		c.respondWithError(w, http.StatusInternalServerError, "Failed to encode response", err)
 	} else {
 		c.logger.Info("Ingestion request processed successfully, UID: %s", nil, scannedCaseResponse.UID)
@@ -237,7 +301,25 @@ func (c *IndexController) CloseQueue() {
 
 func (c *IndexController) respondWithError(w http.ResponseWriter, statusCode int, message string, err error) {
 	c.logger.Error("%s: %v", nil, message, err)
-	http.Error(w, message, statusCode)
+
+	resp := response{
+		Data: responseData{
+			Success: false,
+			Message: message,
+		},
+	}
+
+	if problem, ok := err.(Problem); ok {
+		resp.Data.Message = problem.Title
+		resp.Data.ValidationErrors = problem.ValidationErrors
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		c.respondWithError(w, http.StatusInternalServerError, "Failed to encode response", err)
+	}
 }
 
 // Helper Method: Read Request Body
@@ -279,7 +361,49 @@ func (c *IndexController) validateAndSanitizeXML(bodyStr string) (*types.BaseSet
 		return nil, err
 	}
 
+	// Validate embedded documents
+	for _, document := range parsedBaseXml.Body.Documents {
+		if err := c.validateDocument(document); err != nil {
+			return nil, err
+		}
+	}
+
 	return parsedBaseXml, nil
+}
+
+func (c *IndexController) validateDocument(document types.BaseDocument) error {
+	decodedXML, err := util.DecodeEmbeddedXML(document.EmbeddedXML)
+	if err != nil {
+		return fmt.Errorf("failed to decode XML data from %s: %w", document.Type, err)
+	}
+
+	schemaLocation, err := ingestion.ExtractSchemaLocation(string(decodedXML))
+	if err != nil {
+		return fmt.Errorf("failed to extract schema from %s: %w", document.Type, err)
+	}
+
+	xsdValidator, err := ingestion.NewXSDValidator(c.config.App.ProjectFullPath+"/xsd/"+schemaLocation, string(decodedXML))
+	if err != nil {
+		return fmt.Errorf("failed to load schema %s: %w", schemaLocation, err)
+	}
+
+	if err := xsdValidator.ValidateXsd(); err != nil {
+		if schemaValidationError, ok := err.(xsd.SchemaValidationError); ok {
+			var validationErrors []string
+			for _, error := range schemaValidationError.Errors() {
+				validationErrors = append(validationErrors, error.Error())
+			}
+
+			return Problem{
+				Title:            fmt.Sprintf("XML for %s failed XSD validation", document.Type),
+				ValidationErrors: validationErrors,
+			}
+		}
+
+		return fmt.Errorf("failed XSD validation: %w", err)
+	}
+
+	return nil
 }
 
 func (c *IndexController) processAndPersist(ctx context.Context, decodedXML []byte, originalDoc *types.BaseDocument) (fileName string, err error) {
