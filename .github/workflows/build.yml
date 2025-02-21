@@ -11,7 +11,7 @@ permissions:
   contents: write
   security-events: write
   actions: read
-  checks: write
+  checks: read
   deployments: none
   issues: none
   packages: none
@@ -38,27 +38,27 @@ jobs:
     with:
       application_languages: '["go"]'
 
-  golint:
+  go-lint:
     name: Go Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - run: make go-lint
+        continue-on-error: true
+      - name: Upload golangci-lint results to GitHub Security tab
+        if: ${{ always() }}
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          go-version: stable
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          working-directory: service-app
+          sarif_file: 'test-results/go-lint.sarif'
+          category: golangci-lint
 
   gosec:
     name: Go Sec
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Go Sec
+      - run: make gosec
         continue-on-error: true
-        run: make gosec
       - name: Upload GoSec results to GitHub Security tab
         if: ${{ always() }}
         uses: github/codeql-action/upload-sarif@v3
