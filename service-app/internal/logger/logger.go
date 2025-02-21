@@ -8,12 +8,16 @@ import (
 
 	"github.com/ministryofjustice/opg-go-common/telemetry"
 	"github.com/ministryofjustice/opg-scanning/config"
+	"go.opentelemetry.io/otel/attribute"
+	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
 type Logger struct {
 	cfg        *config.Config
 	SlogLogger *slog.Logger
 }
+
+type loggerContextKey struct{}
 
 func NewLogger(cfg *config.Config) *Logger {
 	// Create the base logger using telemetry.NewLogger.
@@ -33,25 +37,40 @@ func StartTracerProvider(ctx context.Context, logger *slog.Logger, exportTraces 
 	return telemetry.StartTracerProvider(ctx, logger, exportTraces)
 }
 
-func LoggingMiddleware(logger *slog.Logger) func(next http.Handler) http.Handler {
-	return telemetry.Middleware(logger)
-}
-
-// Returns the ContextWithLogger using the opg-go-common/telemetry packages.
 func ContextWithLogger(ctx context.Context, logger *slog.Logger) context.Context {
-	return telemetry.ContextWithLogger(ctx, logger)
+	return context.WithValue(ctx, loggerContextKey{}, logger)
 }
 
-// Retrieves the LoggerFromContext using the opg-go-common/telemetry packages.
-func LoggerFromContext(ctx context.Context) *slog.Logger {
-	return telemetry.LoggerFromContext(ctx)
-}
+func LoggingMiddleware(logger *slog.Logger) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			span := oteltrace.SpanFromContext(r.Context())
 
-func (l *Logger) WithFields(fields map[string]interface{}) *Logger {
-	return &Logger{
-		cfg:        l.cfg,
-		SlogLogger: l.SlogLogger.With(anyFromAttrs(attrsFromMap(fields))...),
+			span.SetAttributes(
+				attribute.String("http.target", r.URL.Path),
+			)
+
+			loggerWithRequest := logger.With(
+				slog.String("trace_id", span.SpanContext().TraceID().String()),
+				slog.Any("request", r),
+			)
+
+			r = r.WithContext(ContextWithLogger(r.Context(), loggerWithRequest))
+
+			next.ServeHTTP(w, r)
+		})
 	}
+}
+
+func LoggerFromContext(ctx context.Context) *slog.Logger {
+	// We don't always have the context so we need to check
+	// if it exists, otherwise we'll get a panic.
+    if val := ctx.Value(loggerContextKey{}); val != nil {
+        if logger, ok := val.(*slog.Logger); ok {
+            return logger
+        }
+    }
+    return nil
 }
 
 func (l *Logger) Info(message string, fields map[string]interface{}, args ...any) {
