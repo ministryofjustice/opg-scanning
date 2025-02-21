@@ -83,7 +83,7 @@ jobs:
     name: "Docker build, trivy scan, ECR push"
     runs-on: ubuntu-latest
     # require all steps before this matrix to have passed
-    needs: [branch_name, workspace_name, semver_tag]
+    needs: [branch_name, workspace_name, semver_tag, gosec, go-lint]
     strategy:
       fail-fast: true
       matrix:
