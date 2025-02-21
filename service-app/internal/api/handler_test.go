@@ -76,7 +76,8 @@ func TestIngestHandler_SetValid(t *testing.T) {
 	responseBody, _ := io.ReadAll(resp.Body)
 	var responseObj response
 
-	json.Unmarshal(responseBody, &responseObj)
+	err := json.Unmarshal(responseBody, &responseObj)
+	assert.Nil(t, err)
 	assert.True(t, responseObj.Data.Success)
 	assert.Equal(t, "700012341234", responseObj.Data.Uid)
 }
@@ -142,7 +143,8 @@ func TestIngestHandler_InvalidEmbeddedXMLProvidesDetails(t *testing.T) {
 	responseBody, _ := io.ReadAll(resp.Body)
 	var responseObj response
 
-	json.Unmarshal(responseBody, &responseObj)
+	err := json.Unmarshal(responseBody, &responseObj)
+	assert.Nil(t, err)
 	assert.False(t, responseObj.Data.Success)
 	assert.Contains(t, responseObj.Data.ValidationErrors, "Element 'LP2': Missing child element(s). Expected is ( Page1 ).")
 }
