@@ -161,7 +161,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	parsedBaseXml, err := c.validateAndSanitizeXML(bodyStr)
+	parsedBaseXml, err := c.validateAndSanitizeXML(reqCtx, bodyStr)
 	if err != nil {
 		c.respondWithError(reqCtx, w, http.StatusBadRequest, "Validate and sanitize XML failed", err)
 		return
@@ -338,7 +338,7 @@ func (c *IndexController) readRequestBody(r *http.Request) (string, error) {
 }
 
 // Helper Method: Validate and Sanitize XML
-func (c *IndexController) validateAndSanitizeXML(bodyStr string) (*types.BaseSet, error) {
+func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr string) (*types.BaseSet, error) {
 	// Extract the document type from the XML
 	schemaLocation, err := ingestion.ExtractSchemaLocation(bodyStr)
 	if err != nil {
@@ -346,7 +346,7 @@ func (c *IndexController) validateAndSanitizeXML(bodyStr string) (*types.BaseSet
 	}
 
 	// Validate against XSD
-	c.logger.Info("Validating against XSD", nil)
+	c.logger.InfoWithContext(ctx, "Validating against XSD", nil)
 	xsdValidator, err := ingestion.NewXSDValidator(c.config.App.ProjectFullPath+"/xsd/"+schemaLocation, bodyStr)
 	if err != nil {
 		return nil, err
@@ -356,7 +356,7 @@ func (c *IndexController) validateAndSanitizeXML(bodyStr string) (*types.BaseSet
 	}
 
 	// Validate and sanitize the XML
-	c.logger.Info("Validating and sanitizing XML", nil)
+	c.logger.InfoWithContext(ctx, "Validating and sanitizing XML", nil)
 	xmlValidator := ingestion.NewXmlValidator(*c.config)
 	parsedBaseXml, err := xmlValidator.XmlValidateSanitize(bodyStr)
 	if err != nil {
