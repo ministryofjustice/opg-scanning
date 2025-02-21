@@ -80,3 +80,18 @@ services:
       timeout: 10s
       retries: 5
     restart: unless-stopped
+
+  go-lint:
+    build: docker/go-lint
+    working_dir: /go/src/app/service-app
+    volumes:
+      - ./:/go/src/app
+      - ./.cache/golangci-lint/v1.64.5:/root/.cache
+    command: golangci-lint run -v --timeout 5m --out-format=sarif:/go/src/app/test-results/go-lint.sarif,colored-line-number --modules-download-mode=readonly
+
+  gosec:
+    image: securego/gosec:latest
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: -exclude-dir=.gocache -fmt=sarif -out=/app/test-results/gosec.sarif -stdout -verbose=text /app/...
