@@ -239,8 +239,8 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 				return
 			}
 
-			// Check if the document is a correspondence type; if so do not send to the job queue
-			if util.Contains([]string{"Correspondence", "SupCorrespondence"}, originalDoc.Type) {
+			// Check if the document should be sent Sirius; if not, skip
+			if !util.Contains(constants.SiriusExtractionDocuments, originalDoc.Type) {
 				c.logger.Info("Skipping external job processing, checks completed for document", map[string]interface{}{
 					"trace_id":      reqID,
 					"set_uid":       scannedCaseResponse.UID,

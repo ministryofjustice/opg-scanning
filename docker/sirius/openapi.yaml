@@ -56,7 +56,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /api/public/v1/scanned-documents/scanned-documents:
+  /api/public/v1/scanned-documents:
     post:
       description: Attach a scanned document to a case
       operationId: createScannedDocument
