@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
@@ -66,18 +65,14 @@ func (p *DocumentProcessor) Process(ctx context.Context) (interface{}, error) {
 	}
 
 	// Validate the document
-	traceID, _ := ctx.Value(constants.TraceIDKey).(string)
-
 	if err := p.validator.Setup(p.doc); err != nil {
 		return nil, fmt.Errorf("validation setup failed: %w", err)
 	}
 
 	if err := p.validator.Validate(); err != nil {
-		p.logger.Error("Validation failed: "+err.Error(), map[string]interface{}{
-			"trace_id": traceID,
-		})
+		p.logger.Error("Validation failed: %v", nil, err)
 	}
-
+	
 	// Sanitize the document
 	if err := p.sanitizer.Setup(p.doc); err != nil {
 		return nil, fmt.Errorf("sanitization setup failed: %w", err)
