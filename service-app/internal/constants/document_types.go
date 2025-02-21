@@ -62,4 +62,13 @@ var (
 		DocumentTypeLP1H,
 		DocumentTypeCOPORD,
 	}
+
+	// these documents should be sent to Sirius to be extracted
+	SiriusExtractionDocuments = []string{
+		DocumentTypeEP2PG,
+		DocumentTypeLP1F,
+		DocumentTypeLP1H,
+		DocumentTypeLP2,
+		DocumentTypeLPC,
+	}
 )
