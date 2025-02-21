@@ -25,3 +25,12 @@ start-sirius:
 clean:
 	@echo "Stopping and cleaning up Docker Compose resources..."
 	@docker-compose down --remove-orphans --volumes || { echo "Failed to clean up resources"; exit 1; }
+
+setup-directories:
+	mkdir -p -m 0777 test-results
+
+go-lint: setup-directories
+	docker compose run --rm go-lint
+
+gosec: setup-directories
+	docker compose run --rm gosec
