@@ -16,6 +16,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/auth"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
+	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
@@ -74,7 +75,7 @@ func NewIndexController(awsClient aws.AwsClientInterface, appConfig *config.Conf
 	}
 }
 
-func (c *IndexController) HandleRequests() {	
+func (c *IndexController) HandleRequests() {
 	http.Handle("/health-check", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 
@@ -84,7 +85,7 @@ func (c *IndexController) HandleRequests() {
 	}))
 
 	// Create the route to handle user authentication and issue JWT token
-	http.Handle("/auth/sessions", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { 
+	http.Handle("/auth/sessions", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c.AuthHandler(r.Context(), w, r)
 	}))
 
@@ -210,7 +211,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
 		// r.Context() carries the enriched logger injected by the middleware.
-    	c.Queue.AddToQueue(reqCtx, doc, "xml", func(processedDoc interface{}, originalDoc *types.BaseDocument) {
+		c.Queue.AddToQueue(reqCtx, doc, "xml", func(processedDoc interface{}, originalDoc *types.BaseDocument) {
 			// Extract the enriched logger from the original request context.
 			enrichedLogger := logger.LoggerFromContext(reqCtx)
 			// Create a new context starting with reqCtx and inject the enriched logger.
@@ -244,7 +245,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			}
 
 			// Check if the document is a correspondence type; if so do not send to the job queue
-			if util.Contains([]string{"Correspondence", "SupCorrespondence"}, originalDoc.Type) {
+			if !util.Contains(constants.SiriusExtractionDocuments, originalDoc.Type) {
 				c.logger.InfoWithContext(ctx, "Skipping external job processing, checks completed for document", map[string]interface{}{
 					"set_uid":       scannedCaseResponse.UID,
 					"pdf_uuid":      attchResp.UUID,
