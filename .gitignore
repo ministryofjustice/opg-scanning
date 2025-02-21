@@ -14,6 +14,6 @@ secrets.auto.tfvars
 .env
 venv/
 env/
-# build & testing
-.cache/
-test-results/
+# build
+.cache
+test-results

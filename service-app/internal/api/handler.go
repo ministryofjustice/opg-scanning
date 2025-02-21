@@ -77,7 +77,10 @@ func NewIndexController(awsClient aws.AwsClientInterface, appConfig *config.Conf
 func (c *IndexController) HandleRequests() {	
 	http.Handle("/health-check", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+
+		if _, err := w.Write([]byte("OK")); err != nil {
+			c.logger.Error(err.Error(), nil)
+		}
 	}))
 
 	// Create the route to handle user authentication and issue JWT token
@@ -91,7 +94,15 @@ func (c *IndexController) HandleRequests() {
 	))
 
 	c.logger.Info("Starting server on :"+c.config.HTTP.Port, nil)
-	http.ListenAndServe(":"+c.config.HTTP.Port, nil)
+
+	server := &http.Server{
+		Addr:              ":" + c.config.HTTP.Port,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	if err := server.ListenAndServe(); err != nil {
+		c.logger.Error(err.Error(), nil)
+	}
 }
 
 func (c *IndexController) AuthHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {

@@ -38,6 +38,34 @@ jobs:
     with:
       application_languages: '["go"]'
 
+  go-lint:
+    name: Go Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make go-lint
+        continue-on-error: true
+      - name: Upload golangci-lint results to GitHub Security tab
+        if: ${{ always() }}
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'test-results/go-lint.sarif'
+          category: golangci-lint
+
+  gosec:
+    name: Go Sec
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make gosec
+        continue-on-error: true
+      - name: Upload GoSec results to GitHub Security tab
+        if: ${{ always() }}
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'test-results/gosec.sarif'
+          category: gosec
+
   # generate tag
   semver_tag:
     needs: [branch_name, codeql_analysis]
@@ -55,7 +83,7 @@ jobs:
     name: "Docker build, trivy scan, ECR push"
     runs-on: ubuntu-latest
     # require all steps before this matrix to have passed
-    needs: [branch_name, workspace_name, semver_tag]
+    needs: [branch_name, workspace_name, semver_tag, gosec, go-lint]
     strategy:
       fail-fast: true
       matrix:
@@ -133,8 +161,14 @@ jobs:
           ECR_REPOSITORY: sirius/scanning/app
         run: |
           docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.SEMVER_TAG }}
-          docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
+          if [ "${{ needs.identify.outputs.branch }}" == "main" ]; then
+            docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:latest
+            docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:main-${{ env.SEMVER_TAG }}
+            docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:main-${{ env.SEMVER_TAG }}-$(date +"%Y%m%d%H%M%S")
+            docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
+          else
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.SEMVER_TAG }}
+          fi
 
   end:
     name: "End of workflow"

@@ -65,13 +65,19 @@ func (p *DocumentProcessor) Process(ctx context.Context) (interface{}, error) {
 	}
 
 	// Validate the document
-	p.validator.Setup(p.doc)
+	if err := p.validator.Setup(p.doc); err != nil {
+		return nil, fmt.Errorf("validation setup failed: %w", err)
+	}
+
 	if err := p.validator.Validate(); err != nil {
 		p.logger.Error("Validation failed: %v", nil, err)
 	}
 	
 	// Sanitize the document
-	p.sanitizer.Setup(p.doc)
+	if err := p.sanitizer.Setup(p.doc); err != nil {
+		return nil, fmt.Errorf("sanitization setup failed: %w", err)
+	}
+
 	sanitizedDoc, err := p.sanitizer.Sanitize()
 	if err != nil {
 		return nil, fmt.Errorf("sanitization failed: %w", err)
