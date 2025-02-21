@@ -63,7 +63,7 @@ func LoggingMiddleware(logger *slog.Logger) func(next http.Handler) http.Handler
 }
 
 func LoggerFromContext(ctx context.Context) *slog.Logger {
-	// We don't always have the context so we need to check
+    // We don't always have the context so we need to check
 	// if it exists, otherwise we'll get a panic.
     if val := ctx.Value(loggerContextKey{}); val != nil {
         if logger, ok := val.(*slog.Logger); ok {
