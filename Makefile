@@ -29,5 +29,8 @@ clean:
 setup-directories:
 	mkdir -p -m 0777 test-results
 
+go-lint: setup-directories
+	docker compose run --rm go-lint
+
 gosec: setup-directories
 	docker compose run --rm gosec
