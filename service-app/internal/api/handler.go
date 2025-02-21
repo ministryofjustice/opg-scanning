@@ -74,14 +74,16 @@ func NewIndexController(awsClient aws.AwsClientInterface, appConfig *config.Conf
 	}
 }
 
-func (c *IndexController) HandleRequests() {
+func (c *IndexController) HandleRequests() {	
 	http.Handle("/health-check", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	}))
 
 	// Create the route to handle user authentication and issue JWT token
-	http.Handle("/auth/sessions", http.HandlerFunc(c.AuthHandler))
+	http.Handle("/auth/sessions", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { 
+		c.AuthHandler(r.Context(), w, r)
+	}))
 
 	// Protect the route with JWT validation (using the authMiddleware)
 	http.Handle("/api/ddc", logger.LoggingMiddleware(c.logger.SlogLogger)(
@@ -92,7 +94,7 @@ func (c *IndexController) HandleRequests() {
 	http.ListenAndServe(":"+c.config.HTTP.Port, nil)
 }
 
-func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
+func (c *IndexController) AuthHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	// Define response error struct
 	type ErrorResponse struct {
 		Error string `json:"error"`
@@ -103,7 +105,7 @@ func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errMsg := fmt.Sprintf("Authentication failed: %v", err)
 		c.logger.Error(errMsg, nil)
-		c.authResponse(w, ErrorResponse{Error: errMsg})
+		c.authResponse(ctx, w, ErrorResponse{Error: errMsg})
 		return
 	}
 
@@ -112,7 +114,7 @@ func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		errMsg := "Failed to retrieve user from context"
 		c.logger.Error(errMsg, nil)
-		c.authResponse(w, ErrorResponse{Error: errMsg})
+		c.authResponse(ctx, w, ErrorResponse{Error: errMsg})
 		return
 	}
 
@@ -127,45 +129,47 @@ func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
 		Token: token,
 	}
 
-	c.authResponse(w, resp)
+	c.authResponse(ctx, w, resp)
 }
 
-func (c *IndexController) authResponse(w http.ResponseWriter, resp interface{}) {
+func (c *IndexController) authResponse(ctx context.Context, w http.ResponseWriter, resp interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		c.respondWithError(w, http.StatusInternalServerError, "Failed to encode response", err)
+		c.respondWithError(ctx, w, http.StatusInternalServerError, "Failed to encode response", err)
 	}
 }
 
 func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) {
+	reqCtx := r.Context()
+
 	if r.Method != http.MethodPost {
-		c.respondWithError(w, http.StatusMethodNotAllowed, "Invalid HTTP method", nil)
+		c.respondWithError(reqCtx, w, http.StatusMethodNotAllowed, "Invalid HTTP method", nil)
 		return
 	}
 
-	c.logger.Info("Received ingestion request", nil)
+	c.logger.InfoWithContext(reqCtx, "Received ingestion request", nil)
 
 	bodyStr, err := c.readRequestBody(r)
 	if err != nil {
-		c.respondWithError(w, http.StatusBadRequest, "Invalid request body", err)
+		c.respondWithError(reqCtx, w, http.StatusBadRequest, "Invalid request body", err)
 		return
 	}
 
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/xml" && contentType != "text/xml" {
-		c.respondWithError(w, http.StatusBadRequest, "Invalid content type", fmt.Errorf("expected application/xml or text/xml, got %s", contentType))
+		c.respondWithError(reqCtx, w, http.StatusBadRequest, "Invalid content type", fmt.Errorf("expected application/xml or text/xml, got %s", contentType))
 		return
 	}
 
 	parsedBaseXml, err := c.validateAndSanitizeXML(bodyStr)
 	if err != nil {
-		c.respondWithError(w, http.StatusBadRequest, "Validate and sanitize XML failed", err)
+		c.respondWithError(reqCtx, w, http.StatusBadRequest, "Validate and sanitize XML failed", err)
 		return
 	}
 
 	// Validate the parsed set
 	if err := c.validator.ValidateSet(parsedBaseXml); err != nil {
-		c.respondWithError(w, http.StatusBadRequest, "Validate set failed", err)
+		c.respondWithError(reqCtx, w, http.StatusBadRequest, "Validate set failed", err)
 		return
 	}
 
@@ -176,23 +180,21 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	defer cancel()
 	scannedCaseResponse, err := service.CreateCaseStub(ctx)
 	if err != nil {
-		c.respondWithError(w, http.StatusInternalServerError, "Failed to create case stub in Sirius", err)
+		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Failed to create case stub in Sirius", err)
 		return
 	}
 
 	// Ensure scannedCaseResponse
 	if scannedCaseResponse == nil || scannedCaseResponse.UID == "" {
-		c.respondWithError(w, http.StatusInternalServerError,
+		c.respondWithError(reqCtx, w, http.StatusInternalServerError,
 			"Invalid response from Sirius when creating case stub, scannedCaseResponse is nil or missing UID",
-			fmt.Errorf("scannedCaseResponse UID missing"))
+			errors.New("scannedCaseResponse UID missing"))
 		return
 	}
 	// Queue each document for further processing
-	c.logger.Info("Queueing documents for processing", map[string]interface{}{
+	c.logger.InfoWithContext(reqCtx, "Queueing documents for processing", map[string]interface{}{
 		"Header": parsedBaseXml.Header,
 	})
-
-	reqCtx := r.Context()
 
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
@@ -200,8 +202,8 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
     	c.Queue.AddToQueue(reqCtx, doc, "xml", func(processedDoc interface{}, originalDoc *types.BaseDocument) {
 			// Extract the enriched logger from the original request context.
 			enrichedLogger := logger.LoggerFromContext(reqCtx)
-			// Create a new context starting with context.Background() and inject the enriched logger.
-			loggerCtx := logger.ContextWithLogger(context.Background(), enrichedLogger)
+			// Create a new context starting with reqCtx and inject the enriched logger.
+			loggerCtx := logger.ContextWithLogger(reqCtx, enrichedLogger)
 			// Then apply your timeout on the new context.
 			ctx, cancel := context.WithTimeout(loggerCtx, time.Duration(c.config.HTTP.Timeout)*time.Second)
 			defer cancel()
@@ -289,9 +291,9 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		c.respondWithError(w, http.StatusInternalServerError, "Failed to encode response", err)
+		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Failed to encode response", err)
 	} else {
-		c.logger.Info("Ingestion request processed successfully, UID: %s", nil, scannedCaseResponse.UID)
+		c.logger.InfoWithContext(reqCtx, "Ingestion request processed successfully, UID: %s", nil, scannedCaseResponse.UID)
 	}
 }
 
@@ -299,8 +301,8 @@ func (c *IndexController) CloseQueue() {
 	c.Queue.Close()
 }
 
-func (c *IndexController) respondWithError(w http.ResponseWriter, statusCode int, message string, err error) {
-	c.logger.Error("%s: %v", nil, message, err)
+func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseWriter, statusCode int, message string, err error) {
+	c.logger.ErrorWithContext(ctx, "%s: %v", nil, message, err)
 
 	resp := response{
 		Data: responseData{
@@ -318,7 +320,7 @@ func (c *IndexController) respondWithError(w http.ResponseWriter, statusCode int
 	w.WriteHeader(statusCode)
 
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		c.respondWithError(w, http.StatusInternalServerError, "Failed to encode response", err)
+		c.respondWithError(ctx, w, http.StatusInternalServerError, "Failed to encode response", err)
 	}
 }
 
