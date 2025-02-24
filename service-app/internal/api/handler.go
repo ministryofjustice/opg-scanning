@@ -314,8 +314,10 @@ func (c *IndexController) CloseQueue() {
 }
 
 func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseWriter, statusCode int, message string, err error) {
-	c.logger.ErrorWithContext(ctx, "%s: %v", nil, message, err)
-
+	c.logger.ErrorWithContext(ctx, message, map[string]interface{}{
+		"error": err,
+	})
+	
 	resp := response{
 		Data: responseData{
 			Success: false,
