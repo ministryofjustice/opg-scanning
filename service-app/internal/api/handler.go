@@ -215,7 +215,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			// Extract the enriched logger from the original request context.
 			enrichedLogger := logger.LoggerFromContext(reqCtx)
 			// Create a new context starting with reqCtx and inject the enriched logger.
-			loggerCtx := logger.ContextWithLogger(reqCtx, enrichedLogger)
+			loggerCtx := logger.ContextWithLogger(context.Background(), enrichedLogger)
 			// Then apply your timeout on the new context.
 			ctx, cancel := context.WithTimeout(loggerCtx, time.Duration(c.config.HTTP.Timeout)*time.Second)
 			defer cancel()
@@ -317,7 +317,7 @@ func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseW
 	c.logger.ErrorWithContext(ctx, message, map[string]interface{}{
 		"error": err,
 	})
-	
+
 	resp := response{
 		Data: responseData{
 			Success: false,
