@@ -9,6 +9,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/factory"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type Job struct {
@@ -33,8 +34,16 @@ func NewJobQueue(config *config.Config) *JobQueue {
 	return queue
 }
 
+func NewJobContext(reqCtx context.Context) context.Context {
+	enrichedLogger := logger.LoggerFromContext(reqCtx)
+    span := trace.SpanFromContext(reqCtx)
+    ctx := trace.ContextWithSpan(context.Background(), span)
+    return logger.ContextWithLogger(ctx, enrichedLogger)
+}
+
 func (q *JobQueue) AddToQueue(ctx context.Context, data *types.BaseDocument, format string, onComplete func(interface{}, *types.BaseDocument)) {
-	job := Job{ctx: ctx, Data: data, format: format, onComplete: onComplete}
+	jobCtx := NewJobContext(ctx)
+	job := Job{ctx: jobCtx, Data: data, format: format, onComplete: onComplete}	
 	q.wg.Add(1)
 	q.Jobs <- job
 }
@@ -49,10 +58,10 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 						return // Exit if the job channel is closed
 					}
 
-					processCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-					defer cancel()
-
+					// TODO: Load timeout from Config
+					processCtx, cancel := context.WithTimeout(job.ctx, 5*time.Second)
 					done := make(chan struct{})
+
 					go func() {
 						defer close(done)
 
@@ -70,7 +79,7 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 						}
 
 						// Process the document
-						parsedDoc, err := processor.Process(job.ctx)
+						parsedDoc, err := processor.Process(processCtx)
 						if err != nil {
 							q.logger.Error("Worker %d failed to process job: %v\n", nil, workerID, err)
 							return
@@ -85,8 +94,10 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 					case <-processCtx.Done():
 						q.logger.Error("Worker %d timed out processing job\n", nil, workerID)
 					case <-done:
-						// Job completed without timing out
+						// Job completed without timing out.
 					}
+					// Cancel the timeout context to free resources.
+					cancel()
 
 					q.wg.Done()
 
