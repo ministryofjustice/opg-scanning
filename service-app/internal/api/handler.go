@@ -212,8 +212,9 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
 		// r.Context() carries the enriched logger injected by the middleware.
-		c.Queue.AddToQueue(reqCtx, doc, "xml", func(processedDoc interface{}, originalDoc *types.BaseDocument) {
-			ctx, cancel := context.WithTimeout(ingestion.NewJobContext(reqCtx), time.Duration(c.config.HTTP.Timeout)*time.Second)
+		c.Queue.AddToQueue(reqCtx, doc, "xml", func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) {
+			// Wrap the jobs context with a timeout for callback processing.
+			ctx, cancel := context.WithTimeout(ctx, time.Duration(c.config.HTTP.Timeout)*time.Second)
 			defer cancel()
 
 			// Attach documents to case

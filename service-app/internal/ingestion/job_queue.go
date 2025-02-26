@@ -16,7 +16,7 @@ type Job struct {
 	ctx        context.Context
 	Data       *types.BaseDocument
 	format     string
-	onComplete func(processedDoc interface{}, originalDoc *types.BaseDocument)
+	onComplete func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument)
 }
 
 type JobQueue struct {
@@ -35,13 +35,13 @@ func NewJobQueue(config *config.Config) *JobQueue {
 }
 
 func NewJobContext(reqCtx context.Context) context.Context {
-	enrichedLogger := logger.LoggerFromContext(reqCtx)
+    enrichedLogger := logger.LoggerFromContext(reqCtx)
     span := trace.SpanFromContext(reqCtx)
     ctx := trace.ContextWithSpan(context.Background(), span)
     return logger.ContextWithLogger(ctx, enrichedLogger)
 }
 
-func (q *JobQueue) AddToQueue(ctx context.Context, data *types.BaseDocument, format string, onComplete func(interface{}, *types.BaseDocument)) {
+func (q *JobQueue) AddToQueue(ctx context.Context, data *types.BaseDocument, format string, onComplete func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument)) {
 	jobCtx := NewJobContext(ctx)
 	job := Job{ctx: jobCtx, Data: data, format: format, onComplete: onComplete}	
 	q.wg.Add(1)
@@ -59,6 +59,7 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 					}
 
 					// TODO: Load timeout from Config
+					// Create a per job timeout context from the jobs context.
 					processCtx, cancel := context.WithTimeout(job.ctx, 5*time.Second)
 					done := make(chan struct{})
 
@@ -78,7 +79,7 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 							return
 						}
 
-						// Process the document
+						// Process the document using processCtx to enforce the timeout.
 						parsedDoc, err := processor.Process(processCtx)
 						if err != nil {
 							q.logger.Error("Worker %d failed to process job: %v\n", nil, workerID, err)
@@ -86,7 +87,8 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 						}
 
 						if job.onComplete != nil {
-							job.onComplete(parsedDoc, job.Data)
+							// Pass the jobs original context to the callback.
+							job.onComplete(job.ctx, parsedDoc, job.Data)
 						}
 					}()
 
