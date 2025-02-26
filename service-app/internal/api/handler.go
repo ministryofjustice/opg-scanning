@@ -22,6 +22,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 type IndexController struct {
@@ -90,9 +91,9 @@ func (c *IndexController) HandleRequests() {
 	}))
 
 	// Protect the route with JWT validation (using the authMiddleware)
-	http.Handle("/api/ddc", logger.LoggingMiddleware(c.logger.SlogLogger)(
+	http.Handle("/api/ddc", otelhttp.NewHandler(logger.LoggingMiddleware(c.logger.SlogLogger)(
 		c.authMiddleware.CheckAuthMiddleware(http.HandlerFunc(c.IngestHandler)),
-	))
+	), "scanning"))
 
 	c.logger.Info("Starting server on :"+c.config.HTTP.Port, nil)
 
@@ -211,13 +212,9 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
 		// r.Context() carries the enriched logger injected by the middleware.
-		c.Queue.AddToQueue(reqCtx, doc, "xml", func(processedDoc interface{}, originalDoc *types.BaseDocument) {
-			// Extract the enriched logger from the original request context.
-			enrichedLogger := logger.LoggerFromContext(reqCtx)
-			// Create a new context starting with reqCtx and inject the enriched logger.
-			loggerCtx := logger.ContextWithLogger(context.Background(), enrichedLogger)
-			// Then apply your timeout on the new context.
-			ctx, cancel := context.WithTimeout(loggerCtx, time.Duration(c.config.HTTP.Timeout)*time.Second)
+		c.Queue.AddToQueue(reqCtx, doc, "xml", func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) {
+			// Wrap the jobs context with a timeout for callback processing.
+			ctx, cancel := context.WithTimeout(ctx, time.Duration(c.config.HTTP.Timeout)*time.Second)
 			defer cancel()
 
 			// Attach documents to case
