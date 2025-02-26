@@ -10,6 +10,7 @@ import (
 
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 type HttpClient struct {
@@ -19,13 +20,17 @@ type HttpClient struct {
 }
 
 func NewHttpClient(config config.Config, logger logger.Logger) *HttpClient {
-	return &HttpClient{
+	httpClient := &HttpClient{
 		HttpClient: &http.Client{
 			Timeout: time.Duration(config.HTTP.Timeout) * time.Second,
 		},
 		Config: &config,
 		Logger: &logger,
 	}
+
+	httpClient.HttpClient.Transport = otelhttp.NewTransport(httpClient.HttpClient.Transport)
+
+	return httpClient
 }
 
 func (r *HttpClient) HTTPRequest(ctx context.Context, url, method string, payload []byte, headers map[string]string) ([]byte, error) {
