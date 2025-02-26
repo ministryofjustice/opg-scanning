@@ -13,6 +13,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/api"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws"
 )
 
 func main() {
@@ -38,6 +39,9 @@ func main() {
 	cfg, err := awsConfig.LoadDefaultConfig(ctx,
 		awsConfig.WithRegion(appConfig.Aws.Region),
 	)
+
+	otelaws.AppendMiddlewares(&cfg.APIOptions)
+
 	if err != nil {
 		slogLogger.Error("Failed to load AWS config", "error", err)
 		return
