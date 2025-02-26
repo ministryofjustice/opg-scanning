@@ -6,7 +6,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -242,4 +244,52 @@ func TestValidateDocumentHandlesErrorCases(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRespondWithErrorHandle5XX(t *testing.T) {
+	ctx := context.Background()
+	w := httptest.NewRecorder()
+
+	c := setupController()
+
+	outBuf := bytes.NewBuffer([]byte{})
+	c.logger.SlogLogger = slog.New(slog.NewTextHandler(outBuf, nil))
+
+	c.respondWithError(ctx, w, 500, "something went wrong", errors.New("what really went wrong"))
+
+	out, err := io.ReadAll(outBuf)
+	assert.Nil(t, err)
+	assert.Contains(t, string(out), "ERROR")
+	assert.Contains(t, string(out), "what really went wrong")
+
+	resp := w.Result()
+	assert.Equal(t, 500, resp.StatusCode)
+
+	body, err := io.ReadAll(resp.Body)
+	assert.Nil(t, err)
+	assert.Contains(t, string(body), `{"data":{"success":false,"message":"something went wrong"}}`)
+}
+
+func TestRespondWithErrorHandle4XX(t *testing.T) {
+	ctx := context.Background()
+	w := httptest.NewRecorder()
+
+	c := setupController()
+
+	outBuf := bytes.NewBuffer([]byte{})
+	c.logger.SlogLogger = slog.New(slog.NewTextHandler(outBuf, nil))
+
+	c.respondWithError(ctx, w, 400, "you sent us something wrong", errors.New("what really went wrong"))
+
+	out, err := io.ReadAll(outBuf)
+	assert.Nil(t, err)
+	assert.Contains(t, string(out), "INFO")
+	assert.Contains(t, string(out), "what really went wrong")
+
+	resp := w.Result()
+	assert.Equal(t, 400, resp.StatusCode)
+
+	body, err := io.ReadAll(resp.Body)
+	assert.Nil(t, err)
+	assert.Contains(t, string(body), `{"data":{"success":false,"message":"you sent us something wrong"}}`)
 }
