@@ -298,7 +298,9 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Failed to encode response", err)
 	} else {
-		c.logger.InfoWithContext(reqCtx, "Ingestion request processed successfully, UID: %s", nil, scannedCaseResponse.UID)
+		c.logger.InfoWithContext(reqCtx, "Ingestion request processed successfully", map[string]interface{}{
+			"uid": scannedCaseResponse.UID,
+		})
 	}
 }
 
@@ -307,9 +309,15 @@ func (c *IndexController) CloseQueue() {
 }
 
 func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseWriter, statusCode int, message string, err error) {
-	c.logger.ErrorWithContext(ctx, message, map[string]interface{}{
-		"error": err,
-	})
+	if statusCode >= 500 {
+		c.logger.ErrorWithContext(ctx, message, map[string]interface{}{
+			"error": err,
+		})
+	} else {
+		c.logger.InfoWithContext(ctx, message, map[string]interface{}{
+			"error": err,
+		})
+	}
 
 	resp := response{
 		Data: responseData{
