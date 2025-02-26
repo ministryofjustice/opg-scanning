@@ -253,11 +253,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			}
 
 			// Persist external aws job queue with UID+fileName
-			AwsQueue, err := aws.NewAwsQueue(c.config)
-			if err != nil {
-				c.logger.ErrorWithContext(ctx, "Failed to create AWS queue", nil, err)
-			}
-			messageID, err := AwsQueue.QueueSetForProcessing(ctx, scannedCaseResponse, fileName)
+			messageID, err := c.AwsClient.QueueSetForProcessing(ctx, scannedCaseResponse, fileName)
 			if err != nil {
 				c.logger.ErrorWithContext(ctx, "Failed to queue document for processing", map[string]interface{}{
 					"set_uid":       scannedCaseResponse.UID,
