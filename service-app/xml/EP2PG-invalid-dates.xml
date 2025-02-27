@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<EP2PG xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="EP2PG.xsd">
+    <Page1>
+        <Part1>
+            <Name>
+                <Salutation>
+                    <Mr>false</Mr>
+                    <Mrs>true</Mrs>
+                    <Ms>false</Ms>
+                    <Miss>false</Miss>
+                    <Other>false</Other>
+                    <OtherName />
+                </Salutation>
+                <LastName>Branning</LastName>
+                <Forename>Dorothy</Forename>
+                <OtherForenames />
+            </Name>
+            <CompanyName />
+            <Address>
+                <Address1>5 Albert Square</Address1>
+                <Address2 />
+                <Address3 />
+                <TownCity>London</TownCity>
+                <County />
+                <Postcode>E3 2UD</Postcode>
+            </Address>
+            <DOB>0</DOB>
+        </Part1>
+        <BURN />
+        <PhysicalPage>1</PhysicalPage>
+    </Page1>
+    <Page2>
+        <Part2>
+            <Attorney>
+                <Name>
+                    <Salutation>
+                        <Mr>true</Mr>
+                        <Mrs>false</Mrs>
+                        <Ms>false</Ms>
+                        <Miss>false</Miss>
+                        <Other>false</Other>
+                        <OtherName />
+                    </Salutation>
+                    <LastName>Cotton</LastName>
+                    <Forename>Nick</Forename>
+                    <OtherForenames />
+                </Name>
+                <CompanyName />
+                <Address>
+                    <Address1>5 Albert Sqaure</Address1>
+                    <Address2 />
+                    <Address3 />
+                    <TownCity>London</TownCity>
+                    <County />
+                    <Postcode>E3 2UD</Postcode>
+                </Address>
+                <DXDetails>
+                    <DXNumber />
+                    <DXExchange />
+                </DXDetails>
+                <DOB />
+                <Telephone />
+                <Email />
+                <Occupation />
+                <Relationship>
+                    <CivilPartnerSpouse>false</CivilPartnerSpouse>
+                    <Child>true</Child>
+                    <OtherRelation>false</OtherRelation>
+                    <NoRelation>false</NoRelation>
+                    <Solicitor>false</Solicitor>
+                    <OtherProfessional>false</OtherProfessional>
+                    <OtherName />
+                </Relationship>
+                <Jointly>false</Jointly>
+                <JointlyAndSeverally>false</JointlyAndSeverally>
+                <Alone>true</Alone>
+            </Attorney>
+        </Part2>
+        <BURN />
+        <PhysicalPage>2</PhysicalPage>
+    </Page2>
+    <Page3>
+        <Part3>
+            <Attorney>
+                <Name>
+                    <Salutation>
+                        <Mr>false</Mr>
+                        <Mrs>false</Mrs>
+                        <Ms>false</Ms>
+                        <Miss>false</Miss>
+                        <Other>false</Other>
+                        <OtherName />
+                    </Salutation>
+                    <LastName />
+                    <Forename />
+                    <OtherForenames />
+                </Name>
+                <CompanyName />
+                <Address>
+                    <Address1 />
+                    <Address2 />
+                    <Address3 />
+                    <TownCity />
+                    <County />
+                    <Postcode />
+                </Address>
+                <DXDetails>
+                    <DXNumber />
+                    <DXExchange />
+                </DXDetails>
+                <DOB />
+                <Telephone />
+                <Email />
+                <Occupation />
+                <Relationship>
+                    <CivilPartnerSpouse>false</CivilPartnerSpouse>
+                    <Child>false</Child>
+                    <OtherRelation>false</OtherRelation>
+                    <NoRelation>false</NoRelation>
+                    <Solicitor>false</Solicitor>
+                    <OtherProfessional>false</OtherProfessional>
+                    <OtherName />
+                </Relationship>
+            </Attorney>
+        </Part3>
+        <Part4>
+            <Salutation>
+                <Mr>false</Mr>
+                <Mrs>false</Mrs>
+                <Ms>false</Ms>
+                <Miss>false</Miss>
+                <Other>false</Other>
+                <OtherName />
+            </Salutation>
+            <LastName />
+            <Forename />
+        </Part4>
+        <BURN />
+        <PhysicalPage>3</PhysicalPage>
+    </Page3>
+    <Page4>
+        <Part4>
+            <OtherForenames />
+            <CompanyName />
+            <Address>
+                <Address1 />
+                <Address2 />
+                <Address3 />
+                <TownCity />
+                <County />
+                <Postcode />
+            </Address>
+            <DXDetails>
+                <DXNumber />
+                <DXExchange />
+            </DXDetails>
+            <DOB />
+            <Telephone />
+            <Email />
+            <Occupation />
+            <Relationship>
+                <CivilPartnerSpouse>false</CivilPartnerSpouse>
+                <Child>false</Child>
+                <OtherRelation>false</OtherRelation>
+                <NoRelation>false</NoRelation>
+                <Solicitor>false</Solicitor>
+                <OtherProfessional>false</OtherProfessional>
+                <OtherName />
+            </Relationship>
+        </Part4>
+        <Part5>
+            <Date />
+            <YesorNo>
+                <Yes>false</Yes>
+                <No>false</No>
+            </YesorNo>
+            <Details />
+        </Part5>
+        <BURN />
+        <PhysicalPage>4</PhysicalPage>
+    </Page4>
+    <Page5>
+        <Part6>
+            <Date>01112009</Date>
+            <Address>
+                <Address1 />
+                <Address2 />
+                <Address3 />
+                <TownCity />
+                <County />
+                <Postcode />
+            </Address>
+            <FullName />
+        </Part6>
+        <Part7>
+            <NoneEntitled>false</NoneEntitled>
+            <Relative>
+                <FullName>Bradley Branning</FullName>
+                <Relationship>Grandson</Relationship>
+                <Address1 />
+                <Address2 />
+                <Address3 />
+                <Date>19122009</Date>
+            </Relative>
+            <Relative>
+                <FullName>Jim Branning</FullName>
+                <Relationship />
+                <Address1 />
+                <Address2 />
+                <Address3 />
+                <Date />
+            </Relative>
+            <Relative>
+                <FullName />
+                <Relationship />
+                <Address1 />
+                <Address2 />
+                <Address3 />
+                <Date />
+            </Relative>
+            <Relative>
+                <FullName />
+                <Relationship />
+                <Address1 />
+                <Address2 />
+                <Address3 />
+                <Date />
+            </Relative>
+            <Relative>
+                <FullName />
+                <Relationship />
+                <Address1 />
+                <Address2 />
+                <Address3 />
+                <Date />
+            </Relative>
+        </Part7>
+        <BURN />
+        <PhysicalPage>5</PhysicalPage>
+    </Page5>
+    <Page6>
+        <Part8>
+            <YesorNo>
+                <Yes>false</Yes>
+                <No>false</No>
+            </YesorNo>
+            <Relative>
+                <FullName />
+                <Relationship />
+                <Address1 />
+                <Address2 />
+                <Address3 />
+                <Date />
+            </Relative>
+            <Relative>
+                <FullName />
+                <Relationship />
+                <Address1 />
+                <Address2 />
+                <Address3 />
+                <Date />
+            </Relative>
+        </Part8>
+        <Part9>
+            <ChequeFee>
+                <YesorNo>
+                    <Yes>false</Yes>
+                    <No>true</No>
+                </YesorNo>
+            </ChequeFee>
+            <ExemptionRemission>
+                <YesorNo>
+                    <Yes>true</Yes>
+                    <No>false</No>
+                </YesorNo>
+            </ExemptionRemission>
+        </Part9>
+        <Part10>
+            <Declaration>
+                <Signed>true</Signed>
+                <Date>18112009</Date>
+                <Signed>false</Signed>
+                <Date />
+                <Signed>false</Signed>
+                <Date />
+            </Declaration>
+        </Part10>
+        <BURN />
+        <PhysicalPage>6</PhysicalPage>
+    </Page6>
+    <Page7>
+        <Part11>
+            <Name>
+                <Salutation>
+                    <Mr>false</Mr>
+                    <Mrs>false</Mrs>
+                    <Ms>false</Ms>
+                    <Miss>false</Miss>
+                    <Other>false</Other>
+                    <OtherName />
+                </Salutation>
+                <LastName>Robshaw</LastName>
+                <Forename>Chris</Forename>
+                <OtherForenames></OtherForenames>
+            </Name>
+            <CompanyName>The best company</CompanyName>
+            <CompanyReference>12345678</CompanyReference>
+            <Address>
+                <Address1>6 Veronica Road</Address1>
+                <Address2>Line 2</Address2>
+                <Address3></Address3>
+                <TownCity>London</TownCity>
+                <County>London</County>
+                <Postcode>SW178QL</Postcode>
+            </Address>
+            <DXDetails>
+                <DXNumber>12334567</DXNumber>
+                <DXExchange>123333</DXExchange>
+            </DXDetails>
+            <Telephone>07717675934</Telephone>
+            <Email>someaddress@rtt.com</Email>
+        </Part11>
+        <Part12>
+            <AdditionalInfo>true</AdditionalInfo>
+        </Part12>
+        <BURN />
+        <PhysicalPage>7</PhysicalPage>
+    </Page7>
+</EP2PG>
