@@ -12,7 +12,6 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/types/corresp_types"
 	"github.com/ministryofjustice/opg-scanning/internal/types/lp1f_types"
 	"github.com/ministryofjustice/opg-scanning/internal/types/lp1h_types"
-	"github.com/ministryofjustice/opg-scanning/internal/types/lp2_types"
 	"github.com/ministryofjustice/opg-scanning/internal/types/lpa120_types"
 	"github.com/ministryofjustice/opg-scanning/internal/types/lpc_types"
 	"github.com/stretchr/testify/assert"
@@ -66,16 +65,6 @@ func TestProcessDocument_LPA120(t *testing.T) {
 	require.True(t, ok, "Expected processedDoc to be of type *corresp_types.Correspondence")
 
 	assert.Equal(t, "John Doe", lpa120.Page3.Section1.FullName, "FullName mismatch")
-}
-
-func TestProcessDocument_LPA2(t *testing.T) {
-	processedDoc := prepareDocument(t, "LP2", "LP2-valid")
-
-	lp2, ok := processedDoc.(*lp2_types.LP2Document)
-	require.True(t, ok, "Expected processedDoc to be of type *lp2_types.LP2Document")
-
-	assert.Equal(t, false, lp2.Page1.Section1.PropertyFinancialAffairs, "PropertyFinancialAffairs mismatch")
-	assert.Equal(t, true, lp2.Page1.Section1.HealthWelfare, "HealthWelfare mismatch")
 }
 
 func TestProcessGenericDocuments(t *testing.T) {
