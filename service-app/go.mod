@@ -3,7 +3,6 @@ module github.com/ministryofjustice/opg-scanning
 go 1.23.2
 
 require (
-	github.com/aws/aws-sdk-go v1.55.6
 	github.com/aws/aws-sdk-go-v2 v1.36.2
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/stretchr/testify v1.10.0
@@ -35,12 +34,12 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	go.opentelemetry.io/contrib/detectors/aws/ecs v1.34.0 // indirect
 	go.opentelemetry.io/contrib/propagators/aws v1.34.0 // indirect
-	go.opentelemetry.io/otel v1.34.0 // indirect
+	go.opentelemetry.io/otel v1.34.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.34.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.34.0 // indirect
 	go.opentelemetry.io/otel/metric v1.34.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.34.0 // indirect
-	go.opentelemetry.io/otel/trace v1.34.0 // indirect
+	go.opentelemetry.io/otel/trace v1.34.0
 	go.opentelemetry.io/proto/otlp v1.5.0 // indirect
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
@@ -52,6 +51,10 @@ require (
 )
 
 require (
+	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.39.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.10.9 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sns v1.33.12 // indirect
+	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 )
@@ -60,8 +63,11 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.29.6
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.77.1
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.34.18
+	github.com/aws/aws-sdk-go-v2/service/sqs v1.37.15
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.56.12
 	github.com/golang-jwt/jwt/v5 v5.2.1
+	go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws v0.59.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.59.0
 )
 
 require (

@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 
+	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -24,4 +25,12 @@ func (m *MockAwsClient) FetchCredentials(ctx context.Context) (map[string]string
 func (m *MockAwsClient) PersistFormData(ctx context.Context, body io.Reader, docType string) (string, error) {
 	args := m.Called(ctx, body, docType)
 	return args.String(0), args.Error(1)
+}
+
+func (m *MockAwsClient) QueueSetForProcessing(ctx context.Context, scannedCaseResponse *types.ScannedCaseResponse, fileName string) (MessageID *string, err error) {
+	args := m.Called(ctx, scannedCaseResponse, fileName)
+
+	messageId := args.String(0)
+
+	return &messageId, args.Error(1)
 }
