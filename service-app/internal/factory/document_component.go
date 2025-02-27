@@ -44,11 +44,11 @@ var componentRegistry = map[string]Component{
 		Validator: lpc_parser.NewValidator(),
 		Sanitizer: lpc_parser.NewSanitizer(),
 	},
-	"LPA120": {	
+	"LPA120": {
 		Parser: lpa120_parser.Parse,
 	},
 	"LP2": {
-		Parser: lp2_parser.Parse,
+		Parser:    lp2_parser.Parse,
 		Validator: lp2_parser.NewValidator(),
 	},
 }
