@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<LP2 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="LP2.xsd">
+  <Page1>
+    <Section1>
+      <Title>Mr</Title>
+      <FirstName>John</FirstName>
+      <LastName>Doe</LastName>
+      <PropertyFinancialAffairs>true</PropertyFinancialAffairs>
+      <HealthWelfare>true</HealthWelfare>
+    </Section1>
+    <BURN/>
+    <PhysicalPage>1</PhysicalPage>
+  </Page1>
+  <Page2>
+    <Section2>
+      <DonorRegisteration>true</DonorRegisteration>
+      <AttorneyRegisteration>false</AttorneyRegisteration>
+      <Attorney>
+        <Title>Mr</Title>
+        <FirstName>John</FirstName>
+        <LastName>Doe</LastName>
+        <DOB>0</DOB>
+      </Attorney>
+      <Attorney>
+        <Title>Mr</Title>
+        <FirstName>Robert</FirstName>
+        <LastName>Doe</LastName>
+        <DOB>01221950</DOB>
+      </Attorney>
+      <Attorney>
+        <Title>Ms</Title>
+        <FirstName>Jane</FirstName>
+        <LastName>Doe</LastName>
+        <DOB>99021984</DOB>
+      </Attorney>
+      <Attorney>
+        <Title>Ms</Title>
+        <FirstName>Emily</FirstName>
+        <LastName>Doe</LastName>
+        <DOB>04201960</DOB>
+      </Attorney>
+    </Section2>
+    <BURN/>
+    <PhysicalPage>2</PhysicalPage>
+  </Page2>
+  <Page3>
+    <Section3>
+      <TheDonor>false</TheDonor>
+      <AnAttorney>true</AnAttorney>
+      <Other>false</Other>
+      <Title>Mr</Title>
+      <FirstName>John</FirstName>
+      <LastName>Doe</LastName>
+      <Company/>
+      <Address>
+        <Address1>123 Fake Street</Address1>
+        <Address2>Faketown</Address2>
+        <Address3>Fakeland</Address3>
+        <Postcode>FA1 2KE</Postcode>
+      </Address>
+      <Post>true</Post>
+      <Phone>false</Phone>
+      <PhoneNumber/>
+      <Email>false</Email>
+      <EmailAddress/>
+      <Welsh>false</Welsh>
+    </Section3>
+    <BURN/>
+    <PhysicalPage>3</PhysicalPage>
+  </Page3>
+  <Page4>
+    <Section4>
+      <Cheque>true</Cheque>
+      <Card>false</Card>
+      <PhoneNumber/>
+      <ReducedFee>false</ReducedFee>
+    </Section4>
+    <BURN/>
+    <PhysicalPage>4</PhysicalPage>
+  </Page4>
+  <Page5>
+    <Section5>
+      <Attorney>
+        <Signature>true</Signature>
+        <Date>0</Date>
+      </Attorney>
+      <Attorney>
+        <Signature>true</Signature>
+        <Date>03030000</Date>
+      </Attorney>
+      <Attorney>
+        <Signature>true</Signature>
+        <Date>01030000</Date>
+      </Attorney>
+      <Attorney>
+        <Signature>true</Signature>
+        <Date>01201950</Date>
+      </Attorney>
+    </Section5>
+    <BURN/>
+    <PhysicalPage>5</PhysicalPage>
+  </Page5>
+  <Page6>
+    <Section6>
+      <Addresses>
+        <Title>Mr</Title>
+        <FirstName>John</FirstName>
+        <LastName>Doe</LastName>
+        <Address>
+          <Address1>456 Example Road</Address1>
+          <Address2>Exampletown</Address2>
+          <Address3>Exampleland</Address3>
+          <Postcode>EX4 5PL</Postcode>
+        </Address>
+        <EmailAddress/>
+      </Addresses>
+      <Addresses>
+        <Title>Mr</Title>
+        <FirstName>John</FirstName>
+        <LastName>Doe</LastName>
+        <Address>
+          <Address1>789 Fake Avenue</Address1>
+          <Address2>Faketown</Address2>
+          <Address3>Fakeland</Address3>
+          <Postcode>FA2 3GH</Postcode>
+        </Address>
+        <EmailAddress/>
+      </Addresses>
+      <Addresses>
+        <Title>Ms</Title>
+        <FirstName>Jane</FirstName>
+        <LastName>Doe</LastName>
+        <Address>
+          <Address1>101 Sample Road</Address1>
+          <Address2>Example City</Address2>
+          <Address3>Exampland</Address3>
+          <Postcode>EX3 4JK</Postcode>
+        </Address>
+        <EmailAddress>s.rowe@hotmail.com</EmailAddress>
+      </Addresses>
+      <Addresses>
+        <Title>Ms</Title>
+        <FirstName>Emily</FirstName>
+        <LastName>Doe</LastName>
+        <Address>
+          <Address1>202 Demo Street</Address1>
+          <Address2>Demo Town</Address2>
+          <Address3>Demoland</Address3>
+          <Postcode>DE5 6LM</Postcode>
+        </Address>
+        <EmailAddress/>
+      </Addresses>
+    </Section6>
+    <BURN/>
+    <PhysicalPage>6</PhysicalPage>
+  </Page6>
+</LP2>

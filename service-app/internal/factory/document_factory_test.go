@@ -67,7 +67,6 @@ func TestProcessDocument_LPA120(t *testing.T) {
 	assert.Equal(t, "John Doe", lpa120.Page3.Section1.FullName, "FullName mismatch")
 }
 
-
 func TestProcessGenericDocuments(t *testing.T) {
 	testCases := []struct {
 			name    string
