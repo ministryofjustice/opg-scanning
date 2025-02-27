@@ -9,13 +9,14 @@ import (
 	"strings"
 	"time"
 
-	awsSdk "github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/ministryofjustice/opg-scanning/config"
+	appTypes "github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
@@ -23,17 +24,20 @@ type AwsClientInterface interface {
 	GetSecretValue(ctx context.Context, secretName string) (string, error)
 	FetchCredentials(ctx context.Context) (map[string]string, error)
 	PersistFormData(ctx context.Context, body io.Reader, docType string) (string, error)
+	QueueSetForProcessing(ctx context.Context, scannedCaseResponse *appTypes.ScannedCaseResponse, fileName string) (MessageID *string, err error)
 }
 
 type AwsClient struct {
 	config         *config.Config
+	siriusQueueURL string
 	SecretsManager *secretsmanager.Client
 	SSM            *ssm.Client
 	S3             *s3.Client
+	SQS            *sqs.Client
 }
 
 // Initializes all required AWS service clients.
-func NewAwsClient(ctx context.Context, cfg awsSdk.Config, appConfig *config.Config) (*AwsClient, error) {
+func NewAwsClient(ctx context.Context, cfg aws.Config, appConfig *config.Config) (*AwsClient, error) {
 	// Use the same endpoint for all services
 	var customEndpoint *string
 	if appConfig.Aws.Endpoint != "" {
@@ -53,11 +57,17 @@ func NewAwsClient(ctx context.Context, cfg awsSdk.Config, appConfig *config.Conf
 		o.UsePathStyle = appConfig.App.Environment == "local"
 	})
 
+	sqsClient := sqs.NewFromConfig(cfg, func(o *sqs.Options) {
+		o.BaseEndpoint = customEndpoint
+	})
+
 	return &AwsClient{
 		config:         appConfig,
+		siriusQueueURL: appConfig.Aws.JobsQueueURL,
 		SecretsManager: smClient,
 		SSM:            SsmClient,
 		S3:             s3Client,
+		SQS:            sqsClient,
 	}, nil
 }
 
@@ -77,7 +87,7 @@ func (a *AwsClient) GetSecretValue(ctx context.Context, secretName string) (stri
 func (a *AwsClient) GetSsmValue(ctx context.Context, secretName string) (string, error) {
 	input := &ssm.GetParameterInput{
 		Name:           &secretName,
-		WithDecryption: awsSdk.Bool(true),
+		WithDecryption: aws.Bool(true),
 	}
 
 	output, err := a.SSM.GetParameter(ctx, input)
@@ -149,4 +159,44 @@ func (a *AwsClient) FetchCredentials(ctx context.Context) (map[string]string, er
 	}
 
 	return credentials, nil
+}
+
+func (a *AwsClient) QueueSetForProcessing(ctx context.Context, scannedCaseResponse *appTypes.ScannedCaseResponse, fileName string) (MessageID *string, err error) {
+	message := createMessageBody(scannedCaseResponse, fileName)
+	messageJson, err := json.Marshal(message)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal message to JSON: %w", err)
+	}
+
+	// Send the message to the SQS queue
+	input := &sqs.SendMessageInput{
+		QueueUrl:       aws.String(a.siriusQueueURL),
+		MessageBody:    aws.String(string(messageJson)),
+		MessageGroupId: aws.String(scannedCaseResponse.UID),
+	}
+
+	output, err := a.SQS.SendMessage(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send message to SQS queue: %w", err)
+	}
+
+	return output.MessageId, nil
+}
+
+func createMessageBody(scannedCaseResponse *appTypes.ScannedCaseResponse, fileName string) map[string]interface{} {
+	// Create a message structure
+	content := map[string]interface{}{
+		"uid":      scannedCaseResponse.UID,
+		"filename": fileName,
+	}
+
+	// Create the final message structure
+	message := map[string]interface{}{
+		"content": util.PhpSerialize(content),
+		"metadata": map[string]interface{}{
+			"__name__": "Ddc\\Job\\FormJob",
+		},
+	}
+
+	return message
 }
