@@ -16,7 +16,7 @@ type EP2PGDocument struct {
 	Page5    Page5      `xml:"Page5"`
 	Page6    Page6      `xml:"Page6"`
 	Page7    Page7      `xml:"Page7"`
-	InfoPage []InfoPage `xml:"InfoPage,omitempty"`
+	InfoPage []types.BasePage
 }
 
 type Page1 struct {
@@ -171,7 +171,7 @@ type Page7 struct {
 }
 
 type Part11 struct {
-	Name             lp1f_types.PersonName `xml:"Name"                 `xml:"Name"`
+	Name             lp1f_types.PersonName `xml:"Name"`
 	CompanyName      string                `xml:"CompanyName"`
 	CompanyReference string                `xml:"CompanyReference"`
 	Address          lp1f_types.Address    `xml:"Address"`
