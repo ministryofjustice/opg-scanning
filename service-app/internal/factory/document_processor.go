@@ -70,9 +70,9 @@ func (p *DocumentProcessor) Process(ctx context.Context) (interface{}, error) {
 	}
 
 	if err := p.validator.Validate(); err != nil {
-		p.logger.Error("Validation failed: %v", nil, err)
+		p.logger.Info("Validation failed: %v", nil, err)
 	}
-	
+
 	// Sanitize the document
 	if err := p.sanitizer.Setup(p.doc); err != nil {
 		return nil, fmt.Errorf("sanitization setup failed: %w", err)
