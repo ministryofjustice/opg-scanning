@@ -62,11 +62,10 @@ func TestProcessDocument_LPA120(t *testing.T) {
 	processedDoc := prepareDocument(t, "LPA120", "LPA120-valid")
 
 	lpa120, ok := processedDoc.(*lpa120_types.LPA120Document)
-	require.True(t, ok, "Expected processedDoc to be of type *corresp_types.Correspondence")
+	require.True(t, ok, "Expected processedDoc to be of type *lpa120_types.LPA120Document")
 
 	assert.Equal(t, "John Doe", lpa120.Page3.Section1.FullName, "FullName mismatch")
 }
-
 
 func TestProcessGenericDocuments(t *testing.T) {
 	testCases := []struct {
