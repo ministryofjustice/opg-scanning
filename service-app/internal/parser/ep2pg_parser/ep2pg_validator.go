@@ -35,8 +35,7 @@ func (v *Validator) Validate() error {
 		if _, err := util.ParseDate(v.doc.Page1.Part1.DOB, "02012006"); err != nil {
 			v.baseValidator.AddValidatorErrorMessage("Failed to parse date of birth for Donor: " + err.Error())
 		}
-	}	
-
+	}
 
 	if v.doc.Page4.Part4.DOB != "" {
 		if _, err := util.ParseDate(v.doc.Page4.Part4.DOB, "02012006"); err != nil {
