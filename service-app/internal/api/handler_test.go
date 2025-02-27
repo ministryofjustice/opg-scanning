@@ -6,7 +6,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -242,4 +244,68 @@ func TestValidateDocumentHandlesErrorCases(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRespondWithErrorHandle5XX(t *testing.T) {
+	ctx := context.Background()
+	w := httptest.NewRecorder()
+
+	c := setupController()
+
+	outBuf := bytes.NewBuffer([]byte{})
+	c.logger.SlogLogger = slog.New(slog.NewJSONHandler(outBuf, nil))
+
+	c.respondWithError(ctx, w, 500, "something went wrong", errors.New("what really went wrong"))
+
+	var logMessage map[string]string
+	jsonUnmarshalReader(outBuf, &logMessage)
+	assert.Equal(t, "ERROR", logMessage["level"])
+	assert.Equal(t, "something went wrong", logMessage["msg"])
+	assert.Equal(t, "what really went wrong", logMessage["error"])
+
+	resp := w.Result()
+	assert.Equal(t, 500, resp.StatusCode)
+
+	respBody := response{}
+	jsonUnmarshalReader(resp.Body, &respBody)
+
+	assert.Equal(t, false, respBody.Data.Success)
+	assert.Equal(t, "something went wrong", respBody.Data.Message)
+}
+
+func TestRespondWithErrorHandle4XX(t *testing.T) {
+	ctx := context.Background()
+	w := httptest.NewRecorder()
+
+	c := setupController()
+
+	outBuf := bytes.NewBuffer([]byte{})
+	c.logger.SlogLogger = slog.New(slog.NewJSONHandler(outBuf, nil))
+
+	c.respondWithError(ctx, w, 400, "you sent us something wrong", errors.New("what really went wrong"))
+
+	var logMessage map[string]string
+	jsonUnmarshalReader(outBuf, &logMessage)
+	assert.Equal(t, "INFO", logMessage["level"])
+	assert.Equal(t, "you sent us something wrong", logMessage["msg"])
+	assert.Equal(t, "what really went wrong", logMessage["error"])
+
+	resp := w.Result()
+	assert.Equal(t, 400, resp.StatusCode)
+
+	respBody := response{}
+	jsonUnmarshalReader(resp.Body, &respBody)
+
+	assert.Equal(t, false, respBody.Data.Success)
+	assert.Equal(t, "you sent us something wrong", respBody.Data.Message)
+}
+
+func jsonUnmarshalReader(reader io.Reader, v any) {
+	body, err := io.ReadAll(reader)
+
+	if err != nil {
+		panic(err)
+	}
+
+	json.Unmarshal(body, v)
 }
