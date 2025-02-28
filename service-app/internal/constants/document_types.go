@@ -55,8 +55,6 @@ var (
 
 	NewCaseDocuments = []string{
 		DocumentTypeEP2PG,
-		DocumentTypeLPA002,
-		DocumentTypeLP0002R,
 		DocumentTypeLP2,
 		DocumentTypeLP1F,
 		DocumentTypeLP1H,
