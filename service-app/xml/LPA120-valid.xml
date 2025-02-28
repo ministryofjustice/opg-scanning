@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<LPA120>
+<LPA120 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="LPA120.xsd">
   <Page1>
     <BURN>DummyBurn1</BURN>
     <PhysicalPage>1</PhysicalPage>
