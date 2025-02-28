@@ -109,10 +109,7 @@ func (s *Service) CreateCaseStub(ctx context.Context) (*types.ScannedCaseRespons
 	}
 
 	var scannedResponse types.ScannedCaseResponse
-	err = json.Unmarshal(*resp, &scannedResponse)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
-	}
+	json.Unmarshal(*resp, &scannedResponse)
 
 	return &scannedResponse, nil
 }
