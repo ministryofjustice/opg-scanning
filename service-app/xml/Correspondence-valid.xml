@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Correspondence xmlns="http://www.w3.org/2001/XMLSchema-instance">
+<Correspondence xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="Correspondence.xsd">
   <SubType>Legal</SubType>
   <CaseNumber>12345</CaseNumber>
   <CaseNumber>67890</CaseNumber>
