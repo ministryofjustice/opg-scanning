@@ -49,8 +49,9 @@ jobs:
         if: ${{ always() }}
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: 'test-results/go-lint.sarif'
+          sarif_file: "test-results/go-lint.sarif"
           category: golangci-lint
+          checkout_path: service-app
 
   gosec:
     name: Go Sec
@@ -63,8 +64,9 @@ jobs:
         if: ${{ always() }}
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: 'test-results/gosec.sarif'
+          sarif_file: "test-results/gosec.sarif"
           category: gosec
+          checkout_path: service-app
 
   # Unit test
   unit-test:
@@ -100,7 +102,16 @@ jobs:
     name: "Docker build, trivy scan, ECR push"
     runs-on: ubuntu-latest
     # require all steps before this matrix to have passed
-    needs: [branch_name, workspace_name, semver_tag, gosec, go-lint, unit-test, integration-test]
+    needs:
+      [
+        branch_name,
+        workspace_name,
+        semver_tag,
+        gosec,
+        go-lint,
+        unit-test,
+        integration-test,
+      ]
     strategy:
       fail-fast: true
       matrix:
@@ -183,13 +194,7 @@ jobs:
     name: Push Version to Parameter Store & Trigger Deploy
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    needs:
-      [
-        branch_name,
-        workspace_name,
-        semver_tag,
-        build_scan_push,
-      ]
+    needs: [branch_name, workspace_name, semver_tag, build_scan_push]
     steps:
       - uses: actions/checkout@v4
 
