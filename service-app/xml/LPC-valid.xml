@@ -1,5 +1,5 @@
 <LPC xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xsi:noNamespaceSchemaLocation="example.xsd">
+     xsi:noNamespaceSchemaLocation="LPC.xsd">
     <Page1>
         <ContinuationSheet1>
             <Attorney>
@@ -48,6 +48,13 @@
 
     <Page2>
         <ContinuationSheet2>
+            <AdditionalInformation>
+                <Notes>true</Notes>
+                <Instructions>true</Instructions>
+                <Preferences>true</Preferences>
+                <ReplacementAttorneys>false</ReplacementAttorneys>
+                <Jointly>false</Jointly>
+            </AdditionalInformation>
             <Donor>
                 <FullName>John Donor</FullName>
                 <Signature>true</Signature>
@@ -60,6 +67,10 @@
 
     <Page3>
         <ContinuationSheet3>
+            <Donor>
+                <FullName>John Donor</FullName>
+            </Donor>
+
             <Signatory>
                 <Signature>true</Signature>
                 <FullName>James Signatory</FullName>
@@ -69,11 +80,23 @@
             <Witnesses>
                 <Signature>true</Signature>
                 <FullName>Witness 1</FullName>
+                <Address>
+                    <Address1>3 Example Road</Address1>
+                    <Address2>Example Town</Address2>
+                    <Address3></Address3>
+                    <Postcode>EX4 MPL</Postcode>
+                </Address>
             </Witnesses>
 
             <Witnesses>
                 <Signature>true</Signature>
                 <FullName>Witness 2</FullName>
+                <Address>
+                    <Address1>3 Example Road</Address1>
+                    <Address2>Example Town</Address2>
+                    <Address3></Address3>
+                    <Postcode>EX4 MPL</Postcode>
+                </Address>
             </Witnesses>
         </ContinuationSheet3>
         <BURN>Valid BURN text</BURN>
