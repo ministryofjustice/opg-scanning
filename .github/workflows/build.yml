@@ -49,8 +49,9 @@ jobs:
         if: ${{ always() }}
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: 'test-results/go-lint.sarif'
+          sarif_file: "test-results/go-lint.sarif"
           category: golangci-lint
+          checkout_path: service-app
 
   gosec:
     name: Go Sec
@@ -63,8 +64,9 @@ jobs:
         if: ${{ always() }}
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: 'test-results/gosec.sarif'
+          sarif_file: "test-results/gosec.sarif"
           category: gosec
+          checkout_path: service-app
 
   # Unit test
   unit-test:
