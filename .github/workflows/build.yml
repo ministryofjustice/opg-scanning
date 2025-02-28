@@ -66,6 +66,24 @@ jobs:
           sarif_file: 'test-results/gosec.sarif'
           category: gosec
 
+  # Unit test
+  unit-test:
+    name: Unit test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make test
+
+  # Integration test
+  integration-test:
+    name: Integration test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make integration-test
+      - run: make clean
+        if: ${{ always() }}
+
   # generate tag
   semver_tag:
     needs: [branch_name, codeql_analysis]
@@ -78,12 +96,11 @@ jobs:
   # Docker build, trivy scan, ECR push as a matrix
   # The matrix loops over each app to build in a complicated
   # structure
-  # ADD IN ECR PUSH
   build_scan_push:
     name: "Docker build, trivy scan, ECR push"
     runs-on: ubuntu-latest
     # require all steps before this matrix to have passed
-    needs: [branch_name, workspace_name, semver_tag, gosec, go-lint]
+    needs: [branch_name, workspace_name, semver_tag, gosec, go-lint, unit-test, integration-test]
     strategy:
       fail-fast: true
       matrix:
@@ -91,7 +108,6 @@ jobs:
         data:
           - docker_build_directory: "./service-app"
             image_app_name: "service-app"
-            test_command: "go test ./..."
     # we use these a few times, so its easier to generate them once and env
     # vars are visible in the output, so helps with debug
     env:
@@ -144,13 +160,6 @@ jobs:
         if: always()
         with:
           sarif_file: ${{ env.sarif_file }}
-      # for a lot of our services, there could be a test process here
-      - name: Run Tests
-        working-directory: ${{ matrix.data.docker_build_directory }}
-        env:
-          PROJECT_PATH: service-app
-        run: |
-          ${{ matrix.data.test_command }}
       ######
       ## Push to ECR
       ######
