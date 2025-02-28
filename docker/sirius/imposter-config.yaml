@@ -1,2 +1,8 @@
 plugin: openapi
 specFile: openapi.yaml
+
+resources:
+  - method: POST
+    path: /api/public/v1/scanned-cases
+    response:
+      scriptFile: scanned-cases-endpoint.js
