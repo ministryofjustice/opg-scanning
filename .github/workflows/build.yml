@@ -72,9 +72,31 @@ jobs:
   unit-test:
     name: Unit test
     runs-on: ubuntu-latest
+    needs:
+      - branch_name
+      - semver_tag
     steps:
       - uses: actions/checkout@v4
       - run: make test
+      - name: Get commit SHA
+        id: get_commit
+        run: |
+          if [ "${{ github.head_ref }}" == "" ]; then
+              echo "COMMIT=${{github.sha}}" >> $GITHUB_OUTPUT
+          else
+              echo "COMMIT=${{github.event.pull_request.head.sha}}" >> $GITHUB_OUTPUT
+          fi
+      # Upload to Pact broker
+      - name: Publish pacts
+        run: |
+          docker run --rm -v $(pwd)/service-app/internal/api/pacts/scanning-sirius.json:/tmp/pacts pactfoundation/pact-cli:latest \
+            pact-broker publish /tmp/pacts \
+            --consumer-app-version ${{ steps.get_commit.outputs.COMMIT }} \
+            --branch ${{ needs.branch_name.outputs.branch_name }} \
+            --tag ${{ needs.semver_tag.outputs.tag }} \
+            --broker-base-url https://pact-broker.api.opg.service.justice.gov.uk \
+            --broker-username admin \
+            --broker-password ${{ secrets.PACT_BROKER_PASSWORD }}
 
   # Integration test
   integration-test:
@@ -88,7 +110,7 @@ jobs:
 
   # generate tag
   semver_tag:
-    needs: [branch_name, codeql_analysis]
+    needs: [branch_name]
     name: "Generate the semver tag value"
     uses: ministryofjustice/opg-github-workflows/.github/workflows/data-parse-semver-tag.yml@v3.6.0
     with:
@@ -102,7 +124,17 @@ jobs:
     name: "Docker build, trivy scan, ECR push"
     runs-on: ubuntu-latest
     # require all steps before this matrix to have passed
-    needs: [branch_name, workspace_name, semver_tag, gosec, go-lint, unit-test, integration-test]
+    needs:
+      [
+        branch_name,
+        workspace_name,
+        semver_tag,
+        gosec,
+        go-lint,
+        codeql_analysis,
+        unit-test,
+        integration-test,
+      ]
     strategy:
       fail-fast: true
       matrix:
@@ -185,13 +217,7 @@ jobs:
     name: Push Version to Parameter Store & Trigger Deploy
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    needs:
-      [
-        branch_name,
-        workspace_name,
-        semver_tag,
-        build_scan_push,
-      ]
+    needs: [branch_name, workspace_name, semver_tag, build_scan_push]
     steps:
       - uses: actions/checkout@v4
 
