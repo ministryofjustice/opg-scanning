@@ -4,11 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
+	"testing"
 	"time"
 
+	"slices"
+
 	"github.com/ministryofjustice/opg-scanning/internal/util"
+	"github.com/stretchr/testify/require"
 )
 
 // Validator is a struct that holds document data and validation error messages
@@ -277,4 +282,37 @@ func (v *BaseValidator) getFieldValues(page, section, field string) (string, err
 	}
 
 	return dateStr, nil
+}
+
+func TestHelperDocumentValidation(
+	t *testing.T,
+	fileName string,
+	expectError bool,
+	expectedPatterns []string,
+	validator CommonValidator,
+) {
+
+	err := validator.Validate()
+
+	if expectError {
+		require.Error(t, err, "Expected validation errors for %s, but got none", fileName)
+
+		messages := validator.GetValidatorErrorMessages()
+
+		t.Log("Actual messages from validation:")
+		for _, msg := range messages {
+			t.Log(msg)
+		}
+
+		for _, pattern := range expectedPatterns {
+			regex, compErr := regexp.Compile(pattern)
+			require.NoError(t, compErr, "Failed to compile regex for pattern: %s", pattern)
+
+			found := slices.ContainsFunc(messages, regex.MatchString)
+
+			require.True(t, found, "Expected error message pattern not found: %s", pattern)
+		}
+	} else {
+		require.NoError(t, err, "Expected no errors for valid document XML")
+	}
 }

@@ -63,6 +63,10 @@ func (v *Validator) Validate() error {
 	return nil
 }
 
+func (v *Validator) GetValidatorErrorMessages() []string {
+	return v.baseValidator.GetValidatorErrorMessages()
+}
+
 // Helper function to extract date from a given section.
 func (v *Validator) extractDate(page, section, path string) (*time.Time, error) {
 	fields, err := v.baseValidator.GetFieldByPath(page, section, path, "DOB")

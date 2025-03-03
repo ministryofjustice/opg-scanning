@@ -41,6 +41,10 @@ func (v *Validator) Validate() error {
 	return nil
 }
 
+func (v *Validator) GetValidatorErrorMessages() []string {
+	return v.baseValidator.GetValidatorErrorMessages()
+}
+
 func (v *Validator) validatePage1() {
 	for i, p := range v.doc.Page1 {
 		cs := p.ContinuationSheet1

@@ -49,3 +49,7 @@ func (v *Validator) Validate() error {
 	}
 	return nil
 }
+
+func (v *Validator) GetValidatorErrorMessages() []string {
+	return v.baseValidator.GetValidatorErrorMessages()
+}
