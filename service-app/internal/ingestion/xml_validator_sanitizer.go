@@ -28,12 +28,12 @@ func (v *XmlValidator) XmlValidateSanitize(xmlData string) (*types.BaseSet, erro
 
 	sanitizedXmlData, err := XmlSanitize(xmlData)
 	if err != nil {
-		return nil, fmt.Errorf("sanitization failed: " + err.Error())
+		return nil, fmt.Errorf("sanitization failed: %w", err)
 	}
 
 	parsedBaseXml, err := parser.BaseParserXml([]byte(sanitizedXmlData))
 	if err != nil {
-		return nil, fmt.Errorf("base XML parsing failed: " + err.Error())
+		return nil, fmt.Errorf("base XML parsing failed: %w", err)
 	}
 
 	return parsedBaseXml, err
