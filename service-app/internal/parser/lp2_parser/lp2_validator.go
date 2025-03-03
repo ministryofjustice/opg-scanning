@@ -50,8 +50,10 @@ func (v *Validator) Validate() error {
 	}
 
 	// Validate Attorney Signature Dates
-	for _, attorney := range v.doc.Page5.Section5.Attorney{
-		if attorney.Date == "" { continue }
+	for _, attorney := range v.doc.Page5.Section5.Attorney {
+		if attorney.Date == "" {
+			continue
+		}
 		if _, err := util.ParseDate(attorney.Date, ""); err != nil {
 			v.baseValidator.AddValidatorErrorMessage("Failed to parse attorney signature date: " + err.Error())
 		}
@@ -59,7 +61,9 @@ func (v *Validator) Validate() error {
 
 	// Validate Attorney Date of Birth
 	for _, attorney := range v.doc.Page2.Section2.Attorney {
-		if attorney.DOB == "" { continue }
+		if attorney.DOB == "" {
+			continue
+		}
 		if _, err := util.ParseDate(attorney.DOB, ""); err != nil {
 			v.baseValidator.AddValidatorErrorMessage("Failed to parse attorney date of birth: " + err.Error())
 		}
@@ -71,4 +75,8 @@ func (v *Validator) Validate() error {
 	}
 
 	return nil
+}
+
+func (v *Validator) GetValidatorErrorMessages() []string {
+	return v.baseValidator.GetValidatorErrorMessages()
 }
