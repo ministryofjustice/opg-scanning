@@ -17,3 +17,4 @@ env/
 # build
 .cache
 test-results
+service-app/internal/api/pacts
