@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"slices"
+
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"github.com/stretchr/testify/require"
 )
@@ -295,7 +297,6 @@ func TestHelperDocumentValidation(
 	if expectError {
 		require.Error(t, err, "Expected validation errors for %s, but got none", fileName)
 
-		// Safely assert that the validator is of the correct type
 		messages := validator.GetValidatorErrorMessages()
 
 		t.Log("Actual messages from validation:")
@@ -307,13 +308,7 @@ func TestHelperDocumentValidation(
 			regex, compErr := regexp.Compile(pattern)
 			require.NoError(t, compErr, "Failed to compile regex for pattern: %s", pattern)
 
-			found := false
-			for _, msg := range messages {
-				if regex.MatchString(msg) {
-					found = true
-					break
-				}
-			}
+			found := slices.ContainsFunc(messages, regex.MatchString)
 
 			require.True(t, found, "Expected error message pattern not found: %s", pattern)
 		}
