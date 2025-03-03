@@ -1,6 +1,8 @@
 module github.com/ministryofjustice/opg-scanning
 
-go 1.23.2
+go 1.24
+
+toolchain go1.24.0
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.36.3
@@ -55,6 +57,12 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.10.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sns v1.33.12 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
+	github.com/hashicorp/go-version v1.7.0 // indirect
+	github.com/hashicorp/logutils v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/spf13/afero v1.12.0 // indirect
+	github.com/spf13/cobra v1.8.1 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 )
@@ -66,6 +74,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.38.0
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.57.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/pact-foundation/pact-go/v2 v2.2.0
 	go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws v0.59.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.59.0
 )
@@ -78,3 +87,5 @@ require (
 	golang.org/x/crypto v0.35.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+tool github.com/pact-foundation/pact-go/v2
