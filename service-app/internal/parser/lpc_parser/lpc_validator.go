@@ -16,7 +16,7 @@ func NewValidator() *Validator {
 	return &Validator{}
 }
 
-func (v *Validator) Setup(doc interface{}) error {
+func (v *Validator) Setup(doc any) error {
 	if doc == nil {
 		return fmt.Errorf("document is nil")
 	}
@@ -30,15 +30,12 @@ func (v *Validator) Setup(doc interface{}) error {
 	return nil
 }
 
-func (v *Validator) Validate() error {
+func (v *Validator) Validate() []string {
 	v.validatePage1()
 	v.validatePage3()
 	v.validatePage4()
 
-	if messages := v.baseValidator.GetValidatorErrorMessages(); len(messages) > 0 {
-		return fmt.Errorf("failed to validate LPC document: %v", messages)
-	}
-	return nil
+	return v.baseValidator.GetValidatorErrorMessages()
 }
 
 func (v *Validator) validatePage1() {
