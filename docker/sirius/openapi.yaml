@@ -39,9 +39,9 @@ paths:
               schema:
                 type: object
                 required:
-                  - uid
+                  - uId
                 properties:
-                  uid:
+                  uId:
                     type: string
                     example: 7000-1234-1234
         "400":

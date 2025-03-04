@@ -32,6 +32,7 @@ func determineCaseRequest(set *types.BaseSet) (*types.ScannedCaseRequest, error)
 				BatchID:        set.Header.Schedule,
 				CaseType:       "order",
 				ReceiptDate:    formatScannedDate(set.Header.ScanTime),
+				CreatedDate:    now,
 			}, nil
 		}
 	}
