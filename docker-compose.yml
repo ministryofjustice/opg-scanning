@@ -23,7 +23,7 @@ services:
   service-app-test:
     build:
       context: ./service-app
-      target: build-env
+      dockerfile: Dockerfile.test
     environment:
       - SIRIUS_BASE_URL=http://sirius-mock:8080
       - AWS_ENDPOINT=http://localstack:4566
@@ -35,15 +35,10 @@ services:
       - .:/app
     working_dir: /app/service-app
     entrypoint:
-      - "sh"
-      - "-c"
-      - |
-        while ! nc -z localstack 4566; do
-          echo "Waiting for Localstack to be ready..."
-          sleep 1
-        done
-        echo "Localstack is ready. Running tests..."
-        go test -v ./...
+      - go
+      - test
+      - -v
+      - ./...
     depends_on:
       localstack:
         condition: service_healthy
