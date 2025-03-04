@@ -28,22 +28,12 @@ func TestInvalidXML(t *testing.T) {
 		"(?i)^Page10 Section9 Witness Full Name not set",
 		"(?i)^Page10 Section9 Witness Address not valid",
 		"(?i)^Page10 Section9 Donor signature not set or invalid",
-		"(?i)^Page12\\[2\\] Section11 Witness Signature not set",
-		"(?i)^no valid applicant signature/dates found",
+		"(?i)^Page12\\[0] Section11 Witness Signature not set",
+		"(?i)^applicant date is invalid",
+		"(?i)^all form dates must be before the earliest applicant signature date",
 	}
 
-	parser.TestHelperDocumentValidation(t, fileName, expectedErrMsgs, validator)
-}
-
-func TestInvalidDateOrderXML(t *testing.T) {
-	validator := getValidator(t, "LP1F-invalid-dates.xml")
-	errMessages := validator.Validate()
-	if len(errMessages) == 0 {
-		t.Errorf("Expected validation errors due to date ordering but got none")
-	}
-
-	found := util.Contains(errMessages, "all form dates must be before the earliest applicant signature date")
-	require.True(t, found, "Expected date ordering validation error not found")
+	parser.DocumentValidationTestHelper(t, fileName, expectedErrMsgs, validator)
 }
 
 func getValidator(t *testing.T, fileName string) parser.CommonValidator {

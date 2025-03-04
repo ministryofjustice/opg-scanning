@@ -26,7 +26,7 @@ func TestInvalidLPCXML(t *testing.T) {
 		`(?i)Page3\[\d+\] requires exactly 2 Witness blocks, found`,
 		`(?i)Page4\[\d+\] requires exactly 2 AuthorisedPerson blocks, found`,
 	}
-	parser.TestHelperDocumentValidation(t, fileName, expectedErrMsgs, validator)
+	parser.DocumentValidationTestHelper(t, fileName, expectedErrMsgs, validator)
 }
 
 func getLPCValidator(t *testing.T, fileName string) parser.CommonValidator {

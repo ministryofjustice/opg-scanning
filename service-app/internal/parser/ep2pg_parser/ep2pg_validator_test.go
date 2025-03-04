@@ -24,7 +24,7 @@ func TestInvalidXML(t *testing.T) {
 	expectedErrMsgs := []string{
 		"(?i)^Failed to parse date of birth for Donor:",
 	}
-	parser.TestHelperDocumentValidation(t, fileName, expectedErrMsgs, validator)
+	parser.DocumentValidationTestHelper(t, fileName, expectedErrMsgs, validator)
 }
 
 func getValidator(t *testing.T, fileName string) parser.CommonValidator {

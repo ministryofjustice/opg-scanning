@@ -22,7 +22,7 @@ func TestInvalidXML(t *testing.T) {
 	fileName := "LP2-invalid-dates.xml"
 	validator := getValidator(t, fileName)
 
-	parser.TestHelperDocumentValidation(t, fileName, []string{
+	parser.DocumentValidationTestHelper(t, fileName, []string{
 		"(?i)^Failed to parse attorney signature date:",
 		"(?i)^Failed to parse attorney date of birth:",
 		"(?i)^Both LPA sub-types are selected",
