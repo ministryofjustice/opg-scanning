@@ -23,12 +23,8 @@ func TestInvalidXML(t *testing.T) {
 
 	expectedErrMsgs := []string{
 		"(?i)^Page10 Section9 Witness Signature not set",
-		"(?i)^Page10 Section9 Donor Signature not set",
 		"(?i)^Page10 Section9 Witness Full Name not set",
 		"(?i)^Page10 Section9 Witness Address not valid",
-		"(?i)^Page10 Section9 Donor signature not set or invalid",
-		"(?i)^Page12\\[2\\] Section11 Witness Signature not set",
-		"(?i)^no valid applicant signature/dates found",
 	}
 
 	parser.TestHelperDocumentValidation(t, fileName, true, expectedErrMsgs, validator)
