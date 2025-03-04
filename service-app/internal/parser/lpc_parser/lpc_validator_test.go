@@ -11,11 +11,7 @@ import (
 
 func TestValidLPCXML(t *testing.T) {
 	validator := getLPCValidator(t, "LPC-valid.xml")
-	errMessages := validator.Validate()
-	errMessagesLen := len(errMessages)
-	if errMessagesLen > 0 {
-		t.Errorf("Expected no errors but got %d", errMessagesLen)
-	}
+	assert.Len(t, validator.Validate(), 0, "Expected no validation errors")
 }
 
 func TestInvalidLPCXML(t *testing.T) {
