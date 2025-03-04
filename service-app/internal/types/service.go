@@ -9,7 +9,7 @@ type ScannedCaseRequest struct {
 }
 
 type ScannedCaseResponse struct {
-	UID string `json:"uid"`
+	UID string `json:"uId"`
 }
 
 type ScannedDocumentRequest struct {
@@ -21,13 +21,7 @@ type ScannedDocumentRequest struct {
 }
 
 type ScannedDocumentResponse struct {
-	ID                  int    `json:"id"`
 	UUID                string `json:"uuid"`
-	Type                string `json:"type"`
-	FriendlyDescription string `json:"friendlyDescription"`
-	Title               string `json:"title"`
-	SourceDocumentType  string `json:"sourceDocumentType"`
-	Subtype             string `json:"subtype"`
 }
 
 // For handling error responses according to the OpenAPI spec
