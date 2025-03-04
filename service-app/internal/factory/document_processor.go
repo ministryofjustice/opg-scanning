@@ -69,8 +69,9 @@ func (p *DocumentProcessor) Process(ctx context.Context) (interface{}, error) {
 		return nil, fmt.Errorf("validation setup failed: %w", err)
 	}
 
-	if err := p.validator.Validate(); err != nil {
-		p.logger.Info("Validation failed: %v", nil, err)
+	// Return an error if any validations failed.
+	if messages := p.validator.Validate(); len(messages) > 0 {
+		p.logger.Info("Validation failed: %v", nil, messages)
 	}
 
 	// Sanitize the document

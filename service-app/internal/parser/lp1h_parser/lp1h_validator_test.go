@@ -9,12 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var err error
-
 func TestValidXML(t *testing.T) {
 	validator := getValidator(t, "LP1H-valid.xml")
-	err = validator.Validate()
-	require.NoError(t, err, "Expected no errors")
+	assert.Len(t, validator.Validate(), 0, "Expected no validation errors")
 }
 
 func getValidator(t *testing.T, fileName string) parser.CommonValidator {

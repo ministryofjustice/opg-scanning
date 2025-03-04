@@ -18,7 +18,7 @@ func NewValidator() *Validator {
 	}
 }
 
-func (v *Validator) Setup(doc interface{}) error {
+func (v *Validator) Setup(doc any) error {
 	if doc == nil {
 		return fmt.Errorf("document is nil")
 	}
@@ -29,7 +29,7 @@ func (v *Validator) Setup(doc interface{}) error {
 	return nil
 }
 
-func (v *Validator) Validate() error {
+func (v *Validator) Validate() []string {
 	// Common witness validations
 	v.baseValidator.WitnessSignatureFullNameAddressValidator("Page10", "Section9")
 
@@ -49,9 +49,5 @@ func (v *Validator) Validate() error {
 		v.baseValidator.ApplicantSignatureValidator(fmt.Sprintf("Page20[%d]", i))
 	}
 
-	// Return errors if any
-	if messages := v.baseValidator.GetValidatorErrorMessages(); len(messages) > 0 {
-		return fmt.Errorf("failed to validate LP1F document: %v", messages)
-	}
-	return nil
+	return v.baseValidator.GetValidatorErrorMessages()
 }
