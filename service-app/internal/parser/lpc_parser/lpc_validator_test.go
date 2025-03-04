@@ -11,8 +11,11 @@ import (
 
 func TestValidLPCXML(t *testing.T) {
 	validator := getLPCValidator(t, "LPC-valid.xml")
-	err := validator.Validate()
-	require.NoError(t, err, "Expected no errors for valid LPC XML")
+	errMessages := validator.Validate()
+	errMessagesLen := len(errMessages)
+	if errMessagesLen > 0 {
+		t.Errorf("Expected no errors but got %d", errMessagesLen)
+	}
 }
 
 func TestInvalidLPCXML(t *testing.T) {
@@ -23,7 +26,7 @@ func TestInvalidLPCXML(t *testing.T) {
 		`(?i)Page3\[\d+\] requires exactly 2 Witness blocks, found`,
 		`(?i)Page4\[\d+\] requires exactly 2 AuthorisedPerson blocks, found`,
 	}
-	parser.TestHelperDocumentValidation(t, fileName, true, expectedErrMsgs, validator)
+	parser.TestHelperDocumentValidation(t, fileName, expectedErrMsgs, validator)
 }
 
 func getLPCValidator(t *testing.T, fileName string) parser.CommonValidator {

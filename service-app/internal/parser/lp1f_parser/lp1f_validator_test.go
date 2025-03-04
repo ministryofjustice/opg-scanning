@@ -9,12 +9,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var err error
-
 func TestValidXML(t *testing.T) {
 	validator := getValidator(t, "LP1F-valid.xml")
-	err = validator.Validate()
-	require.NoError(t, err, "Expected no errors")
+	errMessages := validator.Validate()
+	errMessagesLen := len(errMessages)
+	if errMessagesLen > 0 {
+		t.Errorf("Expected no errors but got %d", errMessagesLen)
+	}
 }
 
 func TestInvalidXML(t *testing.T) {
@@ -23,20 +24,25 @@ func TestInvalidXML(t *testing.T) {
 
 	expectedErrMsgs := []string{
 		"(?i)^Page10 Section9 Witness Signature not set",
+		"(?i)^Page10 Section9 Donor Signature not set",
 		"(?i)^Page10 Section9 Witness Full Name not set",
 		"(?i)^Page10 Section9 Witness Address not valid",
+		"(?i)^Page10 Section9 Donor signature not set or invalid",
+		"(?i)^Page12\\[2\\] Section11 Witness Signature not set",
+		"(?i)^no valid applicant signature/dates found",
 	}
 
-	parser.TestHelperDocumentValidation(t, fileName, true, expectedErrMsgs, validator)
+	parser.TestHelperDocumentValidation(t, fileName, expectedErrMsgs, validator)
 }
 
 func TestInvalidDateOrderXML(t *testing.T) {
 	validator := getValidator(t, "LP1F-invalid-dates.xml")
-	err := validator.Validate()
-	require.Error(t, err, "Expected validation errors due to date ordering but got none")
+	errMessages := validator.Validate()
+	if len(errMessages) == 0 {
+		t.Errorf("Expected validation errors due to date ordering but got none")
+	}
 
-	messages := validator.GetValidatorErrorMessages()
-	found := util.Contains(messages, "all form dates must be before the earliest applicant signature date")
+	found := util.Contains(errMessages, "all form dates must be before the earliest applicant signature date")
 	require.True(t, found, "Expected date ordering validation error not found")
 }
 

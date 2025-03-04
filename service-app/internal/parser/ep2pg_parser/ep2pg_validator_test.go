@@ -9,12 +9,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var err error
-
 func TestValidXML(t *testing.T) {
 	validator := getValidator(t, "EP2PG-valid.xml")
-	err = validator.Validate()
-	require.NoError(t, err, "Expected no errors")
+	errMessages := validator.Validate()
+	errMessagesLen := len(errMessages)
+	if errMessagesLen > 0 {
+		t.Errorf("Expected no errors but got %d", errMessagesLen)
+	}
 }
 
 func TestInvalidXML(t *testing.T) {
@@ -23,7 +24,7 @@ func TestInvalidXML(t *testing.T) {
 	expectedErrMsgs := []string{
 		"(?i)^Failed to parse date of birth for Donor:",
 	}
-	parser.TestHelperDocumentValidation(t, fileName, true, expectedErrMsgs, validator)
+	parser.TestHelperDocumentValidation(t, fileName, expectedErrMsgs, validator)
 }
 
 func getValidator(t *testing.T, fileName string) parser.CommonValidator {

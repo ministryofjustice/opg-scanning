@@ -19,7 +19,7 @@ func NewValidator() *Validator {
 	}
 }
 
-func (v *Validator) Setup(doc interface{}) error {
+func (v *Validator) Setup(doc any) error {
 	if doc == nil {
 		return fmt.Errorf("document is nil")
 	}
@@ -30,7 +30,7 @@ func (v *Validator) Setup(doc interface{}) error {
 	return nil
 }
 
-func (v *Validator) Validate() error {
+func (v *Validator) Validate() []string {
 	if v.doc.Page1.Part1.DOB != "" {
 		if _, err := util.ParseDate(v.doc.Page1.Part1.DOB, "02012006"); err != nil {
 			v.baseValidator.AddValidatorErrorMessage("Failed to parse date of birth for Donor: " + err.Error())
@@ -43,13 +43,5 @@ func (v *Validator) Validate() error {
 		}
 	}
 
-	// Return errors if any
-	if messages := v.baseValidator.GetValidatorErrorMessages(); len(messages) > 0 {
-		return fmt.Errorf("failed to validate Correspondence document: %v", messages)
-	}
-	return nil
-}
-
-func (v *Validator) GetValidatorErrorMessages() []string {
 	return v.baseValidator.GetValidatorErrorMessages()
 }

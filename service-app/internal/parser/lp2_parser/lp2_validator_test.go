@@ -9,19 +9,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var err error
-
 func TestValidXML(t *testing.T) {
 	validator := getValidator(t, "LP2-valid.xml")
-	err = validator.Validate()
-	require.NoError(t, err, "Expected no errors")
+	errMessages := validator.Validate()
+	errMessagesLen := len(errMessages)
+	if errMessagesLen > 0 {
+		t.Errorf("Expected no errors but got %d", errMessagesLen)
+	}
 }
 
 func TestInvalidXML(t *testing.T) {
 	fileName := "LP2-invalid-dates.xml"
 	validator := getValidator(t, fileName)
 
-	parser.TestHelperDocumentValidation(t, fileName, true, []string{
+	parser.TestHelperDocumentValidation(t, fileName, []string{
 		"(?i)^Failed to parse attorney signature date:",
 		"(?i)^Failed to parse attorney date of birth:",
 		"(?i)^Both LPA sub-types are selected",
