@@ -18,7 +18,7 @@ func NewValidator() *Validator {
 	}
 }
 
-func (v *Validator) Setup(doc interface{}) error {
+func (v *Validator) Setup(doc any) error {
 	if doc == nil {
 		return fmt.Errorf("document is nil")
 	}
@@ -29,10 +29,6 @@ func (v *Validator) Setup(doc interface{}) error {
 	return nil
 }
 
-func (v *Validator) Validate() error {
-	// Return errors if any
-	if messages := v.baseValidator.GetValidatorErrorMessages(); len(messages) > 0 {
-		return fmt.Errorf("failed to validate Correspondence document: %v", messages)
-	}
-	return nil
+func (v *Validator) Validate() []string {
+	return v.baseValidator.GetValidatorErrorMessages()
 }

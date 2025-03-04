@@ -19,7 +19,7 @@ func NewValidator() *Validator {
 	}
 }
 
-func (v *Validator) Setup(doc interface{}) error {
+func (v *Validator) Setup(doc any) error {
 	if doc == nil {
 		return fmt.Errorf("document is nil")
 	}
@@ -30,7 +30,7 @@ func (v *Validator) Setup(doc interface{}) error {
 	return nil
 }
 
-func (v *Validator) Validate() error {
+func (v *Validator) Validate() []string {
 	// Validate LP2 Sub-type Selection
 	isPF, err := v.baseValidator.GetFieldByPath("Page1", "Section1", "PropertyFinancialAffairs")
 	if err != nil {
@@ -50,8 +50,10 @@ func (v *Validator) Validate() error {
 	}
 
 	// Validate Attorney Signature Dates
-	for _, attorney := range v.doc.Page5.Section5.Attorney{
-		if attorney.Date == "" { continue }
+	for _, attorney := range v.doc.Page5.Section5.Attorney {
+		if attorney.Date == "" {
+			continue
+		}
 		if _, err := util.ParseDate(attorney.Date, ""); err != nil {
 			v.baseValidator.AddValidatorErrorMessage("Failed to parse attorney signature date: " + err.Error())
 		}
@@ -59,16 +61,13 @@ func (v *Validator) Validate() error {
 
 	// Validate Attorney Date of Birth
 	for _, attorney := range v.doc.Page2.Section2.Attorney {
-		if attorney.DOB == "" { continue }
+		if attorney.DOB == "" {
+			continue
+		}
 		if _, err := util.ParseDate(attorney.DOB, ""); err != nil {
 			v.baseValidator.AddValidatorErrorMessage("Failed to parse attorney date of birth: " + err.Error())
 		}
 	}
 
-	// Return an error if any validations failed.
-	if messages := v.baseValidator.GetValidatorErrorMessages(); len(messages) > 0 {
-		return fmt.Errorf("failed to validate LPA document: %v", messages)
-	}
-
-	return nil
+	return v.baseValidator.GetValidatorErrorMessages()
 }
