@@ -132,7 +132,7 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 					b.
 						Header("Content-Type", matchers.String("application/json")).
 						JSONBody(matchers.Map{
-							"uid": matchers.Regex("7000-3737-2818", `7\d{3}-\d{4}-\d{4}`),
+							"uId": matchers.Regex("7000-3737-2818", `7\d{3}-\d{4}-\d{4}`),
 						})
 				})
 		}

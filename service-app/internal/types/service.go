@@ -9,7 +9,7 @@ type ScannedCaseRequest struct {
 }
 
 type ScannedCaseResponse struct {
-	UID string `json:"uid"`
+	UID string `json:"uId"`
 }
 
 type ScannedDocumentRequest struct {
