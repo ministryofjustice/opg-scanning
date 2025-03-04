@@ -1,11 +1,12 @@
 package parser
 
 type CommonValidator interface {
-	Setup(doc interface{}) error
+	Setup(doc any) error
 	Validate() error
+	GetValidatorErrorMessages() []string
 }
 
 type CommonSanitizer interface {
-	Setup(doc interface{}) error
-	Sanitize() (interface{}, error)
+	Setup(doc any) error
+	Sanitize() (any, error)
 }
