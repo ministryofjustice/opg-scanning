@@ -6,6 +6,8 @@ const (
 	DocumentTypeLPAPA   = "LPA-PA"
 	DocumentTypeLPAPW   = "LPA-PW"
 	DocumentTypeLPA114  = "LPA114"
+	DocumentTypeLPA115  = "LPA115"
+	DocumentTypeLPA116  = "LPA116"
 	DocumentTypeLPA117  = "LPA117"
 	DocumentTypeLPA120  = "LPA120"
 	DocumentTypeLP1F    = "LP1F"
@@ -35,6 +37,8 @@ var (
 		DocumentTypeLPAPA,
 		DocumentTypeLPAPW,
 		DocumentTypeLPA114,
+		DocumentTypeLPA115,
+		DocumentTypeLPA116,
 		DocumentTypeLPA117,
 		DocumentTypeEP2PG,
 		DocumentTypeLP2,
