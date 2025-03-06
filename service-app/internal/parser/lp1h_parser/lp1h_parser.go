@@ -5,7 +5,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/types/lp1h_types"
 )
 
-func Parse(data []byte) (interface{}, error) {
+func Parse(data []byte) (any, error) {
 	doc := &lp1h_types.LP1HDocument{}
 	return parser.DocumentParser(data, doc)
 }
