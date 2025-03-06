@@ -57,12 +57,11 @@ var (
 		DocumentTypeEPA,
 	}
 
-	NewCaseDocuments = []string{
+	NewCaseNumberDocuments = []string{
 		DocumentTypeEP2PG,
 		DocumentTypeLP2,
 		DocumentTypeLP1F,
 		DocumentTypeLP1H,
-		DocumentTypeCOPORD,
 	}
 
 	// these documents should be sent to Sirius to be extracted
