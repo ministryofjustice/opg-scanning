@@ -405,19 +405,23 @@ func (c *IndexController) validateDocument(document types.BaseDocument) error {
 	}
 
 	if err := xsdValidator.ValidateXsd(); err != nil {
-		if schemaValidationError, ok := err.(xsd.SchemaValidationError); ok {
+		switch err := err.(type) {
+		case xsd.SchemaValidationError:
 			var validationErrors []string
-			for _, error := range schemaValidationError.Errors() {
-				validationErrors = append(validationErrors, error.Error())
+			for _, vErr := range err.Errors() {
+				validationErrors = append(validationErrors, vErr.Error())
 			}
-
 			return Problem{
 				Title:            fmt.Sprintf("XML for %s failed XSD validation", document.Type),
 				ValidationErrors: validationErrors,
 			}
-		}
+		default:
+			return Problem{
+				Title:            fmt.Sprintf("XML for %s failed XSD validation", document.Type),
+				ValidationErrors: []string{err.Error()},
+			}
 
-		return fmt.Errorf("failed XSD validation: %w", err)
+		}
 	}
 
 	return nil
