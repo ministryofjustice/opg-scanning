@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LPA116 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="LPA116.xsd">
+  <Page1>
+    <PartC>
+      <Attorney>
+        <Signature>true</Signature>
+        <FullName>John Attorney</FullName>
+        <Date>01012025</Date>
+      </Attorney>
+      <Witness>
+        <Signature>true</Signature>
+        <FullName>Jane Witness</FullName>
+        <Address>
+          <Address1>456 Other Street</Address1>
+          <Address2>Apt 789</Address2>
+          <Address3>Townsville</Address3>
+          <Address4>County</Address4>
+          <Postcode>ZZ99 9ZZ</Postcode>
+        </Address>
+      </Witness>
+    </PartC>
+    <BURN/>
+    <PhysicalPage>1</PhysicalPage>
+  </Page1>
+  <InfoPage>
+    <BURN/>
+    <PhysicalPage>2</PhysicalPage>
+  </InfoPage>
+</LPA116>
