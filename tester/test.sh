@@ -111,6 +111,8 @@ do_test() {
 	check_attachment $token "EPA" "EPA-valid"
 	check_attachment $token "LPA002" "LPA002-valid"
 	check_attachment $token "LPA114" "LPA114-valid"
+	check_attachment $token "LPA115" "LPA115-valid"
+	check_attachment $token "LPA116" "LPA116-valid"
 	check_attachment $token "LPA117" "LPA117-valid"
 	check_attachment $token "LPA120" "LPA120-valid"
 	check_attachment $token "LPA-PA" "LPA-PA-valid"
