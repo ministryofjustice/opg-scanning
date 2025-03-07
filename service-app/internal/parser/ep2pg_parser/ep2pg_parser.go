@@ -5,7 +5,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/types/ep2pg_types"
 )
 
-func Parse(data []byte) (interface{}, error) {
+func Parse(data []byte) (any, error) {
 	doc := &ep2pg_types.EP2PGDocument{}
 	return parser.DocumentParser(data, doc)
 }

@@ -5,7 +5,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/types/lpa120_types"
 )
 
-func Parse(data []byte) (interface{}, error) {
+func Parse(data []byte) (any, error) {
 	doc := &lpa120_types.LPA120Document{}
 	return parser.DocumentParser(data, doc)
 }

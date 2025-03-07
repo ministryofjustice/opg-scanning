@@ -11,6 +11,8 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lp1f_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lp1h_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lp2_parser"
+	"github.com/ministryofjustice/opg-scanning/internal/parser/lpa115_parser"
+	"github.com/ministryofjustice/opg-scanning/internal/parser/lpa116_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lpa120_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lpc_parser"
 )
@@ -43,6 +45,12 @@ var componentRegistry = map[string]Component{
 		Parser:    lpc_parser.Parse,
 		Validator: lpc_parser.NewValidator(),
 		Sanitizer: lpc_parser.NewSanitizer(),
+	},
+	"LPA115": {
+		Parser: lpa115_parser.Parse,
+	},
+	"LPA116": {
+		Parser: lpa116_parser.Parse,
 	},
 	"LPA120": {
 		Parser: lpa120_parser.Parse,

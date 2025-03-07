@@ -4,7 +4,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
 )
 
-func Parse(data []byte) (interface{}, error) {
+func Parse(data []byte) (any, error) {
 	doc := &struct{}{}
 
 	return parser.DocumentParser(data, doc)
