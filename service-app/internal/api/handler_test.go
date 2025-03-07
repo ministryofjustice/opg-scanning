@@ -118,6 +118,31 @@ func TestIngestHandler_InvalidXML(t *testing.T) {
 	}
 }
 
+func TestIngestHandler_InvalidXMLExplainsXSDErrors(t *testing.T) {
+	controller := setupController()
+
+	xmlPayloadMalformed := `<Set xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SET.xsd">
+		<Header CaseNo="1234"></Header>
+	</Set>`
+
+	req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayloadMalformed)))
+	req.Header.Set("Content-Type", "application/xml")
+	w := httptest.NewRecorder()
+
+	controller.IngestHandler(w, req)
+
+	resp := w.Result()
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	responseBody, _ := io.ReadAll(resp.Body)
+	var responseObj response
+
+	err := json.Unmarshal(responseBody, &responseObj)
+	assert.Nil(t, err)
+	assert.False(t, responseObj.Data.Success)
+	assert.Contains(t, responseObj.Data.ValidationErrors, "Element 'Set': Missing child element(s). Expected is ( Body ).")
+}
+
 func TestIngestHandler_InvalidEmbeddedXMLProvidesDetails(t *testing.T) {
 	controller := setupController()
 

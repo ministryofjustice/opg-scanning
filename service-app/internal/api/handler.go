@@ -367,7 +367,19 @@ func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr st
 		return nil, err
 	}
 	if err := xsdValidator.ValidateXsd(); err != nil {
-		return nil, fmt.Errorf("XSD validation failed: %w", err)
+		if schemaValidationError, ok := err.(xsd.SchemaValidationError); ok {
+			var validationErrors []string
+			for _, error := range schemaValidationError.Errors() {
+				validationErrors = append(validationErrors, error.Error())
+			}
+
+			return nil, Problem{
+				Title:            "Validate and sanitize XML failed",
+				ValidationErrors: validationErrors,
+			}
+		}
+
+		return nil, fmt.Errorf("set failed XSD validation: %w", err)
 	}
 
 	// Validate and sanitize the XML
