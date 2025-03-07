@@ -86,7 +86,11 @@ jobs:
           else
               echo "COMMIT=${{github.event.pull_request.head.sha}}" >> $GITHUB_OUTPUT
           fi
-      # Upload to Pact broker
+      - name: Upload code coverage
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./test-results/coverage.out
+          token: ${{ secrets.CODECOV_TOKEN }}
       - name: Publish pacts
         run: |
           docker run --rm -v $(pwd)/service-app/internal/api/pacts:/tmp/pacts pactfoundation/pact-cli:latest \
