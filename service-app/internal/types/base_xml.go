@@ -2,10 +2,18 @@ package types
 
 import "encoding/xml"
 
+// AnyElement can capture unexpected XML elements.
+type AnyElement struct {
+	XMLName  xml.Name
+	InnerXML string `xml:",innerxml"`
+}
+
 type BaseSet struct {
 	XMLName xml.Name    `xml:"Set"`
 	Header  *BaseHeader `xml:"Header"`
 	Body    BaseBody    `xml:"Body"`
+	// Catch all for unexpected elements at the Set level
+	ExtraElements []AnyElement `xml:",any"`
 }
 
 type BaseHeader struct {
