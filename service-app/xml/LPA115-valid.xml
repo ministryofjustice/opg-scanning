@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LPA115 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="LPA115.xsd">
+  <Page3>
+    <PartA>
+      <FullName>John Doe</FullName>
+      <OptionA>
+        <Signature>true</Signature>
+        <Date>19022025</Date>
+      </OptionA>
+      <OptionB>
+        <Signature>false</Signature>
+        <Date>21022025</Date>
+      </OptionB>
+    </PartA>
+    <Signature>true</Signature>
+    <Date>19022025</Date>
+    <ContinuationSheetNo>1</ContinuationSheetNo>
+    <TotalSheets>3</TotalSheets>
+    <BURN/>
+    <PhysicalPage>3</PhysicalPage>
+  </Page3>
+  <Page6>
+    <PartB>
+      <Salutation>
+        <Mr>true</Mr>
+        <Mrs>false</Mrs>
+        <Ms>false</Ms>
+        <Miss>false</Miss>
+        <Other>false</Other>
+        <OtherName></OtherName>
+      </Salutation>
+      <FirstName>Jane</FirstName>
+      <LastName>Smith</LastName>
+      <Address>
+        <Address1>123 Main Street</Address1>
+        <Address2>Suite 100</Address2>
+        <Address3>Cityville</Address3>
+        <Address4>Region</Address4>
+        <Postcode>AB12 3CD</Postcode>
+      </Address>
+      <Signature>true</Signature>
+      <Date>19022025</Date>
+      <ContinuationSheetNo>1</ContinuationSheetNo>
+      <TotalSheets>2</TotalSheets>
+    </PartB>
+    <BURN/>
+    <PhysicalPage>6</PhysicalPage>
+  </Page6>
+</LPA115>
