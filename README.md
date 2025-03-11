@@ -12,7 +12,7 @@ For local development and testing you will need:
 
 - [Docker](https://www.docker.com/get-started)
 - [Docker Compose](https://docs.docker.com/compose/install/)
-- [Golang](https://golang.org) (if you plan on running tests outside of Docker)
+- [Golang](https://golang.org) (>= 1.24.0 - if you plan on running tests outside of Docker)
 
 ## Local Development
 
@@ -108,6 +108,10 @@ make build
 
 The Makefile’s setup-directories target ensures that necessary directories (e.g., for test results) are created.
 
-## Resources
+## Architecture
 
 ![Architecture Diagram](docs/architecture/diagrams/Scanning-API-2025-03-11.png)
+
+## Resources
+
+[Sirius-integration OpenAPI Specification](docker/sirius/openapi.yaml)
