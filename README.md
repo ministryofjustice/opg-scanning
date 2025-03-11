@@ -1,6 +1,6 @@
 # OPG Scanning
 
-OPG Scanning is a Go-based microservice designed to perform scanning and analysis operations. It is containerized with Docker Compose for both standard and Sirius-integrated environments.
+OPG Scanning is a Go-based microservice designed to perform scanning and document extraction and processing operations. It is containerized with Docker Compose for both standard and Sirius-integrated environments.
 
 ## Overview
 
@@ -107,3 +107,7 @@ make build
 ```
 
 The Makefile’s setup-directories target ensures that necessary directories (e.g., for test results) are created.
+
+## Resources
+
+![Architecture Diagram](docs/architecture/diagrams/Scanning-API-2025-03-11.png)
