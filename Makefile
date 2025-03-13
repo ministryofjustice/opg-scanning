@@ -39,3 +39,6 @@ go-lint: setup-directories
 
 gosec: setup-directories
 	docker compose run --rm gosec
+
+scan:
+	docker compose run --rm trivy image --format table service-app:latest
