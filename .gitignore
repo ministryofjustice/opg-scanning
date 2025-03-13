@@ -16,5 +16,6 @@ venv/
 env/
 # build
 .cache
+.trivy-cache
 test-results
 service-app/internal/api/pacts

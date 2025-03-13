@@ -20,15 +20,21 @@ permissions:
   statuses: none
 
 jobs:
-  # generate a branch name
   branch_name:
-    name: "Generate a safe branch name"
-    uses: ministryofjustice/opg-github-workflows/.github/workflows/data-parse-branch-name.yml@v3.6.0
-
-  # generate workspace name
-  workspace_name:
-    name: "Generate the workspace name"
-    uses: ministryofjustice/opg-github-workflows/.github/workflows/data-parse-workspace.yml@v3.6.0
+    name: Generate a Branch Name
+    runs-on: ubuntu-latest
+    outputs:
+      branch_name: ${{ steps.extract_branch.outputs.branch_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract branch name
+        id: extract_branch
+        run: |
+          if [ "${{ github.head_ref }}" == "" ]; then
+            echo BRANCH_NAME=main >> $GITHUB_OUTPUT
+          else
+            echo BRANCH_NAME=${{ github.head_ref }} >> $GITHUB_OUTPUT
+          fi
 
   # SAST
   # codeql for go
@@ -118,7 +124,7 @@ jobs:
     name: "Generate the semver tag value"
     uses: ministryofjustice/opg-github-workflows/.github/workflows/data-parse-semver-tag.yml@v3.6.0
     with:
-      branch_name: ${{ needs.branch_name.outputs.safe }}
+      branch_name: ${{ needs.branch_name.outputs.branch_name }}
     secrets: inherit
 
   # Docker build, trivy scan, ECR push as a matrix
@@ -131,7 +137,6 @@ jobs:
     needs:
       [
         branch_name,
-        workspace_name,
         semver_tag,
         gosec,
         go-lint,
@@ -181,8 +186,7 @@ jobs:
           registries: 311462405659
       # to check if things worked, output docker image list
       - name: Docker image list
-        run: |
-          docker images
+        run: docker images
       - name: Trivy scan
         uses: aquasecurity/trivy-action@0.29.0
         env:
@@ -190,7 +194,6 @@ jobs:
           TRIVY_JAVA_DB_REPOSITORY: ${{ steps.login_ecr.outputs.registry }}/trivy-db-public-ecr/aquasecurity/trivy-java-db:1
         with:
           image-ref: ${{ env.local_docker_image }}
-          severity: "HIGH,CRITICAL"
           format: "sarif"
           output: ${{ env.sarif_file }}
       - name: Trivy scan upload to github
@@ -198,6 +201,7 @@ jobs:
         if: always()
         with:
           sarif_file: ${{ env.sarif_file }}
+          category: trivy-docker-${{ matrix.data.image_app_name }}
       ######
       ## Push to ECR
       ######
@@ -221,7 +225,7 @@ jobs:
     name: Push Version to Parameter Store & Trigger Deploy
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    needs: [branch_name, workspace_name, semver_tag, build_scan_push]
+    needs: [branch_name, semver_tag, build_scan_push]
     steps:
       - uses: actions/checkout@v4
 
