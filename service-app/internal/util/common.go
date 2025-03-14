@@ -2,8 +2,8 @@ package util
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -35,23 +35,16 @@ func GetProjectRoot() (string, error) {
 }
 
 func LoadXMLFileTesting(t *testing.T, filepath string) []byte {
-	data, err := os.ReadFile(filepath)
+	validPath, err := ValidatePath(filepath)
+	if err != nil {
+		require.FailNow(t, "Invalid file path", err.Error())
+	}
+	data, err := os.ReadFile(validPath)
 	// reading the file.
 	if err != nil {
 		require.FailNow(t, "Failed to read XML file", err.Error())
 	}
 	return data
-}
-
-func WriteToFile(fileName string, message string, path string) {
-	f, err := os.OpenFile(path+fileName+".txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if _, err := f.Write([]byte(message + "\n")); err != nil {
-		log.Fatal(err)
-	}
 }
 
 func Contains(slice []string, item string) bool {
@@ -94,4 +87,23 @@ func IsValidXML(data []byte) error {
 		return fmt.Errorf("xml unmarshal error: %w", err)
 	}
 	return nil
+}
+
+func ValidatePath(inputPath string) (string, error) {
+	trustedPath, err := GetProjectRoot()
+	if err != nil {
+		return "", err
+	}
+
+	absPath, err := filepath.Abs(inputPath)
+	if err != nil {
+		return "", err
+	}
+
+	// Ensure the file is within the allowed directory
+	if !strings.HasPrefix(absPath, trustedPath) {
+		return "", errors.New("invalid file path")
+	}
+
+	return absPath, nil
 }

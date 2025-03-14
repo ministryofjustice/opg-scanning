@@ -9,6 +9,7 @@ import (
 
 	"github.com/lestrrat-go/libxml2"
 	"github.com/lestrrat-go/libxml2/xsd"
+	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
 type XSDValidator struct {
@@ -21,7 +22,11 @@ type Root struct {
 }
 
 func NewXSDValidator(xsdPath string, xmlContent string) (*XSDValidator, error) {
-	xsdContent, err := os.ReadFile(xsdPath)
+	validPath, err := util.ValidatePath(xsdPath)
+	if err != nil {
+		return nil, err
+	}
+	xsdContent, err := os.ReadFile(validPath)
 	if err != nil {
 		return nil, err
 	}
