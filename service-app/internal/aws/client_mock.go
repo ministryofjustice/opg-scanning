@@ -27,6 +27,11 @@ func (m *MockAwsClient) PersistFormData(ctx context.Context, body io.Reader, doc
 	return args.String(0), args.Error(1)
 }
 
+func (m *MockAwsClient) PersistSetData(ctx context.Context, body []byte, prefix string) (string, error) {
+	args := m.Called(ctx, body, prefix)
+	return args.String(0), args.Error(1)
+}
+
 func (m *MockAwsClient) QueueSetForProcessing(ctx context.Context, scannedCaseResponse *types.ScannedCaseResponse, fileName string) (MessageID *string, err error) {
 	args := m.Called(ctx, scannedCaseResponse, fileName)
 
