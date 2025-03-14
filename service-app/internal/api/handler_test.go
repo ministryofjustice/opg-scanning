@@ -216,6 +216,23 @@ func TestProcessAndPersist_IncludesXMLDeclaration(t *testing.T) {
 	}
 }
 
+func TestValidateDocumentWarnsOnUnsupportedDocumentType(t *testing.T) {
+
+	c := setupController()
+
+	document := types.BaseDocument{
+		Type:        "BadDocumentType",
+		EmbeddedXML: "",
+	}
+
+	err := c.validateDocument(document)
+
+	problem, ok := err.(Problem)
+	assert.True(t, ok)
+
+	assert.Equal(t, "Document type BadDocumentType is not supported", problem.Title)
+}
+
 func TestValidateDocumentHandlesErrorCases(t *testing.T) {
 	testCases := []struct {
 		name string
@@ -225,12 +242,12 @@ func TestValidateDocumentHandlesErrorCases(t *testing.T) {
 		{
 			name: "not XML",
 			XML:  "not XML",
-			err:  "failed to extract schema from TestDocumentType",
+			err:  "failed to extract schema from EPA",
 		},
 		{
 			name: "no schema",
 			XML:  "<my-doc></my-doc>",
-			err:  "failed to extract schema from TestDocumentType",
+			err:  "failed to extract schema from EPA",
 		},
 		{
 			name: "invalid schema",
@@ -240,7 +257,7 @@ func TestValidateDocumentHandlesErrorCases(t *testing.T) {
 		{
 			name: "does not match schema",
 			XML:  `<my-doc xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="LP2.xsd"></my-doc>`,
-			err:  "XML for TestDocumentType failed XSD validation",
+			err:  "XML for EPA failed XSD validation",
 		},
 		{
 			name: "ok",
@@ -256,7 +273,7 @@ func TestValidateDocumentHandlesErrorCases(t *testing.T) {
 			encodedXML := base64.StdEncoding.EncodeToString([]byte(tc.XML))
 
 			document := types.BaseDocument{
-				Type:        "TestDocumentType",
+				Type:        "EPA",
 				EmbeddedXML: encodedXML,
 			}
 
