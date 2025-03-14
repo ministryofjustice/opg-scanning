@@ -24,6 +24,7 @@ type AwsClientInterface interface {
 	GetSecretValue(ctx context.Context, secretName string) (string, error)
 	FetchCredentials(ctx context.Context) (map[string]string, error)
 	PersistFormData(ctx context.Context, body io.Reader, docType string) (string, error)
+	PersistSetData(ctx context.Context, body []byte, suffix string) (string, error)
 	QueueSetForProcessing(ctx context.Context, scannedCaseResponse *appTypes.ScannedCaseResponse, fileName string) (MessageID *string, err error)
 }
 
@@ -119,6 +120,40 @@ func (a *AwsClient) PersistFormData(ctx context.Context, body io.Reader, docType
 
 	// Since we consume the reader for validation, create a new reader from the buffered data
 	readerForS3 := bytes.NewReader(bodyBytes)
+
+	// Create the S3 input
+	input := &s3.PutObjectInput{
+		Bucket:               &bucketName,
+		Key:                  &fileName,
+		Body:                 readerForS3,
+		ServerSideEncryption: types.ServerSideEncryptionAwsKms,
+		SSEKMSKeyId:          &a.config.Aws.JobsQueueBucketKmsKey,
+	}
+
+	// Upload the file to S3
+	_, err := a.S3.PutObject(ctx, input)
+	if err != nil {
+		return "", fmt.Errorf(
+			"failed to upload object to S3: %w (endpoint: %s, bucket: %s, key: %s)",
+			err, a.config.Aws.Endpoint, bucketName, fileName,
+		)
+	}
+
+	return fileName, nil
+}
+
+func (a *AwsClient) PersistSetData(ctx context.Context, body []byte, suffix string) (string, error) {
+	bucketName := a.config.Aws.JobsQueueBucket
+	if bucketName == "" {
+		return "", fmt.Errorf("JOBSQUEUE_BUCKET is not set")
+	}
+
+	// Generate the filename using the required format
+	currentTime := time.Now().Format("20060102150405")
+	fileName := fmt.Sprintf("SET_%s_%s.xml", currentTime, suffix)
+
+	// Since we consume the reader for validation, create a new reader from the buffered data
+	readerForS3 := bytes.NewReader(body)
 
 	// Create the S3 input
 	input := &s3.PutObjectInput{
