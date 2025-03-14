@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -401,6 +402,12 @@ func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr st
 }
 
 func (c *IndexController) validateDocument(document types.BaseDocument) error {
+	if !slices.Contains(constants.SupportedDocumentTypes, document.Type) {
+		return Problem{
+			Title: fmt.Sprintf("Document type %s is not supported", document.Type),
+		}
+	}
+
 	decodedXML, err := util.DecodeEmbeddedXML(document.EmbeddedXML)
 	if err != nil {
 		return fmt.Errorf("failed to decode XML data from %s: %w", document.Type, err)
