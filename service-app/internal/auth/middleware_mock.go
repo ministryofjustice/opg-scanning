@@ -16,6 +16,7 @@ func PrepareMocks(mockConfig *config.Config, logger *logger.Logger) (*mocks.Mock
 	mockAwsClient.On("FetchCredentials", mock.Anything).Maybe().Return(map[string]string{
 		mockConfig.Auth.ApiUsername: hashPassword("password"),
 	}, nil)
+	mockAwsClient.On("PersistSetData", mock.Anything, mock.Anything).Maybe().Return("path/my-set.xml", nil)
 	// Create the HTTP client and middleware
 	mockHttpClient := new(mocks.MockHttpClient)
 	mockHttpClient.On("GetConfig").Return(mockConfig)
