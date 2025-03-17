@@ -59,6 +59,7 @@ check_file() {
 	type=$2
 	file=$3
 
+	docker compose exec localstack awslocal s3 rm s3://opg-backoffice-jobsqueue-local --recursive --quiet
 	docker compose exec localstack awslocal sqs purge-queue --queue-url=ddc.fifo
 
 	upload_response=$(upload $token $type "$file.xml")
@@ -78,6 +79,12 @@ check_file() {
 		return 1
 	fi
 
+	s3_files=$(docker compose exec localstack awslocal s3api list-objects --bucket=opg-backoffice-jobsqueue-local | jq '.Contents | length')
+	if [[ ! $s3_files = "2" ]]; then
+		echo -e "\033[31m$file failed: s3 should contain 2 files, but contains $s3_files\033[0m"
+		return 1
+	fi
+
 	echo -e "\033[32m$file passed\033[0m"
 	return 0
 }
@@ -87,11 +94,19 @@ check_attachment() {
 	type=$2
 	file=$3
 
+	docker compose exec localstack awslocal s3 rm s3://opg-backoffice-jobsqueue-local --recursive --quiet
+
 	upload_response=$(upload $token $type "$file.xml" "Y")
 	upload_success=$(echo $upload_response | jq -r .data.success)
 	if [[ ! $upload_success = "true" ]]; then
 		echo -e "\033[31m$file failed: upload failed with error $(echo $upload_response | jq .data.message)\033[0m"
 		echo -e "\033[31mValidation errors: $(echo $upload_response | jq -r .data.validationErrors)\033[0m"
+		return 1
+	fi
+
+	s3_files=$(docker compose exec localstack awslocal s3api list-objects --bucket=opg-backoffice-jobsqueue-local | jq '.Contents | length')
+	if [[ ! $s3_files = "2" ]]; then
+		echo -e "\033[31m$file failed: s3 should contain 2 files, but contains $s3_files\033[0m"
 		return 1
 	fi
 
