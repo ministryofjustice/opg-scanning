@@ -175,6 +175,17 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Save Set to S3
+	filename, err := c.AwsClient.PersistSetData(reqCtx, []byte(bodyStr))
+	if err != nil {
+		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Could not persist set to S3", err)
+		return
+	}
+
+	c.logger.InfoWithContext(reqCtx, "Stored Set data", map[string]interface{}{
+		"set_filename": filename,
+	})
+
 	parsedBaseXml, err := c.validateAndSanitizeXML(reqCtx, bodyStr)
 	if err != nil {
 		c.respondWithError(reqCtx, w, http.StatusBadRequest, "Validate and sanitize XML failed", err)
