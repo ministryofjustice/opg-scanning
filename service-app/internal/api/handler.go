@@ -17,6 +17,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/auth"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
+	"github.com/ministryofjustice/opg-scanning/internal/factory"
 	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
@@ -218,7 +219,6 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			defer cancel()
 
 			// Attach documents to case
-			// Set the documents original and processed entities before attaching
 			service.originalDoc = originalDoc
 			attchResp, decodedXML, docErr := service.AttachDocuments(ctx, scannedCaseResponse)
 			if docErr != nil {
@@ -228,6 +228,22 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 					"error":         docErr.Error(),
 				})
 				return
+			}
+
+			// AttachDocument provides decoded XML from originalDoc
+			// If doc type schema is supported then we should provide XML from the processedDoc instead.
+			if factory.IsSupportedDocumentType(originalDoc.Type) {
+				processedXML, err := factory.GenerateXMLFromProcessedDocument(processedDoc)
+				if err != nil {
+					c.logger.ErrorWithContext(ctx, "Failed to generate XML from processed document", map[string]interface{}{
+						"set_uid":       scannedCaseResponse.UID,
+						"document_type": originalDoc.Type,
+						"error":         err.Error(),
+					})
+					return
+				}
+				// Override decoded XML with processed version.
+				decodedXML = processedXML
 			}
 
 			// Persist form data in S3 bucket
