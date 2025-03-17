@@ -72,6 +72,42 @@ func TestPersistFormData_LocalStack(t *testing.T) {
 	assert.True(t, found, fmt.Sprintf("Expected object key '%s' not found in the bucket", expectedKey))
 }
 
+func TestPersistSetData(t *testing.T) {
+	ctx := context.Background()
+
+	appConfig := config.NewConfig()
+
+	cfg, err := awsConfig.LoadDefaultConfig(ctx,
+		awsConfig.WithRegion(appConfig.Aws.Region),
+	)
+	assert.NoError(t, err, "Failed to load AWS configuration")
+
+	awsClient, err := NewAwsClient(ctx, cfg, appConfig)
+	assert.NoError(t, err, "Failed to load AWS client")
+
+	body := []byte("<?xml version=\"1.0\" encoding=\"UTF-8\"?><Set>test</Set>")
+	fileName, err := awsClient.PersistSetData(ctx, body)
+	assert.NoError(t, err)
+	assert.Regexp(t, "^SET_", fileName)
+
+	currentTime := time.Now().Format("20060102150405")
+	expectedKey := fmt.Sprintf("SET_%s.xml", currentTime)
+	listObjectsOutput, err := awsClient.S3.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
+		Bucket: aws.String(appConfig.Aws.JobsQueueBucket),
+	})
+
+	assert.NoError(t, err, "Failed to list objects in the bucket")
+
+	var found bool
+	for _, object := range listObjectsOutput.Contents {
+		if *object.Key == expectedKey {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, fmt.Sprintf("Expected object key '%s' not found in the bucket", expectedKey))
+}
+
 func TestAwsQueue_PHPSerialization(t *testing.T) {
 	message := createMessageBody(scannedCaseResponse, fileName)
 
