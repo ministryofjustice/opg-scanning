@@ -17,7 +17,7 @@ type Job struct {
 	ctx        context.Context
 	Data       *types.BaseDocument
 	format     string
-	onComplete func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument)
+	onComplete func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) error
 }
 
 type JobQueue struct {
@@ -45,7 +45,7 @@ func NewJobContext(reqCtx context.Context) context.Context {
 	return logger.ContextWithLogger(ctx, enrichedLogger)
 }
 
-func (q *JobQueue) AddToQueue(ctx context.Context, data *types.BaseDocument, format string, onComplete func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument)) {
+func (q *JobQueue) AddToQueue(ctx context.Context, data *types.BaseDocument, format string, onComplete func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) error) {
 	jobCtx := NewJobContext(ctx)
 	job := Job{ctx: jobCtx, Data: data, format: format, onComplete: onComplete}
 	q.wg.Add(1)
@@ -95,7 +95,10 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 
 						if job.onComplete != nil {
 							// Pass the jobs original context to the callback.
-							job.onComplete(job.ctx, parsedDoc, job.Data)
+							err := job.onComplete(job.ctx, parsedDoc, job.Data)
+							if err != nil {
+								q.recordError(fmt.Errorf("onComplete errors: %v", err.Error()))
+							}
 						}
 					}()
 
