@@ -73,14 +73,12 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 						// Initialize document processor
 						registry, err := factory.NewRegistry()
 						if err != nil {
-							// q.logger.Error("Worker %d failed to create registry, job: %v\n", nil, workerID, err)
 							q.recordError(fmt.Errorf("Worker %d failed to create registry, job: %v", workerID, err))
 							return
 						}
 
 						processor, err := factory.NewDocumentProcessor(job.Data, job.Data.Type, job.format, registry, q.logger)
 						if err != nil {
-							// q.logger.Error("Worker %d failed to initialize processor for job: %v\n", nil, workerID, err)
 							q.recordError(fmt.Errorf("Worker %d failed to initialize processor for job: %v", workerID, err))
 							return
 						}
@@ -88,7 +86,6 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 						// Process the document using processCtx to enforce the timeout.
 						parsedDoc, err := processor.Process(processCtx)
 						if err != nil {
-							// q.logger.Error("Worker %d failed to process job: %v\n", nil, workerID, err)
 							q.recordError(fmt.Errorf("Worker %d failed to process job: %v\n", workerID, err))
 							return
 						}
@@ -104,7 +101,6 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 
 					select {
 					case <-processCtx.Done():
-						// q.logger.Error("Worker %d timed out processing job\n", nil, workerID)
 						q.recordError(fmt.Errorf("Worker %d timed out processing job\n", workerID))
 					case <-done:
 						// Job completed without timing out.
