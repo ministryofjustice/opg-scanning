@@ -158,18 +158,33 @@ func TestAwsQueue_QueueSetForProcessing(t *testing.T) {
 }
 
 func validateMessageInQueue(t *testing.T, ctx context.Context, sqsClient *sqs.Client, queueUrl string) {
-	// Receive messages from the queue
-	output, err := sqsClient.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
-		QueueUrl:            aws.String(queueUrl),
-		MaxNumberOfMessages: 1,
-		WaitTimeSeconds:     0,
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, output.Messages, "Expected at least one message in the queue")
-	assert.Len(t, output.Messages, 1, "Expected exactly one message in the queue")
-
-	// Parse the message body
-	var receivedMessage map[string]interface{}
-	err = json.Unmarshal([]byte(*output.Messages[0].Body), &receivedMessage)
-	assert.NoError(t, err)
+	var output *sqs.ReceiveMessageOutput
+	var err error
+	// Poll for up to 5 seconds
+	timeout := time.After(5 * time.Second)
+	tick := time.Tick(500 * time.Millisecond)
+	for {
+		select {
+		case <-timeout:
+			t.Fatalf("Timeout waiting for message in queue")
+		case <-tick:
+			output, err = sqsClient.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
+				QueueUrl:            aws.String(queueUrl),
+				MaxNumberOfMessages: 1,
+				WaitTimeSeconds:     1,
+			})
+			if err != nil {
+				t.Fatalf("Failed to receive messages from queue: %v", err)
+			}
+			if len(output.Messages) > 0 {
+				assert.NotNil(t, output.Messages, "Expected at least one message in the queue")
+				assert.Len(t, output.Messages, 1, "Expected exactly one message in the queue")
+				// Optionally parse and assert message content.
+				var receivedMessage map[string]any
+				err = json.Unmarshal([]byte(*output.Messages[0].Body), &receivedMessage)
+				assert.NoError(t, err)
+				return
+			}
+		}
+	}
 }

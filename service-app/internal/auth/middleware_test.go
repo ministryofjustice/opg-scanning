@@ -16,7 +16,7 @@ func TestEnsureTokenConcurrency(t *testing.T) {
 	// Set a reasonable JWTExpiration for testiing e.g. 60 seconds
 	cfg.Auth.JWTExpiration = 60
 
-	logger := logger.NewLogger(cfg)
+	logger := logger.GetLogger(cfg)
 
 	_, _, mockAwsClient, _ := PrepareMocks(cfg, logger)
 	tokenGenerator := NewJWTTokenGenerator(mockAwsClient, cfg, logger)

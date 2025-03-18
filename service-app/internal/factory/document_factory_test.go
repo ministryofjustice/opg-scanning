@@ -111,7 +111,7 @@ func prepareDocument(t *testing.T, docType string, fileName string) interface{} 
 	require.NoError(t, err, "Failed create Registry")
 
 	cfg := config.NewConfig()
-	logger := logger.NewLogger(cfg)
+	logger := logger.GetLogger(cfg)
 	processor, err := NewDocumentProcessor(doc, doc.Type, "XML", registry, logger)
 	require.NoError(t, err, "NewDocumentProcessor returned an error")
 
