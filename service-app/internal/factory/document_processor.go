@@ -2,6 +2,7 @@ package factory
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
@@ -24,6 +25,8 @@ func NewDocumentProcessor(data *types.BaseDocument, docType, format string, regi
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode embedded XML: %w", err)
 	}
+
+	return nil, errors.New("this is an error")
 
 	// Fetch the parser
 	parser, err := registry.GetParser(docType)

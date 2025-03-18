@@ -216,15 +216,21 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			errors.New("scannedCaseResponse UID missing"))
 		return
 	}
+
 	// Queue each document for further processing
-	c.logger.InfoWithContext(reqCtx, "Queueing documents for processing", map[string]interface{}{
-		"Header": parsedBaseXml.Header,
-	})
+	done := make(chan bool)
 
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
+
+		c.logger.InfoWithContext(reqCtx, "Queueing document for processing", map[string]interface{}{
+			"Header":        parsedBaseXml.Header,
+			"set_uid":       scannedCaseResponse.UID,
+			"document_type": doc.Type,
+		})
+
 		// r.Context() carries the enriched logger injected by the middleware.
-		c.Queue.AddToQueue(reqCtx, doc, "xml", func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) {
+		c.Queue.AddToQueue(reqCtx, doc, "xml", func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) error {
 			// Wrap the jobs context with a timeout for callback processing.
 			ctx, cancel := context.WithTimeout(ctx, time.Duration(c.config.HTTP.Timeout)*time.Second)
 			defer cancel()
@@ -234,23 +240,13 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			service.originalDoc = originalDoc
 			attchResp, decodedXML, docErr := service.AttachDocuments(ctx, scannedCaseResponse)
 			if docErr != nil {
-				c.logger.ErrorWithContext(ctx, "Failed to attach document", map[string]interface{}{
-					"set_uid":       scannedCaseResponse.UID,
-					"document_type": originalDoc.Type,
-					"error":         docErr.Error(),
-				})
-				return
+				return fmt.Errorf("failed to attach document: %w", docErr)
 			}
 
 			// Persist form data in S3 bucket
 			fileName, persistErr := c.processAndPersist(ctx, decodedXML, originalDoc)
 			if persistErr != nil {
-				c.logger.ErrorWithContext(ctx, "Failed to persist document", map[string]interface{}{
-					"set_uid":       scannedCaseResponse.UID,
-					"document_type": originalDoc.Type,
-					"error":         persistErr.Error(),
-				})
-				return
+				return fmt.Errorf("failed to persist document: %w", persistErr)
 			}
 
 			// Check if the document is a correspondence type; if so do not send to the job queue
@@ -261,18 +257,13 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 					"filename":      fileName,
 					"document_type": originalDoc.Type,
 				})
-				return
+				return nil
 			}
 
 			// Persist external aws job queue with UID+fileName
 			messageID, err := c.AwsClient.QueueSetForProcessing(ctx, scannedCaseResponse, fileName)
 			if err != nil {
-				c.logger.ErrorWithContext(ctx, "Failed to queue document for processing", map[string]interface{}{
-					"set_uid":       scannedCaseResponse.UID,
-					"document_type": originalDoc.Type,
-					"error":         err.Error(),
-				})
-				return
+				return fmt.Errorf("failed to queue document for processing: %w", persistErr)
 			}
 
 			c.logger.InfoWithContext(ctx, "Job processing completed for document", map[string]interface{}{
@@ -283,11 +274,27 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 				"document_type": originalDoc.Type,
 			})
 
+			return nil
 		})
 		c.logger.InfoWithContext(ctx, "Document queued for processing", map[string]interface{}{
 			"set_uid":       scannedCaseResponse.UID,
 			"document_type": doc.Type,
 		})
+	}
+
+	go func() {
+		c.Queue.Wait()
+		close(done)
+		close(c.Queue.Errors)
+	}()
+
+	select {
+	case <-done:
+		break
+	case err := <-c.Queue.Errors:
+		fmt.Println(">>handling error")
+		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Failed to encode response", err)
+		return
 	}
 
 	// Send the UID response
@@ -314,10 +321,6 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			"uid": scannedCaseResponse.UID,
 		})
 	}
-}
-
-func (c *IndexController) CloseQueue() {
-	c.Queue.Close()
 }
 
 func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseWriter, statusCode int, message string, err error) {
