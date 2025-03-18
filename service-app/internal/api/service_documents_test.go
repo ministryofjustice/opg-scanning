@@ -71,7 +71,7 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 		// Mock dependencies
 		mockConfig := config.NewConfig()
 		mockConfig.App.SiriusBaseURL = baseURL
-		logger := logger.NewLogger(mockConfig)
+		logger := logger.GetLogger(mockConfig)
 
 		_, _, _, tokenGenerator := auth.PrepareMocks(mockConfig, logger)
 		httpClient := httpclient.NewHttpClient(*mockConfig, *logger)
