@@ -32,7 +32,7 @@ func NewJobQueue(config *config.Config) *JobQueue {
 	queue := &JobQueue{
 		Jobs:   make(chan Job, 10), // Buffer size can be adjusted based on needs
 		wg:     &sync.WaitGroup{},
-		logger: logger.NewLogger(config),
+		logger: logger.GetLogger(config),
 		errors: make([]error, 0),
 	}
 	return queue

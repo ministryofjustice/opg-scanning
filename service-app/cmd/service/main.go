@@ -25,7 +25,7 @@ func main() {
 	appConfig := config.NewConfig()
 
 	// Set up logging
-	logWrapper := logger.NewLogger(appConfig)
+	logWrapper := logger.GetLogger(appConfig)
 	slogLogger := logWrapper.SlogLogger
 
 	shutdownTracer, err := logger.StartTracerProvider(ctx, slogLogger, true)

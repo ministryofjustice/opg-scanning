@@ -50,7 +50,7 @@ type responseData struct {
 var uidReplacementRegex = regexp.MustCompile(`^7[0-9]{3}-[0-9]{4}-[0-9]{4}$`)
 
 func NewIndexController(awsClient aws.AwsClientInterface, appConfig *config.Config) *IndexController {
-	logger := logger.NewLogger(appConfig)
+	logger := logger.GetLogger(appConfig)
 
 	// Create dependencies
 	httpClient := httpclient.NewHttpClient(*appConfig, *logger)
