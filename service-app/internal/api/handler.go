@@ -303,6 +303,8 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		errMsg := fmt.Sprintf("Errors encountered during processing: %s", strings.Join(errorMessages, "; "))
 		c.respondWithError(reqCtx, w, http.StatusInternalServerError, errMsg, errors.New(errMsg))
 		return
+	} else {
+		c.logger.InfoWithContext(reqCtx, "No errors found!", nil)
 	}
 
 	// Send the UID response

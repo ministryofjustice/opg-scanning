@@ -105,6 +105,7 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 						q.recordError(fmt.Errorf("Worker %d timed out processing job\n", workerID))
 					case <-done:
 						// Job completed without timing out.
+						q.logger.Info("Worker completed: %d!\n", nil, workerID)
 					}
 					// Cancel the timeout context to free resources.
 					cancel()
