@@ -290,6 +290,23 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		})
 	}
 
+	// Wait for the internal job queue to finish processing.
+	c.Queue.Wait()
+
+	// Check if any errors were collected from the internal jobs.
+	jobErrors := c.Queue.GetErrors()
+	if len(jobErrors) > 0 {
+		var errorMessages []string
+		for _, err := range jobErrors {
+			errorMessages = append(errorMessages, err.Error())
+		}
+		errMsg := fmt.Sprintf("Errors encountered during processing: %s", strings.Join(errorMessages, "; "))
+		c.respondWithError(reqCtx, w, http.StatusInternalServerError, errMsg, errors.New(errMsg))
+		return
+	} else {
+		c.logger.InfoWithContext(reqCtx, "No errors found!", nil)
+	}
+
 	// Send the UID response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)

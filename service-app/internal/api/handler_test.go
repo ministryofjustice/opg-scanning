@@ -50,7 +50,7 @@ func setupController() *IndexController {
 	mockHttpClient.On("HTTPRequest", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return([]byte(`{"UID": "7000-1234-1234"}`), nil)
 
-	return &IndexController{
+	controller := &IndexController{
 		config:         appConfig,
 		logger:         logger,
 		validator:      ingestion.NewValidator(),
@@ -59,6 +59,11 @@ func setupController() *IndexController {
 		Queue:          ingestion.NewJobQueue(appConfig),
 		AwsClient:      awsClient,
 	}
+
+	// start the worker pool so that queued jobs are processed.
+	go controller.Queue.StartWorkerPool(context.Background(), 3)
+
+	return controller
 }
 
 func TestIngestHandler_SetValid(t *testing.T) {
