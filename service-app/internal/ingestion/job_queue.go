@@ -2,6 +2,7 @@ package ingestion
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -16,11 +17,12 @@ type Job struct {
 	ctx        context.Context
 	Data       *types.BaseDocument
 	format     string
-	onComplete func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument)
+	onComplete func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) error
 }
 
 type JobQueue struct {
 	Jobs   chan Job
+	Errors chan error
 	wg     *sync.WaitGroup
 	logger *logger.Logger
 }
@@ -35,15 +37,15 @@ func NewJobQueue(config *config.Config) *JobQueue {
 }
 
 func NewJobContext(reqCtx context.Context) context.Context {
-    enrichedLogger := logger.LoggerFromContext(reqCtx)
-    span := trace.SpanFromContext(reqCtx)
-    ctx := trace.ContextWithSpan(context.Background(), span)
-    return logger.ContextWithLogger(ctx, enrichedLogger)
+	enrichedLogger := logger.LoggerFromContext(reqCtx)
+	span := trace.SpanFromContext(reqCtx)
+	ctx := trace.ContextWithSpan(context.Background(), span)
+	return logger.ContextWithLogger(ctx, enrichedLogger)
 }
 
-func (q *JobQueue) AddToQueue(ctx context.Context, data *types.BaseDocument, format string, onComplete func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument)) {
+func (q *JobQueue) AddToQueue(ctx context.Context, data *types.BaseDocument, format string, onComplete func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) error) {
 	jobCtx := NewJobContext(ctx)
-	job := Job{ctx: jobCtx, Data: data, format: format, onComplete: onComplete}	
+	job := Job{ctx: jobCtx, Data: data, format: format, onComplete: onComplete}
 	q.wg.Add(1)
 	q.Jobs <- job
 }
@@ -69,33 +71,49 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 						// Initialize document processor
 						registry, err := factory.NewRegistry()
 						if err != nil {
-							q.logger.Error("Worker %d failed to create registry, job: %v\n", nil, workerID, err)
+							q.Errors <- fmt.Errorf("worker %d failed to create registry, job: %v", workerID, err)
+							// q.wg.Done()
+							// cancel()
 							return
 						}
 
 						processor, err := factory.NewDocumentProcessor(job.Data, job.Data.Type, job.format, registry, q.logger)
 						if err != nil {
-							q.logger.Error("Worker %d failed to initialize processor for job: %v\n", nil, workerID, err)
+							fmt.Print(">>done")
+							q.Errors <- fmt.Errorf("worker %d failed to initialize processor for job: %v", workerID, err)
+							// q.wg.Done()
+							// cancel()
 							return
 						}
 
 						// Process the document using processCtx to enforce the timeout.
 						parsedDoc, err := processor.Process(processCtx)
 						if err != nil {
-							q.logger.Error("Worker %d failed to process job: %v\n", nil, workerID, err)
+							q.Errors <- fmt.Errorf("worker %d failed to process job: %v", workerID, err)
+							// q.wg.Done()
+							// cancel()
 							return
 						}
 
 						if job.onComplete != nil {
 							// Pass the jobs original context to the callback.
-							job.onComplete(job.ctx, parsedDoc, job.Data)
+							err = job.onComplete(job.ctx, parsedDoc, job.Data)
+
+							if err != nil {
+								q.Errors <- err
+								// q.wg.Done()
+								// cancel()
+								return
+							}
 						}
 					}()
 
 					select {
 					case <-processCtx.Done():
-						q.logger.Error("Worker %d timed out processing job\n", nil, workerID)
+						fmt.Print(">>process timed out")
+						q.Errors <- fmt.Errorf("worker %d timed out processing job", workerID)
 					case <-done:
+						fmt.Print(">>process completed without timeout")
 						// Job completed without timing out.
 					}
 					// Cancel the timeout context to free resources.
@@ -117,6 +135,7 @@ func (q *JobQueue) Wait() {
 }
 
 func (q *JobQueue) Close() {
-	close(q.Jobs)
 	q.wg.Wait()
+	close(q.Jobs)
+	close(q.Errors)
 }
