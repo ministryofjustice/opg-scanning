@@ -11,7 +11,7 @@ import (
 
 func TestAuthenticatorCredentials(t *testing.T) {
 	cfg := config.NewConfig()
-	logger := logger.NewLogger(cfg)
+	logger := logger.GetLogger(cfg)
 
 	_, authMiddleware, _, _ := PrepareMocks(cfg, logger)
 

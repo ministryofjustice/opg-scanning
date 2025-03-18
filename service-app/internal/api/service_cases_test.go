@@ -104,7 +104,7 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 	t.Run(tt.name, func(t *testing.T) {
 		set := parseXMLPayload(t, tt.xmlPayload)
 		mockConfig := config.NewConfig()
-		logger := logger.NewLogger(mockConfig)
+		logger := logger.GetLogger(mockConfig)
 
 		// Set up expected interactions
 		if tt.expectedReq != nil {
