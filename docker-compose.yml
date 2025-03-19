@@ -20,6 +20,8 @@ services:
     depends_on:
       localstack:
         condition: service_healthy
+      sirius-mock:
+        condition: service_healthy
 
   service-app-test:
     build:
