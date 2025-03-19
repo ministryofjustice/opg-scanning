@@ -53,7 +53,7 @@ var uidReplacementRegex = regexp.MustCompile(`^7[0-9]{3}-[0-9]{4}-[0-9]{4}$`)
 func NewIndexController(awsClient aws.AwsClientInterface, appConfig *config.Config) *IndexController {
 	logger := logger.GetLogger(appConfig)
 
-	// Create dependencies
+	// Create dependencies.
 	httpClient := httpclient.NewHttpClient(*appConfig, *logger)
 	tokenGenerator := auth.NewJWTTokenGenerator(awsClient, appConfig, logger)
 	cookieHelper := auth.MembraneCookieHelper{
@@ -62,9 +62,9 @@ func NewIndexController(awsClient aws.AwsClientInterface, appConfig *config.Conf
 	}
 	authenticator := auth.NewBasicAuthAuthenticator(awsClient, cookieHelper, tokenGenerator)
 
-	// Create authentication middleware
+	// Create authentication middleware.
 	authMiddleware := auth.NewMiddleware(authenticator, tokenGenerator, cookieHelper, logger)
-	// Create HTTP middleware
+	// Create HTTP middleware.
 	httpMiddleware, _ := httpclient.NewMiddleware(httpClient, tokenGenerator)
 
 	return &IndexController{
@@ -87,12 +87,12 @@ func (c *IndexController) HandleRequests() {
 		}
 	}))
 
-	// Create the route to handle user authentication and issue JWT token
+	// Create the route to handle user authentication and issue JWT token.
 	http.Handle("/auth/sessions", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c.AuthHandler(r.Context(), w, r)
 	}))
 
-	// Protect the route with JWT validation (using the authMiddleware)
+	// Protect the route with JWT validation (using the authMiddleware).
 	http.Handle("/api/ddc", otelhttp.NewHandler(logger.LoggingMiddleware(c.logger.SlogLogger)(
 		c.authMiddleware.CheckAuthMiddleware(http.HandlerFunc(c.IngestHandler)),
 	), "scanning"))
@@ -110,12 +110,12 @@ func (c *IndexController) HandleRequests() {
 }
 
 func (c *IndexController) AuthHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	// Define response error struct
+	// Define response error struct.
 	type ErrorResponse struct {
 		Error string `json:"error"`
 	}
 
-	// Authenticate user credentials and issue JWT token
+	// Authenticate user credentials and issue JWT token.
 	ctx, err := c.authMiddleware.Authenticator.Authenticate(w, r)
 	if err != nil {
 		errMsg := fmt.Sprintf("Authentication failed: %v", err)
@@ -124,7 +124,7 @@ func (c *IndexController) AuthHandler(ctx context.Context, w http.ResponseWriter
 		return
 	}
 
-	// Retrieve user from context
+	// Retrieve user from context.
 	userFromCtx, ok := auth.UserFromContext(ctx)
 	if !ok {
 		errMsg := "Failed to retrieve user from context"
@@ -135,7 +135,7 @@ func (c *IndexController) AuthHandler(ctx context.Context, w http.ResponseWriter
 
 	token := c.authMiddleware.TokenGenerator.GetToken()
 
-	// Build response with email and token
+	// Build response with email and token.
 	resp := struct {
 		Email string `json:"email"`
 		Token string `json:"authentication_token"`
@@ -176,7 +176,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Save Set to S3
+	// Save Set to S3.
 	filename, err := c.AwsClient.PersistSetData(reqCtx, []byte(bodyStr))
 	if err != nil {
 		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Could not persist set to S3", err)
@@ -193,13 +193,13 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Validate the parsed set
+	// Validate the parsed set.
 	if err := c.validator.ValidateSet(parsedBaseXml); err != nil {
 		c.respondWithError(reqCtx, w, http.StatusBadRequest, "Validate set failed", err)
 		return
 	}
 
-	// Create a new client and prepare to attach documents
+	// Create a new client and prepare to attach documents.
 	client := NewClient(c.httpMiddleware)
 	service := NewService(client, parsedBaseXml)
 	ctx, cancel := context.WithTimeout(r.Context(), time.Duration(c.config.HTTP.Timeout)*time.Second)
@@ -210,14 +210,14 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Ensure scannedCaseResponse
+	// Ensure scannedCaseResponse.
 	if scannedCaseResponse == nil || scannedCaseResponse.UID == "" {
 		c.respondWithError(reqCtx, w, http.StatusInternalServerError,
 			"Invalid response from Sirius when creating case stub, scannedCaseResponse is nil or missing UID",
 			errors.New("scannedCaseResponse UID missing"))
 		return
 	}
-	// Queue each document for further processing
+	// Queue each document for further processing.
 	c.logger.InfoWithContext(reqCtx, "Queueing documents for processing", map[string]any{
 		"Header": parsedBaseXml.Header,
 	})
@@ -243,7 +243,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			}
 
 			// If the document type includes a supported schema e.g. a unique parser exists,
-			// we then ensure XML data persisted comes from processedDoc var instead.
+			// we ensure XML data persisted comes from processedDoc var instead.
 			// Otherwise, all documents that use a generic parser will persist the original XML e.g. decodedXML.
 			if factory.IsSupportedDocumentType(originalDoc.Type) {
 				processedXML, err := factory.GenerateXMLFromProcessedDocument(processedDoc)
@@ -262,7 +262,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 				c.logger.InfoWithContext(ctx, "Persist original XML document", nil)
 			}
 
-			// Persist form data in S3 bucket
+			// Persist form data in S3 bucket.
 			fileName, persistErr := c.processAndPersist(ctx, decodedXML, originalDoc)
 			if persistErr != nil {
 				c.logger.ErrorWithContext(ctx, "Failed to persist document", map[string]any{
@@ -273,7 +273,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 				return persistErr
 			}
 
-			// Check if the document is a correspondence type; if so do not send to the job queue
+			// Check if the document is a correspondence type; if so do not send to the job queue.
 			if !util.Contains(constants.SiriusExtractionDocuments, originalDoc.Type) {
 				c.logger.InfoWithContext(ctx, "Skipping external job processing, checks completed for document", map[string]any{
 					"set_uid":       scannedCaseResponse.UID,
@@ -284,7 +284,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 				return nil
 			}
 
-			// Persist external aws job queue with UID+fileName
+			// Persist external aws job queue with UID+fileName.
 			messageID, err := c.AwsClient.QueueSetForProcessing(ctx, scannedCaseResponse, fileName)
 			if err != nil {
 				c.logger.ErrorWithContext(ctx, "Failed to queue document for processing", map[string]any{
@@ -389,7 +389,7 @@ func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseW
 	}
 }
 
-// Helper Method: Read Request Body
+// Helper Method: Read Request Body.
 func (c *IndexController) readRequestBody(r *http.Request) (string, error) {
 	if r.Body == nil {
 		return "", errors.New("request body is empty")
@@ -402,15 +402,15 @@ func (c *IndexController) readRequestBody(r *http.Request) (string, error) {
 	return string(body), nil
 }
 
-// Helper Method: Validate and Sanitize XML
+// Helper Method: Validate and Sanitize XML.
 func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr string) (*types.BaseSet, error) {
-	// Extract the document type from the XML
+	// Extract the document type from the XML.
 	schemaLocation, err := ingestion.ExtractSchemaLocation(bodyStr)
 	if err != nil {
 		return nil, err
 	}
 
-	// Validate against XSD
+	// Validate against XSD.
 	c.logger.InfoWithContext(ctx, "Validating against XSD", nil)
 	xsdValidator, err := ingestion.NewXSDValidator(c.config.App.ProjectFullPath+"/xsd/"+schemaLocation, bodyStr)
 	if err != nil {
@@ -432,7 +432,7 @@ func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr st
 		return nil, fmt.Errorf("set failed XSD validation: %w", err)
 	}
 
-	// Validate and sanitize the XML
+	// Validate and sanitize the XML.
 	c.logger.InfoWithContext(ctx, "Validating and sanitizing XML", nil)
 	xmlValidator := ingestion.NewXmlValidator(*c.config)
 	parsedBaseXml, err := xmlValidator.XmlValidateSanitize(bodyStr)
@@ -440,7 +440,7 @@ func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr st
 		return nil, err
 	}
 
-	// Validate embedded documents
+	// Validate embedded documents.
 	for _, document := range parsedBaseXml.Body.Documents {
 		if err := c.validateDocument(document); err != nil {
 			return nil, err
