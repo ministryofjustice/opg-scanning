@@ -242,8 +242,8 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 				return docErr
 			}
 
-			// AttachDocument provides decoded XML from originalDoc
-			// If doc type schema is supported then we should provide XML from the processedDoc instead.
+			// Document type includes support schema, persist XML from the processedDoc instead.
+			// Otherwise, all documents that use a generic parser will persist the original XML.
 			if factory.IsSupportedDocumentType(originalDoc.Type) {
 				processedXML, err := factory.GenerateXMLFromProcessedDocument(processedDoc)
 				if err != nil {
@@ -256,9 +256,9 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 				}
 				// Override decoded XML with processed version.
 				decodedXML = processedXML
-				c.logger.InfoWithContext(ctx, "Process and persist parsed XML document", nil)
+				c.logger.InfoWithContext(ctx, "Persist parsed XML document", nil)
 			} else {
-				c.logger.InfoWithContext(ctx, "Process and persist original XML document", nil)
+				c.logger.InfoWithContext(ctx, "Persist original XML document", nil)
 			}
 
 			// Persist form data in S3 bucket
