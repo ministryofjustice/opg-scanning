@@ -1,6 +1,6 @@
 services:
   service-app:
-    image: service-app:latest
+    image: 311462405659.dkr.ecr.eu-west-1.amazonaws.com/sirius/scanning/app:latest
     build:
       context: ./service-app
     ports:
@@ -19,6 +19,8 @@ services:
       retries: 5
     depends_on:
       localstack:
+        condition: service_healthy
+      sirius-mock:
         condition: service_healthy
 
   service-app-test:
