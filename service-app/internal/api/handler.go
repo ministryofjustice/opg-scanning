@@ -294,13 +294,13 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	// Wait for the internal job queue to finish processing.
 	c.Queue.Wait()
 
-	// Gather any errors
+	// Gather any errors.
 	jobErrors := c.Queue.GetErrors()
 
-	// Always clear the queue errors before exiting
+	// Always clear the queue errors before exiting.
 	defer c.Queue.ClearErrors()
 
-	// 4. Handle errors if present
+	// Handle errors if present.
 	if len(jobErrors) > 0 {
 		var errorMessages []string
 		for _, err := range jobErrors {
