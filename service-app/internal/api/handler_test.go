@@ -354,5 +354,9 @@ func jsonUnmarshalReader(reader io.Reader, v any) {
 		panic(err)
 	}
 
-	json.Unmarshal(body, v)
+	err = json.Unmarshal(body, v)
+
+	if err != nil {
+		panic(err)
+	}
 }
