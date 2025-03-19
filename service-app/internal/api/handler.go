@@ -155,6 +155,8 @@ func (c *IndexController) authResponse(ctx context.Context, w http.ResponseWrite
 
 func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) {
 	reqCtx := r.Context()
+	// Always clear queue errors at the end of the request.
+	defer c.Queue.ClearErrors()
 
 	if r.Method != http.MethodPost {
 		c.respondWithError(reqCtx, w, http.StatusMethodNotAllowed, "Invalid HTTP method", nil)
@@ -296,9 +298,6 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 
 	// Gather any errors.
 	jobErrors := c.Queue.GetErrors()
-
-	// Always clear the queue errors before exiting.
-	defer c.Queue.ClearErrors()
 
 	// Handle errors if present.
 	if len(jobErrors) > 0 {
