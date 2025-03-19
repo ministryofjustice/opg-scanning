@@ -72,6 +72,42 @@ func TestPersistFormData_LocalStack(t *testing.T) {
 	assert.True(t, found, fmt.Sprintf("Expected object key '%s' not found in the bucket", expectedKey))
 }
 
+func TestPersistSetData(t *testing.T) {
+	ctx := context.Background()
+
+	appConfig := config.NewConfig()
+
+	cfg, err := awsConfig.LoadDefaultConfig(ctx,
+		awsConfig.WithRegion(appConfig.Aws.Region),
+	)
+	assert.NoError(t, err, "Failed to load AWS configuration")
+
+	awsClient, err := NewAwsClient(ctx, cfg, appConfig)
+	assert.NoError(t, err, "Failed to load AWS client")
+
+	body := []byte("<?xml version=\"1.0\" encoding=\"UTF-8\"?><Set>test</Set>")
+	fileName, err := awsClient.PersistSetData(ctx, body)
+	assert.NoError(t, err)
+	assert.Regexp(t, "^SET_", fileName)
+
+	currentTime := time.Now().Format("20060102150405")
+	expectedKey := fmt.Sprintf("SET_%s.xml", currentTime)
+	listObjectsOutput, err := awsClient.S3.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
+		Bucket: aws.String(appConfig.Aws.JobsQueueBucket),
+	})
+
+	assert.NoError(t, err, "Failed to list objects in the bucket")
+
+	var found bool
+	for _, object := range listObjectsOutput.Contents {
+		if *object.Key == expectedKey {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, fmt.Sprintf("Expected object key '%s' not found in the bucket", expectedKey))
+}
+
 func TestAwsQueue_PHPSerialization(t *testing.T) {
 	message := createMessageBody(scannedCaseResponse, fileName)
 
@@ -122,18 +158,33 @@ func TestAwsQueue_QueueSetForProcessing(t *testing.T) {
 }
 
 func validateMessageInQueue(t *testing.T, ctx context.Context, sqsClient *sqs.Client, queueUrl string) {
-	// Receive messages from the queue
-	output, err := sqsClient.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
-		QueueUrl:            aws.String(queueUrl),
-		MaxNumberOfMessages: 1,
-		WaitTimeSeconds:     0,
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, output.Messages, "Expected at least one message in the queue")
-	assert.Len(t, output.Messages, 1, "Expected exactly one message in the queue")
-
-	// Parse the message body
-	var receivedMessage map[string]interface{}
-	err = json.Unmarshal([]byte(*output.Messages[0].Body), &receivedMessage)
-	assert.NoError(t, err)
+	var output *sqs.ReceiveMessageOutput
+	var err error
+	// Poll for up to 5 seconds
+	timeout := time.After(5 * time.Second)
+	tick := time.Tick(500 * time.Millisecond)
+	for {
+		select {
+		case <-timeout:
+			t.Fatalf("Timeout waiting for message in queue")
+		case <-tick:
+			output, err = sqsClient.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
+				QueueUrl:            aws.String(queueUrl),
+				MaxNumberOfMessages: 1,
+				WaitTimeSeconds:     1,
+			})
+			if err != nil {
+				t.Fatalf("Failed to receive messages from queue: %v", err)
+			}
+			if len(output.Messages) > 0 {
+				assert.NotNil(t, output.Messages, "Expected at least one message in the queue")
+				assert.Len(t, output.Messages, 1, "Expected exactly one message in the queue")
+				// Optionally parse and assert message content.
+				var receivedMessage map[string]any
+				err = json.Unmarshal([]byte(*output.Messages[0].Body), &receivedMessage)
+				assert.NoError(t, err)
+				return
+			}
+		}
+	}
 }

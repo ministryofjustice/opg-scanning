@@ -14,6 +14,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/types/lp1h_types"
 	"github.com/ministryofjustice/opg-scanning/internal/types/lpa120_types"
 	"github.com/ministryofjustice/opg-scanning/internal/types/lpc_types"
+	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -69,24 +70,24 @@ func TestProcessDocument_LPA120(t *testing.T) {
 
 func TestProcessGenericDocuments(t *testing.T) {
 	testCases := []struct {
-			name    string
-			docType string
-			valid   string
+		name    string
+		docType string
+		valid   string
 	}{
-			{"LP2", "LP2", "LP2-valid"},
-			{"LPA002", "LPA002", "LPA002-valid"},
-			{"LPA-PA", "LPA-PA", "LPA-PA-valid"},
-			{"LPA-PW", "LPA-PW", "LPA-PW-valid"},
-			{"LPA114", "LPA114", "LPA114-valid"},
-			{"LPA117", "LPA117", "LPA117-valid"},
-			{"EP2PG", "EP2PG", "EP2PG-valid"},
-			{"EPA", "EPA", "EPA-valid"},
+		{"LP2", "LP2", "LP2-valid"},
+		{"LPA002", "LPA002", "LPA002-valid"},
+		{"LPA-PA", "LPA-PA", "LPA-PA-valid"},
+		{"LPA-PW", "LPA-PW", "LPA-PW-valid"},
+		{"LPA114", "LPA114", "LPA114-valid"},
+		{"LPA117", "LPA117", "LPA117-valid"},
+		{"EP2PG", "EP2PG", "EP2PG-valid"},
+		{"EPA", "EPA", "EPA-valid"},
 	}
 
 	for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-					prepareDocument(t, tc.docType, tc.valid)
-			})
+		t.Run(tc.name, func(t *testing.T) {
+			prepareDocument(t, tc.docType, tc.valid)
+		})
 	}
 }
 
@@ -110,7 +111,7 @@ func prepareDocument(t *testing.T, docType string, fileName string) interface{} 
 	require.NoError(t, err, "Failed create Registry")
 
 	cfg := config.NewConfig()
-	logger := logger.NewLogger(cfg)
+	logger := logger.GetLogger(cfg)
 	processor, err := NewDocumentProcessor(doc, doc.Type, "XML", registry, logger)
 	require.NoError(t, err, "NewDocumentProcessor returned an error")
 
@@ -123,7 +124,11 @@ func prepareDocument(t *testing.T, docType string, fileName string) interface{} 
 }
 
 func loadXMLFile(t *testing.T, filepath string) string {
-	data, err := os.ReadFile(filepath)
+	validPath, err := util.ValidatePath(filepath)
+	if err != nil {
+		require.FailNow(t, "Invalid file path", err.Error())
+	}
+	data, err := os.ReadFile(validPath)
 	require.NoError(t, err, "Failed to read XML file")
 	return base64.StdEncoding.EncodeToString(data)
 }

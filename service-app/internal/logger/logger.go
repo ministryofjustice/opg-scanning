@@ -22,7 +22,7 @@ type loggerContextKey struct{}
 func NewLogger(cfg *config.Config) *Logger {
 	// Create the base logger using telemetry.NewLogger.
 	baseLogger := telemetry.NewLogger("opg-scanning-service")
-	
+
 	slogLogger := baseLogger.With(
 		slog.String("environment", cfg.App.Environment),
 	)
@@ -63,14 +63,14 @@ func LoggingMiddleware(logger *slog.Logger) func(next http.Handler) http.Handler
 }
 
 func LoggerFromContext(ctx context.Context) *slog.Logger {
-    // We don't always have the context so we need to check
+	// We don't always have the context so we need to check
 	// if it exists, otherwise we'll get a panic.
-    if val := ctx.Value(loggerContextKey{}); val != nil {
-        if logger, ok := val.(*slog.Logger); ok {
-            return logger
-        }
-    }
-    return nil
+	if val := ctx.Value(loggerContextKey{}); val != nil {
+		if logger, ok := val.(*slog.Logger); ok {
+			return logger
+		}
+	}
+	return nil
 }
 
 func (l *Logger) Info(message string, fields map[string]interface{}, args ...any) {

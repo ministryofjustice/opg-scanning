@@ -1,5 +1,6 @@
 services:
   service-app:
+    image: service-app:latest
     build:
       context: ./service-app
     ports:
@@ -56,7 +57,7 @@ services:
       - "4566:4566"
       - "4571:4571"
     healthcheck:
-      test: ["CMD", "bash", "/scripts/wait/healthcheck.sh"]
+      test: [ "CMD", "bash", "/scripts/wait/healthcheck.sh" ]
       interval: 5s
       timeout: 10s
       retries: 5
@@ -67,7 +68,7 @@ services:
     volumes:
       - ./docker/sirius:/opt/imposter/config
     healthcheck:
-      test: ["CMD", "imposter", "list", "-x"]
+      test: [ "CMD", "imposter", "list", "-x" ]
       interval: 5s
       timeout: 10s
       retries: 5
@@ -87,3 +88,15 @@ services:
     volumes:
       - .:/app
     command: -exclude-dir=.gocache -fmt=sarif -out=/app/test-results/gosec.sarif -stdout -verbose=text /app/...
+
+  trivy:
+    image: aquasec/trivy:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./.trivy-cache:/root/.cache
+      - ./.trivyignore:/.trivyignore
+    environment:
+      - TRIVY_DB_REPOSITORY=${TRIVY_DB_REPOSITORY}
+      - TRIVY_JAVA_DB_REPOSITORY=${TRIVY_JAVA_DB_REPOSITORY}
+      - TRIVY_USERNAME=${DOCKER_USERNAME}
+      - TRIVY_PASSWORD=${DOCKER_PASSWORD}

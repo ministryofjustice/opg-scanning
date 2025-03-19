@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -50,7 +51,7 @@ type responseData struct {
 var uidReplacementRegex = regexp.MustCompile(`^7[0-9]{3}-[0-9]{4}-[0-9]{4}$`)
 
 func NewIndexController(awsClient aws.AwsClientInterface, appConfig *config.Config) *IndexController {
-	logger := logger.NewLogger(appConfig)
+	logger := logger.GetLogger(appConfig)
 
 	// Create dependencies
 	httpClient := httpclient.NewHttpClient(*appConfig, *logger)
@@ -146,7 +147,7 @@ func (c *IndexController) AuthHandler(ctx context.Context, w http.ResponseWriter
 	c.authResponse(ctx, w, resp)
 }
 
-func (c *IndexController) authResponse(ctx context.Context, w http.ResponseWriter, resp interface{}) {
+func (c *IndexController) authResponse(ctx context.Context, w http.ResponseWriter, resp any) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		c.respondWithError(ctx, w, http.StatusInternalServerError, "Failed to encode response", err)
@@ -174,6 +175,17 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		c.respondWithError(reqCtx, w, http.StatusBadRequest, "Invalid content type", fmt.Errorf("expected application/xml or text/xml, got %s", contentType))
 		return
 	}
+
+	// Save Set to S3
+	filename, err := c.AwsClient.PersistSetData(reqCtx, []byte(bodyStr))
+	if err != nil {
+		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Could not persist set to S3", err)
+		return
+	}
+
+	c.logger.InfoWithContext(reqCtx, "Stored Set data", map[string]any{
+		"set_filename": filename,
+	})
 
 	parsedBaseXml, err := c.validateAndSanitizeXML(reqCtx, bodyStr)
 	if err != nil {
@@ -206,14 +218,14 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	// Queue each document for further processing
-	c.logger.InfoWithContext(reqCtx, "Queueing documents for processing", map[string]interface{}{
+	c.logger.InfoWithContext(reqCtx, "Queueing documents for processing", map[string]any{
 		"Header": parsedBaseXml.Header,
 	})
 
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
 		// r.Context() carries the enriched logger injected by the middleware.
-		c.Queue.AddToQueue(reqCtx, doc, "xml", func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) {
+		c.Queue.AddToQueue(reqCtx, doc, "xml", func(ctx context.Context, processedDoc any, originalDoc *types.BaseDocument) error {
 			// Wrap the jobs context with a timeout for callback processing.
 			ctx, cancel := context.WithTimeout(ctx, time.Duration(c.config.HTTP.Timeout)*time.Second)
 			defer cancel()
@@ -222,12 +234,12 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			service.originalDoc = originalDoc
 			attchResp, decodedXML, docErr := service.AttachDocuments(ctx, scannedCaseResponse)
 			if docErr != nil {
-				c.logger.ErrorWithContext(ctx, "Failed to attach document", map[string]interface{}{
+				c.logger.ErrorWithContext(ctx, "Failed to attach document", map[string]any{
 					"set_uid":       scannedCaseResponse.UID,
 					"document_type": originalDoc.Type,
 					"error":         docErr.Error(),
 				})
-				return
+				return docErr
 			}
 
 			// AttachDocument provides decoded XML from originalDoc
@@ -249,37 +261,37 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			// Persist form data in S3 bucket
 			fileName, persistErr := c.processAndPersist(ctx, decodedXML, originalDoc)
 			if persistErr != nil {
-				c.logger.ErrorWithContext(ctx, "Failed to persist document", map[string]interface{}{
+				c.logger.ErrorWithContext(ctx, "Failed to persist document", map[string]any{
 					"set_uid":       scannedCaseResponse.UID,
 					"document_type": originalDoc.Type,
 					"error":         persistErr.Error(),
 				})
-				return
+				return persistErr
 			}
 
 			// Check if the document is a correspondence type; if so do not send to the job queue
 			if !util.Contains(constants.SiriusExtractionDocuments, originalDoc.Type) {
-				c.logger.InfoWithContext(ctx, "Skipping external job processing, checks completed for document", map[string]interface{}{
+				c.logger.InfoWithContext(ctx, "Skipping external job processing, checks completed for document", map[string]any{
 					"set_uid":       scannedCaseResponse.UID,
 					"pdf_uuid":      attchResp.UUID,
 					"filename":      fileName,
 					"document_type": originalDoc.Type,
 				})
-				return
+				return nil
 			}
 
 			// Persist external aws job queue with UID+fileName
 			messageID, err := c.AwsClient.QueueSetForProcessing(ctx, scannedCaseResponse, fileName)
 			if err != nil {
-				c.logger.ErrorWithContext(ctx, "Failed to queue document for processing", map[string]interface{}{
+				c.logger.ErrorWithContext(ctx, "Failed to queue document for processing", map[string]any{
 					"set_uid":       scannedCaseResponse.UID,
 					"document_type": originalDoc.Type,
 					"error":         err.Error(),
 				})
-				return
+				return err
 			}
 
-			c.logger.InfoWithContext(ctx, "Job processing completed for document", map[string]interface{}{
+			c.logger.InfoWithContext(ctx, "Job processing completed for document", map[string]any{
 				"set_uid":       scannedCaseResponse.UID,
 				"pdf_uuid":      attchResp.UUID,
 				"job_queue_id":  messageID,
@@ -287,11 +299,29 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 				"document_type": originalDoc.Type,
 			})
 
+			return nil
 		})
-		c.logger.InfoWithContext(ctx, "Document queued for processing", map[string]interface{}{
+		c.logger.InfoWithContext(ctx, "Document queued for processing", map[string]any{
 			"set_uid":       scannedCaseResponse.UID,
 			"document_type": doc.Type,
 		})
+	}
+
+	// Wait for the internal job queue to finish processing.
+	c.Queue.Wait()
+
+	// Check if any errors were collected from the internal jobs.
+	jobErrors := c.Queue.GetErrors()
+	if len(jobErrors) > 0 {
+		var errorMessages []string
+		for _, err := range jobErrors {
+			errorMessages = append(errorMessages, err.Error())
+		}
+		errMsg := fmt.Sprintf("Errors encountered during processing: %s", strings.Join(errorMessages, "; "))
+		c.respondWithError(reqCtx, w, http.StatusInternalServerError, errMsg, errors.New(errMsg))
+		return
+	} else {
+		c.logger.InfoWithContext(reqCtx, "No errors found!", nil)
 	}
 
 	// Send the UID response
@@ -314,7 +344,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Failed to encode response", err)
 	} else {
-		c.logger.InfoWithContext(reqCtx, "Ingestion request processed successfully", map[string]interface{}{
+		c.logger.InfoWithContext(reqCtx, "Ingestion request processed successfully", map[string]any{
 			"uid": scannedCaseResponse.UID,
 		})
 	}
@@ -326,11 +356,11 @@ func (c *IndexController) CloseQueue() {
 
 func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseWriter, statusCode int, message string, err error) {
 	if statusCode >= 500 {
-		c.logger.ErrorWithContext(ctx, message, map[string]interface{}{
+		c.logger.ErrorWithContext(ctx, message, map[string]any{
 			"error": err,
 		})
 	} else {
-		c.logger.InfoWithContext(ctx, message, map[string]interface{}{
+		c.logger.InfoWithContext(ctx, message, map[string]any{
 			"error": err,
 		})
 	}
@@ -417,6 +447,12 @@ func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr st
 }
 
 func (c *IndexController) validateDocument(document types.BaseDocument) error {
+	if !slices.Contains(constants.SupportedDocumentTypes, document.Type) {
+		return Problem{
+			Title: fmt.Sprintf("Document type %s is not supported", document.Type),
+		}
+	}
+
 	decodedXML, err := util.DecodeEmbeddedXML(document.EmbeddedXML)
 	if err != nil {
 		return fmt.Errorf("failed to decode XML data from %s: %w", document.Type, err)
