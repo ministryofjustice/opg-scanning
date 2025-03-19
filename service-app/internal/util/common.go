@@ -39,7 +39,7 @@ func LoadXMLFileTesting(t *testing.T, filepath string) []byte {
 	if err != nil {
 		require.FailNow(t, "Invalid file path", err.Error())
 	}
-	data, err := os.ReadFile(validPath)
+	data, err := os.ReadFile(validPath) //#nosec G304 false positive: we check the path above
 	// reading the file.
 	if err != nil {
 		require.FailNow(t, "Failed to read XML file", err.Error())
