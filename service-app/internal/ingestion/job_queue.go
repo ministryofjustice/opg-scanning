@@ -15,6 +15,7 @@ import (
 
 type Job struct {
 	ctx        context.Context
+	cfg        *config.Config
 	Data       *types.BaseDocument
 	format     string
 	onComplete func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) error
@@ -45,9 +46,9 @@ func NewJobContext(reqCtx context.Context) context.Context {
 	return logger.ContextWithLogger(ctx, enrichedLogger)
 }
 
-func (q *JobQueue) AddToQueue(ctx context.Context, data *types.BaseDocument, format string, onComplete func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) error) {
+func (q *JobQueue) AddToQueue(ctx context.Context, cfg *config.Config, data *types.BaseDocument, format string, onComplete func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) error) {
 	jobCtx := NewJobContext(ctx)
-	job := Job{ctx: jobCtx, Data: data, format: format, onComplete: onComplete}
+	job := Job{ctx: jobCtx, cfg: cfg, Data: data, format: format, onComplete: onComplete}
 	q.wg.Add(1)
 	q.Jobs <- job
 }
@@ -62,9 +63,8 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 						return // Exit if the job channel is closed
 					}
 
-					// TODO: Load timeout from Config
 					// Create a per job timeout context from the jobs context.
-					processCtx, cancel := context.WithTimeout(job.ctx, 5*time.Second)
+					processCtx, cancel := context.WithTimeout(job.ctx, time.Duration(job.cfg.HTTP.Timeout)*time.Second)
 					done := make(chan struct{})
 
 					go func() {
