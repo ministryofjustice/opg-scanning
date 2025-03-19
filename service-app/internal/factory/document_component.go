@@ -1,6 +1,7 @@
 package factory
 
 import (
+	"encoding/xml"
 	"fmt"
 	"slices"
 
@@ -74,4 +75,24 @@ func GetComponent(docType string) (Component, error) {
 	}
 
 	return Component{}, fmt.Errorf("unsupported docType: %s", docType)
+}
+
+func IsSupportedDocumentType(docType string) bool {
+	if _, exists := componentRegistry[docType]; exists {
+		return exists
+	}
+
+	return false
+}
+
+func GenerateXMLFromProcessedDocument(data interface{}) ([]byte, error) {
+	xmlHeader := "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+
+	xmlBody, err := xml.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+
+	finalXML := xmlHeader + string(xmlBody)
+	return []byte(finalXML), nil
 }
