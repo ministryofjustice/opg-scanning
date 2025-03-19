@@ -133,6 +133,12 @@ func (q *JobQueue) GetErrors() []error {
 	return errorsCopy
 }
 
+func (q *JobQueue) ClearErrors() {
+	q.errorMu.Lock()
+	defer q.errorMu.Unlock()
+	q.errors = []error{}
+}
+
 func (q *JobQueue) Wait() {
 	q.wg.Wait()
 }
