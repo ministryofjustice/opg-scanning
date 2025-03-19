@@ -108,12 +108,35 @@ jobs:
             --broker-username admin \
             --broker-password ${{ secrets.PACT_BROKER_PASSWORD }}
 
+  build:
+    name: Build Image
+    needs: [unit-test]
+    uses: ministryofjustice/opg-github-workflows/.github/workflows/build-multi-architecture-image.yml@v3.10.0
+    with:
+      image_name: 311462405659.dkr.ecr.eu-west-1.amazonaws.com/sirius/scanning/app
+      build_path: ./service-app
+
   # Integration test
   integration-test:
     name: Integration test
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Set up Docker
+        run: |
+          echo '{"experimental": true, "features": { "containerd-snapshotter": true }}' | sudo tee -a /etc/docker/daemon.json
+          sudo systemctl restart docker
+          docker run --privileged --rm tonistiigi/binfmt --install all
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: /tmp/images
+          name: multi-arch-image
+      - name: Load Image
+        run: |
+          docker load -i /tmp/images/multi-arch-image.tar
+
       - run: make integration-test
       - run: make clean
         if: ${{ always() }}
@@ -127,13 +150,9 @@ jobs:
       branch_name: ${{ needs.branch_name.outputs.branch_name }}
     secrets: inherit
 
-  # Docker build, trivy scan, ECR push as a matrix
-  # The matrix loops over each app to build in a complicated
-  # structure
-  build_scan_push:
-    name: "Docker build, trivy scan, ECR push"
+  push:
+    name: "Push Image"
     runs-on: ubuntu-latest
-    # require all steps before this matrix to have passed
     needs:
       [
         branch_name,
@@ -143,31 +162,28 @@ jobs:
         codeql_analysis,
         unit-test,
         integration-test,
+        build
       ]
-    strategy:
-      fail-fast: true
-      matrix:
-        # services to scan over
-        data:
-          - docker_build_directory: "./service-app"
-            image_app_name: "service-app"
-    # we use these a few times, so its easier to generate them once and env
-    # vars are visible in the output, so helps with debug
     env:
-      local_docker_image: ${{ matrix.data.image_app_name }}:latest
+      local_docker_image: 311462405659.dkr.ecr.eu-west-1.amazonaws.com/sirius/scanning/app:latest
       sarif_file: trivy-results.sarif
     steps:
       - uses: actions/checkout@v4
-      - name: Show environment values
+
+      - name: Set up Docker
         run: |
-          echo "local_docker_image: ${{ env.local_docker_image }}"
-          echo "sarif_file: ${{ env.sarif_file }}"
-      # build our sample docker image
-      - name: Docker build
-        # set the working directory to the variable
-        working-directory: ${{ matrix.data.docker_build_directory }}
+          echo '{"experimental": true, "features": { "containerd-snapshotter": true }}' | sudo tee -a /etc/docker/daemon.json
+          sudo systemctl restart docker
+          docker run --privileged --rm tonistiigi/binfmt --install all
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: /tmp/images
+          name: multi-arch-image
+      - name: Load Image
         run: |
-          docker build -t ${{ env.local_docker_image }} .
+          docker load -i /tmp/images/multi-arch-image.tar
+      
       # log in to ECR
       - name: Configure AWS Credentials With Assumed Role to Management
         uses: aws-actions/configure-aws-credentials@v4
@@ -175,7 +191,6 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-1
-          # management account role
           role-to-assume: arn:aws:iam::311462405659:role/sirius-actions-ci
           role-duration-seconds: 900
           role-session-name: OPGScanningWorkflowGithubAction
@@ -184,9 +199,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2.0.1
         with:
           registries: 311462405659
-      # to check if things worked, output docker image list
-      - name: Docker image list
-        run: docker images
+
       - name: Trivy scan
         uses: aquasecurity/trivy-action@0.29.0
         env:
@@ -202,10 +215,8 @@ jobs:
         with:
           sarif_file: ${{ env.sarif_file }}
           category: trivy-docker-${{ matrix.data.image_app_name }}
-      ######
-      ## Push to ECR
-      ######
-      - name: Push Container
+
+      - name: Tag & Push
         env:
           SEMVER_TAG: ${{ needs.semver_tag.outputs.tag }}
           ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
@@ -213,7 +224,6 @@ jobs:
         run: |
           docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.SEMVER_TAG }}
           if [ "${{ needs.branch_name.outputs.branch_name }}" == "main" ]; then
-            docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:latest
             docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:main-${{ env.SEMVER_TAG }}
             docker tag ${{ env.local_docker_image }} $ECR_REGISTRY/$ECR_REPOSITORY:main-${{ env.SEMVER_TAG }}-$(date +"%Y%m%d%H%M%S")
             docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
@@ -225,7 +235,7 @@ jobs:
     name: Push Version to Parameter Store & Trigger Deploy
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    needs: [branch_name, semver_tag, build_scan_push]
+    needs: [branch_name, semver_tag, build, push]
     steps:
       - uses: actions/checkout@v4
 
