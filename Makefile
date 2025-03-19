@@ -41,4 +41,4 @@ gosec: setup-directories
 	docker compose run --rm gosec
 
 scan:
-	docker compose run --rm trivy image --format table service-app:latest
+	docker compose run --rm trivy image --format table 311462405659.dkr.ecr.eu-west-1.amazonaws.com/sirius/scanning/app:latest
