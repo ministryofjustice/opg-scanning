@@ -294,9 +294,6 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	// Wait for the internal job queue to finish processing.
 	c.Queue.Wait()
 
-	// Clear errors
-	c.Queue.ClearErrors()
-
 	// Check if any errors were collected from the internal jobs.
 	jobErrors := c.Queue.GetErrors()
 	if len(jobErrors) > 0 {
@@ -310,6 +307,9 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	} else {
 		c.logger.InfoWithContext(reqCtx, "No errors found!", nil)
 	}
+
+	// Clear errors
+	c.Queue.ClearErrors()
 
 	// Send the UID response
 	w.Header().Set("Content-Type", "application/json")
