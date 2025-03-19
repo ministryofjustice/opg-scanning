@@ -59,7 +59,7 @@ services:
       - "4566:4566"
       - "4571:4571"
     healthcheck:
-      test: [ "CMD", "bash", "/scripts/wait/healthcheck.sh" ]
+      test: ["CMD", "bash", "/scripts/wait/healthcheck.sh"]
       interval: 5s
       timeout: 10s
       retries: 5
@@ -70,7 +70,7 @@ services:
     volumes:
       - ./docker/sirius:/opt/imposter/config
     healthcheck:
-      test: [ "CMD", "imposter", "list", "-x" ]
+      test: ["CMD", "imposter", "list", "-x"]
       interval: 5s
       timeout: 10s
       retries: 5
@@ -86,10 +86,10 @@ services:
 
   gosec:
     image: securego/gosec:latest
-    working_dir: /app
+    working_dir: /app/service-app
     volumes:
       - .:/app
-    command: -exclude-dir=.gocache -fmt=sarif -out=/app/test-results/gosec.sarif -stdout -verbose=text /app/...
+    command: -exclude-dir=.gocache -fmt=sarif -out=/app/test-results/gosec.sarif -stdout -verbose=text /app/service-app/...
 
   trivy:
     image: aquasec/trivy:latest
