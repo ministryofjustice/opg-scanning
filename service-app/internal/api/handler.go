@@ -242,8 +242,9 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 				return docErr
 			}
 
-			// Document type includes support schema, persist XML from the processedDoc instead.
-			// Otherwise, all documents that use a generic parser will persist the original XML.
+			// If the document type includes a supported schema e.g. a unique parser exists,
+			// we then ensure XML data persisted comes from processedDoc var instead.
+			// Otherwise, all documents that use a generic parser will persist the original XML e.g. decodedXML.
 			if factory.IsSupportedDocumentType(originalDoc.Type) {
 				processedXML, err := factory.GenerateXMLFromProcessedDocument(processedDoc)
 				if err != nil {
