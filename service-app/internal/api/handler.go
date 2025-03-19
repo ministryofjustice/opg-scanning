@@ -252,10 +252,13 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 						"document_type": originalDoc.Type,
 						"error":         err.Error(),
 					})
-					return
+					return err
 				}
 				// Override decoded XML with processed version.
 				decodedXML = processedXML
+				c.logger.InfoWithContext(ctx, "Process and persist parsed XML document", nil)
+			} else {
+				c.logger.InfoWithContext(ctx, "Process and persist original XML document", nil)
 			}
 
 			// Persist form data in S3 bucket

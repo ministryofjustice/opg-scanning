@@ -85,7 +85,7 @@ func IsSupportedDocumentType(docType string) bool {
 	return false
 }
 
-func GenerateXMLFromProcessedDocument(data interface{}) ([]byte, error) {
+func GenerateXMLFromProcessedDocument(data any) ([]byte, error) {
 	xmlHeader := "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 
 	xmlBody, err := xml.MarshalIndent(data, "", "  ")
