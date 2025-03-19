@@ -308,6 +308,9 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		c.logger.InfoWithContext(reqCtx, "No errors found!", nil)
 	}
 
+	// Clear errors
+	c.Queue.ClearErrors()
+
 	// Send the UID response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
