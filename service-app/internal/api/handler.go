@@ -88,7 +88,7 @@ func (c *IndexController) HandleRequests() {
 
 	// Create the route to handle user authentication and issue JWT token
 	http.Handle("/auth/sessions", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c.AuthHandler(r.Context(), w, r)
+		c.AuthHandler(w, r)
 	}))
 
 	// Protect the route with JWT validation (using the authMiddleware)
@@ -108,7 +108,7 @@ func (c *IndexController) HandleRequests() {
 	}
 }
 
-func (c *IndexController) AuthHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
 	// Define response error struct
 	type ErrorResponse struct {
 		Error string `json:"error"`

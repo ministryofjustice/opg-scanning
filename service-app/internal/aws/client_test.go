@@ -144,6 +144,7 @@ func TestAwsQueue_QueueSetForProcessing(t *testing.T) {
 	cfg, err := awsConfig.LoadDefaultConfig(ctx,
 		awsConfig.WithRegion(appConfig.Aws.Region),
 	)
+	assert.NoError(t, err)
 
 	awsClient, err := NewAwsClient(ctx, cfg, appConfig)
 	assert.NoError(t, err, "Failed to create AwsQueue instance")
