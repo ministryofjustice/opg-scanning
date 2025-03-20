@@ -110,7 +110,7 @@ The Makefile’s setup-directories target ensures that necessary directories (e.
 
 ## Architecture
 
-![Architecture Diagram](docs/architecture/diagrams/scanning-api.png)
+![Architecture Diagram](docs/architecture/diagrams/scanning-api.svg)
 
 ## Resources
 
