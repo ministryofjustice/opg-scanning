@@ -35,6 +35,7 @@ I3 --> I4
 I4 --> I5
 I5 --> I6
 I6 --> I7
+IngestFlow -- HTTP Response --> H3
 
 %% Job Queue & Document Processing
 subgraph JobProcessing [Job Queue & Processing]
@@ -45,9 +46,6 @@ Q4[Component Registry]
 Q5[Parser / Validator / Sanitizer per Doc Type]
 Q6[Process Document]
 Q7[On-Complete Callback]
-Q8[Attach Documents to Case]
-Q9[Persist Data to AWS S3]
-Q10[Queue for External AWS Processing]
 end
 
 I7 --> Q1
@@ -58,8 +56,17 @@ Q4 --> Q5
 Q3 --> Q6
 Q6 --> Q7
 Q7 --> Q8
+JobProcessing --> IngestFlow
+
+subgraph onComplete [onComplete callback]
+Q8[Attach Documents to Case]
+Q9[Persist Data to AWS S3]
+Q10[Queue for External AWS Processing]
+end
+
 Q8 --> Q9
 Q9 --> Q10
+onComplete --> JobProcessing
 
 %% Auth Flow
 subgraph AuthFlow [Authentication]
@@ -80,7 +87,7 @@ S3[AWS Queue]
 end
 
 I6 -- Create Case Stub --> S1
-Q8 -- Create Case Stub --> S1
+Q8 -- Attach to Case Stub --> S1
 
 Q9 -- Persist Form Data --> S2
 Q10 -- Send for Processing --> S3
