@@ -33,6 +33,7 @@ func NewService(client *Client, set *types.BaseSet) *Service {
 // Attach documents to cases
 func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.ScannedCaseResponse) (*types.ScannedDocumentResponse, []byte, error) {
 	var documentSubType string
+	var mappedDocType string
 
 	// Decode the base64-encoded XML
 	decodedXML, err := base64.StdEncoding.DecodeString(s.originalDoc.EmbeddedXML)
@@ -52,13 +53,20 @@ func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.Scann
 			return nil, nil, fmt.Errorf("failed to cast correspInterface to corresp_types.Correspondence")
 		}
 		documentSubType = corresp.SubType
+		mappedDocType = deputyDocType(s.originalDoc.Type)
+	} else if util.Contains([]string{"DEPREPORTS", "FINDOCS", "DEPCORRES"}, s.originalDoc.Type) {
+		// For supervision report types directly map the top-level document type.
+		mappedDocType = deputyDocType(s.originalDoc.Type)
+	} else {
+		// For any other document types, leave as is.
+		mappedDocType = s.originalDoc.Type
 	}
 
 	// Prepare the request payload
 	request := types.ScannedDocumentRequest{
 		CaseReference:   caseResponse.UID,
 		Content:         s.originalDoc.EmbeddedPDF,
-		DocumentType:    s.originalDoc.Type,
+		DocumentType:    mappedDocType,
 		DocumentSubType: documentSubType,
 		ScannedDate:     formatScannedDate(s.set.Header.ScanTime),
 	}
@@ -115,4 +123,19 @@ func (s *Service) CreateCaseStub(ctx context.Context) (*types.ScannedCaseRespons
 	}
 
 	return &scannedResponse, nil
+}
+
+func deputyDocType(docType string) string {
+	switch docType {
+	case "FINDOCS":
+		return "Report - Financial evidence"
+	case "DEPREPORTS":
+		return "Report - General"
+	case "DEPCORRES":
+		return "Report"
+	case "SupCorrespondence":
+		return "Correspondence"
+	default:
+		return docType
+	}
 }
