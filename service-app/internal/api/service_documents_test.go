@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/base64"
+	"encoding/xml"
 	"fmt"
 	"os"
 	"testing"
@@ -104,6 +105,118 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 		assert.NotNil(t, response)
 		assert.Equal(t, xmlStringData, decodedXML)
 		assert.Equal(t, "fc763eba-0905-41c5-a27f-3934ab26786c", response.UUID)
+
+		return err
+	})
+
+	assert.NoError(t, err)
+}
+
+func TestAttachDocument_Set_Supervision(t *testing.T) {
+	mockProvider, err := consumer.NewV4Pact(consumer.MockHTTPProviderConfig{
+		Consumer: "scanning",
+		Provider: "sirius",
+	})
+	assert.Nil(t, err)
+
+	// Load XML data from the test file specific to DEPREPORTS
+	xmlStringData := util.LoadXMLFileTesting(t, "../../xml/set/Supervision-DEPREPORTS.xml")
+	xmlBase64 := base64.StdEncoding.EncodeToString(xmlStringData)
+	if xmlBase64 == "" {
+		t.Fatal("failed to load sample DeputyReport XML")
+	}
+
+	var sSet types.BaseSet
+	err = xml.Unmarshal(xmlStringData, &sSet)
+	assert.NoError(t, err)
+	// We expect two Document nodes (one DEPREPORTS and one DEPCORRES)
+	assert.Equal(t, 2, len(sSet.Body.Documents), "expected 2 documents in the set")
+
+	// For each document, set up the expected mapping:
+	// - DEPREPORTS should map to "Report - General"
+	// - DEPCORRES should map to "Report"
+	expectedMapping := map[string]string{
+		"DEPREPORTS": "Report - General",
+		"DEPCORRES":  "Report",
+	}
+
+	for idx, d := range sSet.Body.Documents {
+
+		// Determine expected mapped type
+		expectedType, ok := expectedMapping[d.Type]
+		if !ok {
+			expectedType = d.Type
+		}
+
+		// Set up expected interactions
+		mockProvider.
+			AddInteraction().
+			Given(fmt.Sprintf("An %v with UID %v", expectedType, sSet.Header.CaseNo)).
+			Given("I am a DDC user").
+			UponReceiving(fmt.Sprintf("A request to attach document %d of type %s", idx+1, expectedType)).
+			WithRequest("POST", "/api/public/v1/scanned-documents", func(b *consumer.V4RequestBuilder) {
+				b.
+					Header("Content-Type", matchers.String("application/json")).
+					JSONBody(matchers.Map{
+						"caseReference":   matchers.String(sSet.Header.CaseNo),
+						"content":         matchers.String(sSet.Body.Documents[idx].EmbeddedPDF),
+						"documentType":    matchers.String(expectedType),
+						"documentSubType": matchers.String(""),
+						"scannedDate":     matchers.DateTimeGenerated(sSet.Header.ScanTime, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+					})
+			}).
+			WillRespondWith(201, func(b *consumer.V4ResponseBuilder) {
+				b.
+					Header("Content-Type", matchers.String("application/json")).
+					JSONBody(matchers.Map{
+						"uuid": matchers.UUID(),
+					})
+			})
+	}
+
+	err = mockProvider.ExecuteTest(t, func(pactConfig consumer.MockServerConfig) error {
+		baseURL := fmt.Sprintf("http://%s:%d", pactConfig.Host, pactConfig.Port)
+
+		// Mock dependencies
+		mockConfig := config.NewConfig()
+		mockConfig.App.SiriusBaseURL = baseURL
+		logger := logger.GetLogger(mockConfig)
+
+		_, _, _, tokenGenerator := auth.PrepareMocks(mockConfig, logger)
+		httpClient := httpclient.NewHttpClient(*mockConfig, *logger)
+		httpMiddleware, _ := httpclient.NewMiddleware(httpClient, tokenGenerator)
+
+		// For each document in the set, create a Service instance and call AttachDocuments
+		for _, d := range sSet.Body.Documents {
+			// Create a BaseDocument for this individual document.
+			baseDoc := &types.BaseDocument{
+				EmbeddedXML: d.EmbeddedXML,
+				EmbeddedPDF: d.EmbeddedPDF,
+				Type:        d.Type,
+			}
+			svc := &Service{
+				Client:      &Client{Middleware: httpMiddleware},
+				originalDoc: baseDoc,
+				set: &types.BaseSet{
+					Header: &types.BaseHeader{
+						CaseNo:   sSet.Header.CaseNo,
+						ScanTime: sSet.Header.ScanTime,
+					},
+				},
+			}
+
+			caseResp := &types.ScannedCaseResponse{
+				UID: sSet.Header.CaseNo,
+			}
+
+			ctx := context.Background()
+			resp, decodedXML, err := svc.AttachDocuments(ctx, caseResp)
+			if err != nil {
+				t.Fatalf("AttachDocuments returned error for document type %s: %v", d.Type, err)
+			}
+			assert.Equal(t, []byte(d.EmbeddedXML), decodedXML)
+			assert.NotEqual(t, "", resp.UUID)
+		}
 
 		return err
 	})
