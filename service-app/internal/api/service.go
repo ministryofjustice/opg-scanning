@@ -33,7 +33,7 @@ func NewService(client *Client, set *types.BaseSet) *Service {
 // Attach documents to cases
 func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.ScannedCaseResponse) (*types.ScannedDocumentResponse, []byte, error) {
 	var documentSubType string
-	var mappedDocType = s.originalDoc.Type
+	var originalDocType = s.originalDoc.Type
 
 	// Decode the base64-encoded XML
 	decodedXML, err := base64.StdEncoding.DecodeString(s.originalDoc.EmbeddedXML)
@@ -42,11 +42,11 @@ func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.Scann
 	}
 
 	// Check for Correspondence or SupCorrespondence and extract SubType
-	if util.Contains([]string{"Correspondence", "SupCorrespondence"}, s.originalDoc.Type) {
+	if util.Contains([]string{"Correspondence", "SupCorrespondence"}, originalDocType) {
 		// Parse the XML
 		correspInterface, err := corresp_parser.Parse([]byte(decodedXML))
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to parse correspondence for document %s: %w", s.originalDoc.Type, err)
+			return nil, nil, fmt.Errorf("failed to parse correspondence for document %s: %w", originalDocType, err)
 		}
 		corresp, ok := correspInterface.(*corresp_types.Correspondence)
 		if !ok {
@@ -59,7 +59,7 @@ func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.Scann
 	request := types.ScannedDocumentRequest{
 		CaseReference:   caseResponse.UID,
 		Content:         s.originalDoc.EmbeddedPDF,
-		DocumentType:    mappedDocType,
+		DocumentType:    originalDocType,
 		DocumentSubType: documentSubType,
 		ScannedDate:     formatScannedDate(s.set.Header.ScanTime),
 	}

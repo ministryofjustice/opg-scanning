@@ -138,7 +138,7 @@ func TestAttachDocument_Set_Supervision(t *testing.T) {
 		// Set up expected interactions
 		mockProvider.
 			AddInteraction().
-			Given(fmt.Sprintf("An %v with UID %v", d.Type, sSet.Header.CaseNo)).
+			Given(fmt.Sprintf("An %v with UID %v exists", d.Type, sSet.Header.CaseNo)).
 			Given("I am a DDC user").
 			UponReceiving("A request to attach a scanned document").
 			WithRequest("POST", "/api/public/v1/scanned-documents", func(b *consumer.V4RequestBuilder) {
