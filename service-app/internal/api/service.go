@@ -33,6 +33,7 @@ func NewService(client *Client, set *types.BaseSet) *Service {
 // Attach documents to cases
 func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.ScannedCaseResponse) (*types.ScannedDocumentResponse, []byte, error) {
 	var documentSubType string
+	var mappedDocType = s.originalDoc.Type
 
 	// Decode the base64-encoded XML
 	decodedXML, err := base64.StdEncoding.DecodeString(s.originalDoc.EmbeddedXML)
@@ -58,7 +59,7 @@ func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.Scann
 	request := types.ScannedDocumentRequest{
 		CaseReference:   caseResponse.UID,
 		Content:         s.originalDoc.EmbeddedPDF,
-		DocumentType:    s.originalDoc.Type,
+		DocumentType:    mappedDocType,
 		DocumentSubType: documentSubType,
 		ScannedDate:     formatScannedDate(s.set.Header.ScanTime),
 	}

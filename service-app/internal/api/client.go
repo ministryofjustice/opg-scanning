@@ -30,7 +30,7 @@ func (c *Client) ClientRequest(ctx context.Context, reqData interface{}, url str
 
 	responseBody, err := c.Middleware.HTTPRequest(ctx, url, "POST", body, nil)
 	if err != nil {
-		return nil, fmt.Errorf("request to Sirius API failed: %w", err)
+		return nil, fmt.Errorf("request to Sirius API (%v) failed: %w", url, err)
 	}
 
 	return &responseBody, nil
