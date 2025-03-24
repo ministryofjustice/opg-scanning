@@ -153,16 +153,15 @@ func TestAttachDocument_Set_Supervision(t *testing.T) {
 			AddInteraction().
 			Given(fmt.Sprintf("An %v with UID %v", expectedType, sSet.Header.CaseNo)).
 			Given("I am a DDC user").
-			UponReceiving(fmt.Sprintf("A request to attach document %d of type %s", idx+1, expectedType)).
+			UponReceiving("A request to attach a scanned document").
 			WithRequest("POST", "/api/public/v1/scanned-documents", func(b *consumer.V4RequestBuilder) {
 				b.
 					Header("Content-Type", matchers.String("application/json")).
 					JSONBody(matchers.Map{
-						"caseReference":   matchers.String(sSet.Header.CaseNo),
-						"content":         matchers.String(sSet.Body.Documents[idx].EmbeddedPDF),
-						"documentType":    matchers.String(expectedType),
-						"documentSubType": matchers.String(""),
-						"scannedDate":     matchers.DateTimeGenerated(sSet.Header.ScanTime, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+						"caseReference": matchers.String(sSet.Header.CaseNo),
+						"content":       matchers.String(sSet.Body.Documents[idx].EmbeddedPDF),
+						"documentType":  matchers.String(expectedType),
+						"scannedDate":   matchers.DateTimeGenerated("2014-12-18T14:48:33Z", "yyyy-MM-dd'T'HH:mm:ss'Z'"),
 					})
 			}).
 			WillRespondWith(201, func(b *consumer.V4ResponseBuilder) {
@@ -177,6 +176,8 @@ func TestAttachDocument_Set_Supervision(t *testing.T) {
 	err = mockProvider.ExecuteTest(t, func(pactConfig consumer.MockServerConfig) error {
 		baseURL := fmt.Sprintf("http://%s:%d", pactConfig.Host, pactConfig.Port)
 
+		fmt.Printf("Base URL: %s\n", baseURL)
+
 		// Mock dependencies
 		mockConfig := config.NewConfig()
 		mockConfig.App.SiriusBaseURL = baseURL
@@ -187,24 +188,13 @@ func TestAttachDocument_Set_Supervision(t *testing.T) {
 		httpMiddleware, _ := httpclient.NewMiddleware(httpClient, tokenGenerator)
 
 		// For each document in the set, create a Service instance and call AttachDocuments
+		svc := &Service{
+			Client: &Client{Middleware: httpMiddleware},
+			set:    &sSet,
+		}
 		for _, d := range sSet.Body.Documents {
 			// Create a BaseDocument for this individual document.
-			baseDoc := &types.BaseDocument{
-				EmbeddedXML: d.EmbeddedXML,
-				EmbeddedPDF: d.EmbeddedPDF,
-				Type:        d.Type,
-			}
-			svc := &Service{
-				Client:      &Client{Middleware: httpMiddleware},
-				originalDoc: baseDoc,
-				set: &types.BaseSet{
-					Header: &types.BaseHeader{
-						CaseNo:   sSet.Header.CaseNo,
-						ScanTime: sSet.Header.ScanTime,
-					},
-				},
-			}
-
+			svc.originalDoc = &d
 			caseResp := &types.ScannedCaseResponse{
 				UID: sSet.Header.CaseNo,
 			}
@@ -214,7 +204,14 @@ func TestAttachDocument_Set_Supervision(t *testing.T) {
 			if err != nil {
 				t.Fatalf("AttachDocuments returned error for document type %s: %v", d.Type, err)
 			}
-			assert.Equal(t, []byte(d.EmbeddedXML), decodedXML)
+
+			// Decode the embedded XML
+			decodedEmbeddedXML, err := base64.StdEncoding.DecodeString(d.EmbeddedXML)
+			if err != nil {
+				t.Fatalf("failed to decode embedded XML for document type %s: %v", d.Type, err)
+			}
+
+			assert.Equal(t, decodedEmbeddedXML, decodedXML)
 			assert.NotEqual(t, "", resp.UUID)
 		}
 
