@@ -73,7 +73,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.0
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.38.0
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.57.0
-	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/pact-foundation/pact-go/v2 v2.2.0
 	go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws v0.59.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.59.0
