@@ -132,26 +132,13 @@ func TestAttachDocument_Set_Supervision(t *testing.T) {
 	// We expect two Document nodes (one DEPREPORTS and one DEPCORRES)
 	assert.Equal(t, 2, len(sSet.Body.Documents), "expected 2 documents in the set")
 
-	// For each document, set up the expected mapping:
-	// - DEPREPORTS should map to "Report - General"
-	// - DEPCORRES should map to "Report"
-	expectedMapping := map[string]string{
-		"DEPREPORTS": "Report - General",
-		"DEPCORRES":  "Report",
-	}
-
 	for idx, d := range sSet.Body.Documents {
 		doc := sSet.Body.Documents[idx]
-		// Determine expected mapped type
-		expectedType, ok := expectedMapping[d.Type]
-		if !ok {
-			expectedType = d.Type
-		}
 
 		// Set up expected interactions
 		mockProvider.
 			AddInteraction().
-			Given(fmt.Sprintf("An %v with UID %v", expectedType, sSet.Header.CaseNo)).
+			Given(fmt.Sprintf("An %v with UID %v", d.Type, sSet.Header.CaseNo)).
 			Given("I am a DDC user").
 			UponReceiving("A request to attach a scanned document").
 			WithRequest("POST", "/api/public/v1/scanned-documents", func(b *consumer.V4RequestBuilder) {
@@ -160,7 +147,7 @@ func TestAttachDocument_Set_Supervision(t *testing.T) {
 					JSONBody(matchers.Map{
 						"caseReference": matchers.String(sSet.Header.CaseNo),
 						"content":       matchers.String(doc.EmbeddedPDF),
-						"documentType":  matchers.String(expectedType),
+						"documentType":  matchers.String(d.Type),
 						"scannedDate":   matchers.DateTimeGenerated("2014-12-18T14:48:33Z", "yyyy-MM-dd'T'HH:mm:ss'Z'"),
 					})
 			}).

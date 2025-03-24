@@ -53,9 +53,6 @@ func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.Scann
 			return nil, nil, fmt.Errorf("failed to cast correspInterface to corresp_types.Correspondence")
 		}
 		documentSubType = corresp.SubType
-	} else if util.Contains([]string{"DEPREPORTS", "FINDOCS", "DEPCORRES"}, s.originalDoc.Type) {
-		// For supervision report types directly map the top-level document type.
-		mappedDocType = deputyDocType(s.originalDoc.Type)
 	}
 
 	// Prepare the request payload
@@ -119,17 +116,4 @@ func (s *Service) CreateCaseStub(ctx context.Context) (*types.ScannedCaseRespons
 	}
 
 	return &scannedResponse, nil
-}
-
-func deputyDocType(docType string) string {
-	switch docType {
-	case "FINDOCS":
-		return "Report - Financial evidence"
-	case "DEPREPORTS":
-		return "Report - General"
-	case "DEPCORRES":
-		return "Report"
-	default:
-		return docType
-	}
 }
