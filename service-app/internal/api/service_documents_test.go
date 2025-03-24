@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/base64"
+	"encoding/xml"
 	"fmt"
 	"os"
 	"testing"
@@ -104,6 +105,102 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 		assert.NotNil(t, response)
 		assert.Equal(t, xmlStringData, decodedXML)
 		assert.Equal(t, "fc763eba-0905-41c5-a27f-3934ab26786c", response.UUID)
+
+		return err
+	})
+
+	assert.NoError(t, err)
+}
+
+func TestAttachDocument_Set_Supervision(t *testing.T) {
+	mockProvider, err := consumer.NewV4Pact(consumer.MockHTTPProviderConfig{
+		Consumer: "scanning",
+		Provider: "sirius",
+	})
+	assert.Nil(t, err)
+
+	// Load XML data from the test file specific to DEPREPORTS
+	xmlStringData := util.LoadXMLFileTesting(t, "../../xml/set/Supervision-DEPREPORTS.xml")
+	xmlBase64 := base64.StdEncoding.EncodeToString(xmlStringData)
+	if xmlBase64 == "" {
+		t.Fatal("failed to load sample DeputyReport XML")
+	}
+
+	var sSet types.BaseSet
+	err = xml.Unmarshal(xmlStringData, &sSet)
+	assert.NoError(t, err)
+	// We expect two Document nodes (one DEPREPORTS and one DEPCORRES)
+	assert.Equal(t, 2, len(sSet.Body.Documents), "expected 2 documents in the set")
+
+	for idx, d := range sSet.Body.Documents {
+		doc := sSet.Body.Documents[idx]
+
+		// Set up expected interactions
+		mockProvider.
+			AddInteraction().
+			Given(fmt.Sprintf("An %v with UID %v exists", d.Type, sSet.Header.CaseNo)).
+			Given("I am a DDC user").
+			UponReceiving("A request to attach a scanned document").
+			WithRequest("POST", "/api/public/v1/scanned-documents", func(b *consumer.V4RequestBuilder) {
+				b.
+					Header("Content-Type", matchers.String("application/json")).
+					JSONBody(matchers.Map{
+						"caseReference": matchers.String(sSet.Header.CaseNo),
+						"content":       matchers.String(doc.EmbeddedPDF),
+						"documentType":  matchers.String(d.Type),
+						"scannedDate":   matchers.DateTimeGenerated("2014-12-18T14:48:33Z", "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+					})
+			}).
+			WillRespondWith(201, func(b *consumer.V4ResponseBuilder) {
+				b.
+					Header("Content-Type", matchers.String("application/json")).
+					JSONBody(matchers.Map{
+						"uuid": matchers.UUID(),
+					})
+			})
+	}
+
+	err = mockProvider.ExecuteTest(t, func(pactConfig consumer.MockServerConfig) error {
+		baseURL := fmt.Sprintf("http://%s:%d", pactConfig.Host, pactConfig.Port)
+
+		fmt.Printf("Base URL: %s\n", baseURL)
+
+		// Mock dependencies
+		mockConfig := config.NewConfig()
+		mockConfig.App.SiriusBaseURL = baseURL
+		logger := logger.GetLogger(mockConfig)
+
+		_, _, _, tokenGenerator := auth.PrepareMocks(mockConfig, logger)
+		httpClient := httpclient.NewHttpClient(*mockConfig, *logger)
+		httpMiddleware, _ := httpclient.NewMiddleware(httpClient, tokenGenerator)
+
+		// For each document in the set, create a Service instance and call AttachDocuments
+		svc := &Service{
+			Client: &Client{Middleware: httpMiddleware},
+			set:    &sSet,
+		}
+		for _, d := range sSet.Body.Documents {
+			// Create a BaseDocument for this individual document.
+			svc.originalDoc = &d
+			caseResp := &types.ScannedCaseResponse{
+				UID: sSet.Header.CaseNo,
+			}
+
+			ctx := context.Background()
+			resp, decodedXML, err := svc.AttachDocuments(ctx, caseResp)
+			if err != nil {
+				t.Fatalf("AttachDocuments returned error for document type %s: %v", d.Type, err)
+			}
+
+			// Decode the embedded XML
+			decodedEmbeddedXML, err := base64.StdEncoding.DecodeString(d.EmbeddedXML)
+			if err != nil {
+				t.Fatalf("failed to decode embedded XML for document type %s: %v", d.Type, err)
+			}
+
+			assert.Equal(t, decodedEmbeddedXML, decodedXML)
+			assert.NotEqual(t, "", resp.UUID)
+		}
 
 		return err
 	})
