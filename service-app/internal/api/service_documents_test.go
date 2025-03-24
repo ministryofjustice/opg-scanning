@@ -141,7 +141,7 @@ func TestAttachDocument_Set_Supervision(t *testing.T) {
 	}
 
 	for idx, d := range sSet.Body.Documents {
-
+		doc := sSet.Body.Documents[idx]
 		// Determine expected mapped type
 		expectedType, ok := expectedMapping[d.Type]
 		if !ok {
@@ -159,7 +159,7 @@ func TestAttachDocument_Set_Supervision(t *testing.T) {
 					Header("Content-Type", matchers.String("application/json")).
 					JSONBody(matchers.Map{
 						"caseReference": matchers.String(sSet.Header.CaseNo),
-						"content":       matchers.String(sSet.Body.Documents[idx].EmbeddedPDF),
+						"content":       matchers.String(doc.EmbeddedPDF),
 						"documentType":  matchers.String(expectedType),
 						"scannedDate":   matchers.DateTimeGenerated("2014-12-18T14:48:33Z", "yyyy-MM-dd'T'HH:mm:ss'Z'"),
 					})
