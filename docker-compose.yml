@@ -1,6 +1,6 @@
 services:
   service-app:
-    image: service-app:latest
+    image: 311462405659.dkr.ecr.eu-west-1.amazonaws.com/sirius/scanning/app:latest
     build:
       context: ./service-app
     ports:
@@ -19,6 +19,8 @@ services:
       retries: 5
     depends_on:
       localstack:
+        condition: service_healthy
+      sirius-mock:
         condition: service_healthy
 
   service-app-test:
@@ -57,18 +59,18 @@ services:
       - "4566:4566"
       - "4571:4571"
     healthcheck:
-      test: [ "CMD", "bash", "/scripts/wait/healthcheck.sh" ]
+      test: ["CMD", "bash", "/scripts/wait/healthcheck.sh"]
       interval: 5s
       timeout: 10s
       retries: 5
     restart: unless-stopped
 
   sirius-mock:
-    image: outofcoffee/imposter:4.5.8
+    image: outofcoffee/imposter:4.6.2
     volumes:
       - ./docker/sirius:/opt/imposter/config
     healthcheck:
-      test: [ "CMD", "imposter", "list", "-x" ]
+      test: ["CMD", "imposter", "list", "-x"]
       interval: 5s
       timeout: 10s
       retries: 5
@@ -84,10 +86,10 @@ services:
 
   gosec:
     image: securego/gosec:latest
-    working_dir: /app
+    working_dir: /app/service-app
     volumes:
       - .:/app
-    command: -exclude-dir=.gocache -fmt=sarif -out=/app/test-results/gosec.sarif -stdout -verbose=text /app/...
+    command: -exclude-dir=.gocache -fmt=sarif -out=/app/test-results/gosec.sarif -stdout -verbose=text /app/service-app/...
 
   trivy:
     image: aquasec/trivy:latest

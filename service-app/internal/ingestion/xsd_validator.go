@@ -26,7 +26,7 @@ func NewXSDValidator(xsdPath string, xmlContent string) (*XSDValidator, error) {
 	if err != nil {
 		return nil, err
 	}
-	xsdContent, err := os.ReadFile(validPath)
+	xsdContent, err := os.ReadFile(validPath) //#nosec G304 false positive: we check the path above
 	if err != nil {
 		return nil, err
 	}

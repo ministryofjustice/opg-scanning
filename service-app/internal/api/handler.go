@@ -89,7 +89,7 @@ func (c *IndexController) HandleRequests() {
 
 	// Create the route to handle user authentication and issue JWT token.
 	http.Handle("/auth/sessions", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c.AuthHandler(r.Context(), w, r)
+		c.AuthHandler(w, r)
 	}))
 
 	// Protect the route with JWT validation (using the authMiddleware).
@@ -109,8 +109,8 @@ func (c *IndexController) HandleRequests() {
 	}
 }
 
-func (c *IndexController) AuthHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	// Define response error struct.
+func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
+	// Define response error struct
 	type ErrorResponse struct {
 		Error string `json:"error"`
 	}
@@ -156,6 +156,8 @@ func (c *IndexController) authResponse(ctx context.Context, w http.ResponseWrite
 
 func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) {
 	reqCtx := r.Context()
+	// Always clear queue errors at the end of the request.
+	defer c.Queue.ClearErrors()
 
 	if r.Method != http.MethodPost {
 		c.respondWithError(reqCtx, w, http.StatusMethodNotAllowed, "Invalid HTTP method", nil)
@@ -225,7 +227,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
 		// r.Context() carries the enriched logger injected by the middleware.
-		c.Queue.AddToQueue(reqCtx, doc, "xml", func(ctx context.Context, processedDoc any, originalDoc *types.BaseDocument) error {
+		c.Queue.AddToQueue(reqCtx, c.config, doc, "xml", func(ctx context.Context, processedDoc any, originalDoc *types.BaseDocument) error {
 			// Wrap the jobs context with a timeout for callback processing.
 			ctx, cancel := context.WithTimeout(ctx, time.Duration(c.config.HTTP.Timeout)*time.Second)
 			defer cancel()
@@ -314,8 +316,10 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	// Wait for the internal job queue to finish processing.
 	c.Queue.Wait()
 
-	// Check if any errors were collected from the internal jobs.
+	// Gather any errors.
 	jobErrors := c.Queue.GetErrors()
+
+	// Handle errors if present.
 	if len(jobErrors) > 0 {
 		var errorMessages []string
 		for _, err := range jobErrors {

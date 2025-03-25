@@ -15,12 +15,12 @@ integration-test:
 
 build:
 	@echo "Building the application..."
-	@docker compose build || { echo "Failed to build the application image"; exit 1; }
+	@docker compose build service-app || { echo "Failed to build the application image"; exit 1; }
 
 start:
 	@${MAKE} build
 	@echo "Running the application using Docker Compose..."
-	@docker compose up -d || { echo "Failed to start Docker Compose"; exit 1; }
+	@docker compose up -d service-app || { echo "Failed to start Docker Compose"; exit 1; }
 
 start-sirius:
 	@${MAKE} build
@@ -41,4 +41,4 @@ gosec: setup-directories
 	docker compose run --rm gosec
 
 scan:
-	docker compose run --rm trivy image --format table service-app:latest
+	docker compose run --rm trivy image --format table 311462405659.dkr.ecr.eu-west-1.amazonaws.com/sirius/scanning/app:latest
