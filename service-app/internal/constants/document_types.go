@@ -23,7 +23,10 @@ const (
 )
 
 const (
-	DocumentTypeCOPORD = "COPORD"
+	DocumentTypeCOPORD     = "COPORD"
+	DocumentTypeDEPREPORTS = "DEPREPORTS"
+	DocumentTypeDEPCORRES  = "DEPCORRES"
+	DocumentTypeFINDOCS    = "FINDOCS"
 )
 
 var (
@@ -43,6 +46,9 @@ var (
 		DocumentTypeEP2PG,
 		DocumentTypeLP2,
 		DocumentTypeEPA,
+		DocumentTypeDEPREPORTS,
+		DocumentTypeDEPCORRES,
+		DocumentTypeFINDOCS,
 	}
 
 	LPATypeDocuments = []string{
