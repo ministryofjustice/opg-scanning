@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/lestrrat-go/libxml2"
+	"github.com/lestrrat-go/libxml2/parser"
 	"github.com/lestrrat-go/libxml2/xsd"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
@@ -39,7 +40,7 @@ func NewXSDValidator(xsdPath string, xmlContent string) (*XSDValidator, error) {
 }
 
 func (v *XSDValidator) ValidateXsd() error {
-	doc, err := libxml2.ParseString(v.xmlContent)
+	doc, err := libxml2.ParseString(v.xmlContent, parser.XMLParseNoNet)
 	if err != nil {
 		return err
 	}
