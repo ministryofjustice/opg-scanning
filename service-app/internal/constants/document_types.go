@@ -15,6 +15,7 @@ const (
 	DocumentTypeLP2     = "LP2"
 	DocumentTypeLPC     = "LPC"
 	DocumentCorresp     = "Correspondence"
+	DocumentSupCorresp  = "SupCorrespondence"
 )
 
 const (
@@ -34,6 +35,7 @@ var (
 		DocumentTypeLP1F,
 		DocumentTypeLP1H,
 		DocumentCorresp,
+		DocumentSupCorresp,
 		DocumentTypeLPC,
 		DocumentTypeLPA120,
 		DocumentTypeLPA002,
