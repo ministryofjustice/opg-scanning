@@ -86,10 +86,12 @@ func (c *IndexController) HandleRequests() {
 		}
 	}))
 
+	// Create the route to handle user authentication and issue JWT token
 	http.Handle("/auth/sessions", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c.AuthHandler(w, r)
 	}))
 
+	// Protect the route with JWT validation (using the authMiddleware)
 	http.Handle("/api/ddc", otelhttp.NewHandler(logger.LoggingMiddleware(c.logger.SlogLogger)(
 		c.authMiddleware.CheckAuthMiddleware(http.HandlerFunc(c.IngestHandler)),
 	), "scanning"))
@@ -112,6 +114,7 @@ func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
 		Error string `json:"error"`
 	}
 
+	// Authenticate user credentials and issue JWT token
 	ctx, err := c.authMiddleware.Authenticator.Authenticate(w, r)
 	if err != nil {
 		errMsg := fmt.Sprintf("Authentication failed: %v", err)
@@ -120,6 +123,7 @@ func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Retrieve user from context
 	userFromCtx, ok := auth.UserFromContext(ctx)
 	if !ok {
 		errMsg := "Failed to retrieve user from context"
@@ -130,6 +134,7 @@ func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
 
 	token := c.authMiddleware.TokenGenerator.GetToken()
 
+	// Build response with email and token
 	resp := struct {
 		Email string `json:"email"`
 		Token string `json:"authentication_token"`
@@ -171,6 +176,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Save Set to S3
 	filename, err := c.AwsClient.PersistSetData(reqCtx, []byte(bodyStr))
 	if err != nil {
 		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Could not persist set to S3", err)
@@ -187,6 +193,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Validate the parsed set
 	if err := c.validator.ValidateSet(parsedBaseXml); err != nil {
 		c.respondWithError(reqCtx, w, http.StatusBadRequest, "Validate set failed", err)
 		return
@@ -276,6 +283,7 @@ func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseW
 	}
 }
 
+// Helper Method: Validate and Sanitize XML
 func (c *IndexController) readRequestBody(r *http.Request) (string, error) {
 	if r.Body == nil {
 		return "", errors.New("request body is empty")
@@ -294,6 +302,7 @@ func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr st
 		return nil, err
 	}
 
+	// Validate against XSD
 	c.logger.InfoWithContext(ctx, "Validating against XSD", nil)
 	xsdValidator, err := ingestion.NewXSDValidator(c.config.App.ProjectFullPath+"/xsd/"+schemaLocation, bodyStr)
 	if err != nil {
@@ -313,6 +322,7 @@ func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr st
 		return nil, fmt.Errorf("set failed XSD validation: %w", err)
 	}
 
+	// Validate and sanitize the XML
 	c.logger.InfoWithContext(ctx, "Validating and sanitizing XML", nil)
 	xmlValidator := ingestion.NewXmlValidator(*c.config)
 	parsedBaseXml, err := xmlValidator.XmlValidateSanitize(bodyStr)
@@ -320,6 +330,7 @@ func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr st
 		return nil, err
 	}
 
+	// Validate embedded documents
 	for _, document := range parsedBaseXml.Body.Documents {
 		if err := c.validateDocument(document); err != nil {
 			return nil, err
