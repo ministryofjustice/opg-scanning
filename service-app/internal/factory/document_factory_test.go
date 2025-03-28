@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/base64"
 	"os"
+	"strings"
 	"testing"
 
+	"github.com/lestrrat-go/libxml2"
+	"github.com/lestrrat-go/libxml2/xsd"
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
@@ -88,6 +91,76 @@ func TestProcessGenericDocuments(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			prepareDocument(t, tc.docType, tc.valid)
 		})
+	}
+}
+
+// Verifies that valid data returns proper XML given LP1F.
+func TestGenerateXMLFromProcessedDocument_Success(t *testing.T) {
+	processedDoc := prepareDocument(t, "LP1F", "LP1F-valid")
+
+	lp1fDoc, ok := processedDoc.(*lp1f_types.LP1FDocument)
+	require.True(t, ok, "Expected processedDoc to be of type *lp1f_types.LP1FDocument")
+
+	input := lp1fDoc
+	result, err := GenerateXMLFromProcessedDocument(input)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	expectedHeader := "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+	if !strings.HasPrefix(string(result), expectedHeader) {
+		t.Errorf("Expected XML to start with header %q, got %q", expectedHeader, result)
+	}
+
+	if !strings.Contains(string(result), "<LP1F>") {
+		t.Errorf("Expected XML to contain <LP1F>, got %q", result)
+	}
+}
+
+// Verifies that an unmarshalable input causes an error.
+func TestGenerateXMLFromProcessedDocument_Error(t *testing.T) {
+	// A channel cannot be marshalled to XML.
+	input := make(chan int)
+	_, err := GenerateXMLFromProcessedDocument(input)
+	if err == nil {
+		t.Fatalf("Expected an error, got nil")
+	}
+}
+
+func TestProcessedXMLValidation(t *testing.T) {
+	mockConfig := config.NewConfig()
+
+	processedDoc := prepareDocument(t, "LP1F", "LP1F-valid")
+
+	lp1fDoc, ok := processedDoc.(*lp1f_types.LP1FDocument)
+	require.True(t, ok, "Expected processedDoc to be of type *lp1f_types.LP1FDocument")
+
+	input := lp1fDoc
+	result, err := GenerateXMLFromProcessedDocument(input)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	// Run XSD validation on the processed XML.
+	// Assume schemaPath is the path to your XSD.
+	schemaPath := mockConfig.App.ProjectFullPath + "/xsd/LP1F.xsd"
+	xsdContent, err := os.ReadFile(schemaPath)
+	if err != nil {
+		t.Fatalf("failed to load schemaPath: %v", err)
+	}
+	schema, err := xsd.Parse(xsdContent)
+	if err != nil {
+		t.Fatalf("failed to parse xsdContent: %v", err)
+	}
+
+	doc, err := libxml2.ParseString(string(result))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer doc.Free()
+
+	if err := schema.Validate(doc); err != nil {
+		t.Fatalf("XSD validation failed: %v", err)
 	}
 }
 
