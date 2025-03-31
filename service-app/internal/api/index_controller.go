@@ -155,7 +155,6 @@ func (c *IndexController) authResponse(ctx context.Context, w http.ResponseWrite
 
 func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) {
 	reqCtx := r.Context()
-	// Always clear queue errors at the end of the request.
 	defer c.Queue.ClearErrors()
 
 	if r.Method != http.MethodPost {
@@ -200,7 +199,6 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Create a new client and prepare to attach documents
 	client := NewClient(c.httpMiddleware)
 	service := NewService(client, parsedBaseXml)
 	ctx, cancel := context.WithTimeout(r.Context(), time.Duration(c.config.HTTP.Timeout)*time.Second)
@@ -211,105 +209,17 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Ensure scannedCaseResponse
 	if scannedCaseResponse == nil || scannedCaseResponse.UID == "" {
 		c.respondWithError(reqCtx, w, http.StatusInternalServerError,
 			"Invalid response from Sirius when creating case stub, scannedCaseResponse is nil or missing UID",
 			errors.New("scannedCaseResponse UID missing"))
 		return
 	}
-	// Queue each document for further processing
-	c.logger.InfoWithContext(reqCtx, "Queueing documents for processing", map[string]any{
-		"Header": parsedBaseXml.Header,
-	})
 
-	for i := range parsedBaseXml.Body.Documents {
-		doc := &parsedBaseXml.Body.Documents[i]
-		// r.Context() carries the enriched logger injected by the middleware.
-		c.Queue.AddToQueue(reqCtx, c.config, doc, "xml", func(ctx context.Context, processedDoc any, originalDoc *types.BaseDocument) error {
-			// Wrap the jobs context with a timeout for callback processing.
-			ctx, cancel := context.WithTimeout(ctx, time.Duration(c.config.HTTP.Timeout)*time.Second)
-			defer cancel()
-
-			// Attach documents to case
-			// Set the documents original and processed entities before attaching
-			service.originalDoc = originalDoc
-			attchResp, decodedXML, docErr := service.AttachDocuments(ctx, scannedCaseResponse)
-			if docErr != nil {
-				c.logger.ErrorWithContext(ctx, "Failed to attach document", map[string]any{
-					"set_uid":       scannedCaseResponse.UID,
-					"document_type": originalDoc.Type,
-					"error":         docErr.Error(),
-				})
-				return docErr
-			}
-
-			// Persist form data in S3 bucket
-			fileName, persistErr := c.processAndPersist(ctx, decodedXML, originalDoc)
-			if persistErr != nil {
-				c.logger.ErrorWithContext(ctx, "Failed to persist document", map[string]any{
-					"set_uid":       scannedCaseResponse.UID,
-					"document_type": originalDoc.Type,
-					"error":         persistErr.Error(),
-				})
-				return persistErr
-			}
-
-			// Check if the document is a correspondence type; if so do not send to the job queue
-			if !util.Contains(constants.SiriusExtractionDocuments, originalDoc.Type) {
-				c.logger.InfoWithContext(ctx, "Skipping external job processing, checks completed for document", map[string]any{
-					"set_uid":       scannedCaseResponse.UID,
-					"pdf_uuid":      attchResp.UUID,
-					"filename":      fileName,
-					"document_type": originalDoc.Type,
-				})
-				return nil
-			}
-
-			// Persist external aws job queue with UID+fileName
-			messageID, err := c.AwsClient.QueueSetForProcessing(ctx, scannedCaseResponse, fileName)
-			if err != nil {
-				c.logger.ErrorWithContext(ctx, "Failed to queue document for processing", map[string]any{
-					"set_uid":       scannedCaseResponse.UID,
-					"document_type": originalDoc.Type,
-					"error":         err.Error(),
-				})
-				return err
-			}
-
-			c.logger.InfoWithContext(ctx, "Job processing completed for document", map[string]any{
-				"set_uid":       scannedCaseResponse.UID,
-				"pdf_uuid":      attchResp.UUID,
-				"job_queue_id":  messageID,
-				"filename":      fileName,
-				"document_type": originalDoc.Type,
-			})
-
-			return nil
-		})
-		c.logger.InfoWithContext(ctx, "Document queued for processing", map[string]any{
-			"set_uid":       scannedCaseResponse.UID,
-			"document_type": doc.Type,
-		})
-	}
-
-	// Wait for the internal job queue to finish processing.
-	c.Queue.Wait()
-
-	// Gather any errors.
-	jobErrors := c.Queue.GetErrors()
-
-	// Handle errors if present.
-	if len(jobErrors) > 0 {
-		var errorMessages []string
-		for _, err := range jobErrors {
-			errorMessages = append(errorMessages, err.Error())
-		}
-		errMsg := fmt.Sprintf("Errors encountered during processing: %s", strings.Join(errorMessages, "; "))
-		c.respondWithError(reqCtx, w, http.StatusInternalServerError, errMsg, errors.New(errMsg))
+	// Processing qeueue
+	if err := c.ProcessQueue(reqCtx, scannedCaseResponse, parsedBaseXml); err != nil {
+		c.respondWithError(reqCtx, w, http.StatusInternalServerError, err.Error(), err)
 		return
-	} else {
-		c.logger.InfoWithContext(reqCtx, "No errors found!", nil)
 	}
 
 	// Send the UID response
@@ -373,7 +283,7 @@ func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseW
 	}
 }
 
-// Helper Method: Read Request Body
+// Helper Method: Validate and Sanitize XML
 func (c *IndexController) readRequestBody(r *http.Request) (string, error) {
 	if r.Body == nil {
 		return "", errors.New("request body is empty")
@@ -386,9 +296,7 @@ func (c *IndexController) readRequestBody(r *http.Request) (string, error) {
 	return string(body), nil
 }
 
-// Helper Method: Validate and Sanitize XML
 func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr string) (*types.BaseSet, error) {
-	// Extract the document type from the XML
 	schemaLocation, err := ingestion.ExtractSchemaLocation(bodyStr)
 	if err != nil {
 		return nil, err
@@ -406,13 +314,11 @@ func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr st
 			for _, error := range schemaValidationError.Errors() {
 				validationErrors = append(validationErrors, error.Error())
 			}
-
 			return nil, Problem{
 				Title:            "Validate and sanitize XML failed",
 				ValidationErrors: validationErrors,
 			}
 		}
-
 		return nil, fmt.Errorf("set failed XSD validation: %w", err)
 	}
 
@@ -462,26 +368,22 @@ func (c *IndexController) validateDocument(document types.BaseDocument) error {
 			for _, error := range schemaValidationError.Errors() {
 				validationErrors = append(validationErrors, error.Error())
 			}
-
 			return Problem{
 				Title:            fmt.Sprintf("XML for %s failed XSD validation", document.Type),
 				ValidationErrors: validationErrors,
 			}
 		}
-
 		return fmt.Errorf("failed XSD validation: %w", err)
 	}
 
 	return nil
 }
 
-func (c *IndexController) processAndPersist(ctx context.Context, decodedXML []byte, originalDoc *types.BaseDocument) (fileName string, err error) {
-	// Persist the decoded XML data in its original form as represented in the origin request.
+func (c *IndexController) processAndPersist(ctx context.Context, decodedXML []byte, originalDoc *types.BaseDocument) (string, error) {
 	xmlReader := bytes.NewReader(decodedXML)
 	fileName, awsErr := c.AwsClient.PersistFormData(ctx, xmlReader, originalDoc.Type)
 	if awsErr != nil {
 		return "", awsErr
 	}
-
 	return fileName, nil
 }
