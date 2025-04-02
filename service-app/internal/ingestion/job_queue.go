@@ -91,7 +91,7 @@ func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
 						}
 
 						if job.onComplete != nil {
-							// Pass the jobs original context to the callback.
+							// Pass HTTP client timeout for processing jobs
 							err := job.onComplete(processCtx, parsedDoc, job.Data)
 							if err != nil {
 								q.recordError(fmt.Errorf("onComplete errors: %v", err.Error()))
