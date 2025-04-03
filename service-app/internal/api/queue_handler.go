@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"time"
 
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
@@ -20,10 +19,6 @@ func (c *IndexController) ProcessQueue(ctx context.Context, scannedCaseResponse 
 		doc := &parsedBaseXml.Body.Documents[i]
 		// Here we use AddToQueueSequentially to ensure that the documents are processed in order.
 		c.Queue.AddToQueueSequentially(ctx, c.config, doc, "xml", func(ctx context.Context, processedDoc any, originalDoc *types.BaseDocument) error {
-			// Wrap the job context with a timeout.
-			ctx, cancel := context.WithTimeout(ctx, time.Duration(c.config.HTTP.Timeout)*time.Second)
-			defer cancel()
-
 			// Create a new service instance for attaching documents.
 			service := NewService(NewClient(c.httpMiddleware), parsedBaseXml)
 			service.originalDoc = originalDoc
@@ -82,16 +77,13 @@ func (c *IndexController) ProcessQueue(ctx context.Context, scannedCaseResponse 
 			return nil
 		})
 
-		c.logger.InfoWithContext(ctx, "Document queued for processing", map[string]any{
+		c.logger.InfoWithContext(ctx, "Document added for processing", map[string]any{
 			"set_uid":       scannedCaseResponse.UID,
 			"document_type": doc.Type,
 		})
 	}
 
 	// Only needed for async processing.
-	// // Wait for all jobs to finish.
-	// c.Queue.Wait()
-
 	// // Retrieve and handle any errors that occurred during processing.
 	// jobErrors := c.Queue.GetErrors()
 	// if len(jobErrors) > 0 {
