@@ -46,6 +46,40 @@ func NewJobContext(reqCtx context.Context) context.Context {
 	return logger.ContextWithLogger(ctx, enrichedLogger)
 }
 
+func (q *JobQueue) AddToQueueSequentially(ctx context.Context, cfg *config.Config, data *types.BaseDocument, format string, onComplete func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) error) {
+	// Create a job context
+	jobCtx := NewJobContext(ctx)
+
+	// Initialize the registry and processor synchronously
+	registry, err := factory.NewRegistry()
+	if err != nil {
+		q.recordError(fmt.Errorf("failed to create registry: %v", err))
+		return
+	}
+
+	processor, err := factory.NewDocumentProcessor(data, data.Type, format, registry, q.logger)
+	if err != nil {
+		q.recordError(fmt.Errorf("failed to initialize processor: %v", err))
+		return
+	}
+
+	// Use a per-job timeout context.
+	processCtx, cancel := context.WithTimeout(jobCtx, time.Duration(cfg.HTTP.Timeout)*time.Second)
+	defer cancel()
+
+	parsedDoc, err := processor.Process(processCtx)
+	if err != nil {
+		q.recordError(fmt.Errorf("failed to process job: %v", err))
+		return
+	}
+
+	if onComplete != nil {
+		if err = onComplete(processCtx, parsedDoc, data); err != nil {
+			q.recordError(fmt.Errorf("onComplete error: %v", err))
+		}
+	}
+}
+
 func (q *JobQueue) AddToQueue(ctx context.Context, cfg *config.Config, data *types.BaseDocument, format string, onComplete func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) error) {
 	jobCtx := NewJobContext(ctx)
 	job := Job{ctx: jobCtx, cfg: cfg, Data: data, format: format, onComplete: onComplete}
