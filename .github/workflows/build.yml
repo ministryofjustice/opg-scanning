@@ -26,7 +26,7 @@ jobs:
     outputs:
       branch_name: ${{ steps.extract_branch.outputs.branch_name }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
       - name: Extract & Sanitise branch name
         id: extract_branch
         run: |
@@ -48,12 +48,12 @@ jobs:
     name: Go Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
       - run: make go-lint
         continue-on-error: true
       - name: Upload golangci-lint results to GitHub Security tab
         if: ${{ always() }}
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v3.28.13
         with:
           sarif_file: "test-results/go-lint.sarif"
           category: golangci-lint
@@ -63,12 +63,12 @@ jobs:
     name: Go Sec
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
       - run: make gosec
         continue-on-error: true
       - name: Upload GoSec results to GitHub Security tab
         if: ${{ always() }}
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v3.28.13
         with:
           sarif_file: "test-results/gosec.sarif"
           category: gosec
@@ -82,7 +82,7 @@ jobs:
       - branch_name
       - semver_tag
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
       - run: make test
       - name: Get commit SHA
         id: get_commit
@@ -93,7 +93,7 @@ jobs:
               echo "COMMIT=${{github.event.pull_request.head.sha}}" >> $GITHUB_OUTPUT
           fi
       - name: Upload code coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v5.4.0
         with:
           files: ./test-results/coverage.out
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -121,14 +121,14 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
       - name: Set up Docker
         run: |
           echo '{"experimental": true, "features": { "containerd-snapshotter": true }}' | sudo tee -a /etc/docker/daemon.json
           sudo systemctl restart docker
           docker run --privileged --rm tonistiigi/binfmt --install all
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4.2.1
         with:
           path: /tmp/images
           name: multi-arch-image
@@ -167,7 +167,7 @@ jobs:
       local_docker_image: 311462405659.dkr.ecr.eu-west-1.amazonaws.com/sirius/scanning/app:latest
       sarif_file: trivy-results.sarif
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
       - name: Set up Docker
         run: |
@@ -175,7 +175,7 @@ jobs:
           sudo systemctl restart docker
           docker run --privileged --rm tonistiigi/binfmt --install all
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4.2.1
         with:
           path: /tmp/images
           name: multi-arch-image
@@ -185,7 +185,7 @@ jobs:
       
       # log in to ECR
       - name: Configure AWS Credentials With Assumed Role to Management
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v4.1.0
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -209,7 +209,7 @@ jobs:
           format: "sarif"
           output: ${{ env.sarif_file }}
       - name: Trivy scan upload to github
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v3.28.13
         if: always()
         with:
           sarif_file: ${{ env.sarif_file }}
@@ -236,10 +236,10 @@ jobs:
     if: github.ref == 'refs/heads/main'
     needs: [branch_name, semver_tag, build, push]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v4.1.0
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -250,7 +250,7 @@ jobs:
 
       - name: Install AWS CLI
         id: install-aws-cli
-        uses: unfor19/install-aws-cli-action@v1
+        uses: unfor19/install-aws-cli-action@v1.0.7
 
       - name: Push Tag to Parameter Store
         run: |
