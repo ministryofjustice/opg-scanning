@@ -46,104 +46,35 @@ func NewJobContext(reqCtx context.Context) context.Context {
 	return logger.ContextWithLogger(ctx, enrichedLogger)
 }
 
-func (q *JobQueue) AddToQueue(ctx context.Context, cfg *config.Config, data *types.BaseDocument, format string, onComplete func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) error) {
+func (q *JobQueue) AddToQueueSequentially(ctx context.Context, cfg *config.Config, data *types.BaseDocument, format string, onComplete func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) error) error {
+	// Create a job context
 	jobCtx := NewJobContext(ctx)
-	job := Job{ctx: jobCtx, cfg: cfg, Data: data, format: format, onComplete: onComplete}
-	q.wg.Add(1)
-	q.Jobs <- job
-}
 
-func (q *JobQueue) StartWorkerPool(ctx context.Context, numWorkers int) {
-	for i := 0; i < numWorkers; i++ {
-		go func(workerID int) {
-			for {
-				select {
-				case job, ok := <-q.Jobs:
-					if !ok {
-						return // Exit if the job channel is closed
-					}
-
-					// Create a per job timeout context from the jobs context.
-					processCtx, cancel := context.WithTimeout(job.ctx, time.Duration(job.cfg.HTTP.Timeout)*time.Second)
-					done := make(chan struct{})
-
-					go func() {
-						defer close(done)
-
-						// Initialize document processor
-						registry, err := factory.NewRegistry()
-						if err != nil {
-							q.recordError(fmt.Errorf("Worker %d failed to create registry, job: %v", workerID, err))
-							return
-						}
-
-						processor, err := factory.NewDocumentProcessor(job.Data, job.Data.Type, job.format, registry, q.logger)
-						if err != nil {
-							q.recordError(fmt.Errorf("Worker %d failed to initialize processor for job: %v", workerID, err))
-							return
-						}
-
-						// Process the document using processCtx to enforce the timeout.
-						parsedDoc, err := processor.Process(processCtx)
-						if err != nil {
-							q.recordError(fmt.Errorf("Worker %d failed to process job: %v\n", workerID, err))
-							return
-						}
-
-						if job.onComplete != nil {
-							// Pass HTTP client timeout for processing jobs
-							err := job.onComplete(processCtx, parsedDoc, job.Data)
-							if err != nil {
-								q.recordError(fmt.Errorf("onComplete errors: %v", err.Error()))
-							}
-						}
-					}()
-
-					select {
-					case <-processCtx.Done():
-						q.recordError(fmt.Errorf("Worker %d timed out processing job\n", workerID))
-					case <-done:
-						// Job completed without timing out.
-						q.logger.Info("Worker completed: %d!\n", nil, workerID)
-					}
-					// Cancel the timeout context to free resources.
-					cancel()
-					q.wg.Done()
-
-				case <-ctx.Done():
-					q.logger.Info("Worker pool stopped", nil)
-					return
-				}
-			}
-		}(i)
+	// Initialize the registry and processor synchronously
+	registry, err := factory.NewRegistry()
+	if err != nil {
+		return fmt.Errorf("failed to create registry: %v", err)
 	}
-}
 
-func (q *JobQueue) recordError(err error) {
-	q.errorMu.Lock()
-	defer q.errorMu.Unlock()
-	q.errors = append(q.errors, err)
-}
+	processor, err := factory.NewDocumentProcessor(data, data.Type, format, registry, q.logger)
+	if err != nil {
+		return fmt.Errorf("failed to initialize processor: %v", err)
+	}
 
-func (q *JobQueue) GetErrors() []error {
-	q.errorMu.Lock()
-	defer q.errorMu.Unlock()
-	errorsCopy := make([]error, len(q.errors))
-	copy(errorsCopy, q.errors)
-	return errorsCopy
-}
+	// Use a per-job timeout context.
+	processCtx, cancel := context.WithTimeout(jobCtx, time.Duration(cfg.HTTP.Timeout)*time.Second)
+	defer cancel()
 
-func (q *JobQueue) ClearErrors() {
-	q.errorMu.Lock()
-	defer q.errorMu.Unlock()
-	q.errors = []error{}
-}
+	parsedDoc, err := processor.Process(processCtx)
+	if err != nil {
+		return fmt.Errorf("failed to process job: %v", err)
+	}
 
-func (q *JobQueue) Wait() {
-	q.wg.Wait()
-}
+	if onComplete != nil {
+		if err = onComplete(processCtx, parsedDoc, data); err != nil {
+			return fmt.Errorf("onComplete error: %w", err)
+		}
+	}
 
-func (q *JobQueue) Close() {
-	close(q.Jobs)
-	q.wg.Wait()
+	return nil
 }
