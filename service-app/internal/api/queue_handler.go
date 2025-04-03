@@ -83,17 +83,6 @@ func (c *IndexController) ProcessQueue(ctx context.Context, scannedCaseResponse 
 		})
 	}
 
-	// Only needed for async processing.
-	// // Retrieve and handle any errors that occurred during processing.
-	// jobErrors := c.Queue.GetErrors()
-	// if len(jobErrors) > 0 {
-	// 	var errorMessages []string
-	// 	for _, err := range jobErrors {
-	// 		errorMessages = append(errorMessages, err.Error())
-	// 	}
-	// 	return errors.New(fmt.Sprintf("Errors encountered during processing: %s", strings.Join(errorMessages, "; ")))
-	// }
-
 	c.logger.InfoWithContext(ctx, "No errors found!", nil)
 	return nil
 }

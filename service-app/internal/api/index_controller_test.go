@@ -60,9 +60,6 @@ func setupController() *IndexController {
 		AwsClient:      awsClient,
 	}
 
-	// start the worker pool so that queued jobs are processed.
-	go controller.Queue.StartWorkerPool(context.Background(), 3)
-
 	return controller
 }
 

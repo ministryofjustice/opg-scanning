@@ -53,7 +53,6 @@ func main() {
 	}
 
 	controller := api.NewIndexController(awsClient, appConfig)
-	controller.Queue.StartWorkerPool(ctx, 3)
 	slogLogger.Info("Service started...")
 
 	go func() {
@@ -68,6 +67,5 @@ func main() {
 	// Start shutdown sequence
 	slogLogger.Info("Shutting down gracefully...")
 	cancel()
-	controller.Queue.Close()
 	slogLogger.Info("All jobs processed. Exiting.")
 }
