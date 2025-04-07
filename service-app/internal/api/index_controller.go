@@ -247,10 +247,6 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func (c *IndexController) CloseQueue() {
-	c.Queue.Close()
-}
-
 func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseWriter, statusCode int, message string, err error) {
 	if statusCode >= 500 {
 		c.logger.ErrorWithContext(ctx, message, map[string]any{
