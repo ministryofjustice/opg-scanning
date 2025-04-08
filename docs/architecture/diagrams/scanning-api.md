@@ -11,6 +11,7 @@ subgraph IndexController [IndexController]
 H1[Health Check Handler]
 H2[Auth Handler]
 H3[IngestHandler]
+H4[HTTP Rresponse: xxx]
 end
 
 A1 --> H1
@@ -25,7 +26,7 @@ I3[Extract Schema & Validate XSD]
 I4[XML Sanitization & Embedded Document Validation]
 I5[Validate Set via Validator]
 I6[Create Case Stub Sirius]
-I7[Queue Each Document]
+I7[Process Each Document]
 end
 
 H3 --> I1
@@ -35,17 +36,15 @@ I3 --> I4
 I4 --> I5
 I5 --> I6
 I6 --> I7
-IngestFlow -- HTTP Response --> H3
+IngestFlow --> H4
 
 %% Job Queue & Document Processing
-subgraph JobProcessing [Job Queue & Processing]
-Q1[JobQueue]
-Q2[Worker Pool]
-Q3[DocumentProcessor]
-Q4[Component Registry]
-Q5[Parser / Validator / Sanitizer per Doc Type]
-Q6[Process Document]
-Q7[On-Complete Callback]
+subgraph JobProcessing [Sequential JobProcessing]
+Q1[DocumentProcessor]
+Q2[Component Registry]
+Q3[Parser / Validator / Sanitizer per Doc Type]
+Q4[Process Document]
+Q5[On-Complete Callback]
 end
 
 I7 --> Q1
@@ -53,10 +52,7 @@ Q1 --> Q2
 Q2 --> Q3
 Q3 --> Q4
 Q4 --> Q5
-Q3 --> Q6
-Q6 --> Q7
-Q7 --> Q8
-JobProcessing --> IngestFlow
+Q5 --> onComplete
 
 subgraph onComplete [onComplete callback]
 Q8[Attach Documents to Case]
@@ -67,6 +63,7 @@ end
 Q8 --> Q9
 Q9 --> Q10
 onComplete --> JobProcessing
+JobProcessing --> IngestFlow
 
 %% Auth Flow
 subgraph AuthFlow [Authentication]
