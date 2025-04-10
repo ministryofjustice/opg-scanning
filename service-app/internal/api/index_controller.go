@@ -318,9 +318,9 @@ func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr st
 	}
 
 	// Validate and sanitize the XML
-	c.logger.InfoWithContext(ctx, "Validating and sanitizing XML", nil)
+	c.logger.InfoWithContext(ctx, "Validating XML", nil)
 	xmlValidator := ingestion.NewXmlValidator(*c.config)
-	parsedBaseXml, err := xmlValidator.XmlValidateSanitize(bodyStr)
+	parsedBaseXml, err := xmlValidator.XmlValidate(bodyStr)
 	if err != nil {
 		return nil, err
 	}

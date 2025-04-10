@@ -34,7 +34,7 @@ func BaseParserXml(data []byte) (*types.BaseSet, error) {
 // have all fields marked with the "required" tag present and non-empty.
 // It supports pointer dereferencing and recursive validation for nested structs.
 // Returns an error if any required field is missing or empty; otherwise, returns nil.
-func ValidateStruct(s interface{}) error {
+func ValidateStruct(s any) error {
 	val := reflect.ValueOf(s)
 
 	// Check if val is a pointer and dereference it
@@ -43,7 +43,7 @@ func ValidateStruct(s interface{}) error {
 	}
 	typeOfS := val.Type()
 
-	for i := 0; i < val.NumField(); i++ {
+	for i := range val.NumField() {
 		field := val.Field(i)
 		fieldType := typeOfS.Field(i)
 		requiredTag := fieldType.Tag.Get("required")
