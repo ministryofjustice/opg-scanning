@@ -11,7 +11,6 @@ import (
 type RegistryInterface interface {
 	GetParser(docType string) (func([]byte) (interface{}, error), error)
 	GetValidator(docType string) (parser.CommonValidator, error)
-	GetSanitizer(docType string) (parser.CommonSanitizer, error)
 }
 
 // Registry manages parsers, validators, and sanitizers for document types.
@@ -54,12 +53,4 @@ func (r *Registry) GetValidator(docType string) (parser.CommonValidator, error) 
 		return nil, fmt.Errorf("validator for document type '%s' not found", docType)
 	}
 	return component.Validator, nil
-}
-
-func (r *Registry) GetSanitizer(docType string) (parser.CommonSanitizer, error) {
-	component, exists := r.components[docType]
-	if !exists {
-		return nil, fmt.Errorf("sanitizer for document type '%s' not found", docType)
-	}
-	return component.Sanitizer, nil
 }

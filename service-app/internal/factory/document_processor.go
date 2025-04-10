@@ -12,9 +12,8 @@ import (
 
 type DocumentProcessor struct {
 	logger    logger.Logger
-	doc       interface{}
+	doc       any
 	validator parser.CommonValidator
-	sanitizer parser.CommonSanitizer
 }
 
 // Initializes a new DocumentProcessor.
@@ -43,24 +42,17 @@ func NewDocumentProcessor(data *types.BaseDocument, docType, format string, regi
 		return nil, fmt.Errorf("failed to retrieve validator factory: %w", err)
 	}
 
-	// Fetch the sanitizer
-	sanitizer, err := registry.GetSanitizer(docType)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve sanitizer: %w", err)
-	}
-
 	return &DocumentProcessor{
 		logger:    *logger,
 		doc:       parsedDoc,
 		validator: validator,
-		sanitizer: sanitizer,
 	}, nil
 }
 
 // Process validates and sanitizes the document.
-func (p *DocumentProcessor) Process(ctx context.Context) (interface{}, error) {
+func (p *DocumentProcessor) Process(ctx context.Context) (any, error) {
 	// If the document type doesn't declare a validator or sanitizer, skip.
-	if p.validator == nil || p.sanitizer == nil {
+	if p.validator == nil {
 		return p.doc, nil
 	}
 
@@ -74,16 +66,5 @@ func (p *DocumentProcessor) Process(ctx context.Context) (interface{}, error) {
 		p.logger.Info("Validation failed: %v", nil, messages)
 	}
 
-	// Sanitize the document
-	if err := p.sanitizer.Setup(p.doc); err != nil {
-		return nil, fmt.Errorf("sanitization setup failed: %w", err)
-	}
-
-	sanitizedDoc, err := p.sanitizer.Sanitize()
-	if err != nil {
-		return nil, fmt.Errorf("sanitization failed: %w", err)
-	}
-
-	p.doc = sanitizedDoc
 	return p.doc, nil
 }
