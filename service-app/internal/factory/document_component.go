@@ -21,7 +21,6 @@ import (
 type Component struct {
 	Parser    func([]byte) (interface{}, error)
 	Validator parser.CommonValidator
-	Sanitizer parser.CommonSanitizer
 }
 
 // Stores the mapping of document types to their respective components.
@@ -29,22 +28,18 @@ var componentRegistry = map[string]Component{
 	"LP1H": {
 		Parser:    lp1h_parser.Parse,
 		Validator: lp1h_parser.NewValidator(),
-		Sanitizer: lp1h_parser.NewSanitizer(),
 	},
 	"LP1F": {
 		Parser:    lp1f_parser.Parse,
 		Validator: lp1f_parser.NewValidator(),
-		Sanitizer: lp1f_parser.NewSanitizer(),
 	},
 	"Correspondence": {
 		Parser:    corresp_parser.Parse,
 		Validator: corresp_parser.NewValidator(),
-		Sanitizer: corresp_parser.NewSanitizer(),
 	},
 	"LPC": {
 		Parser:    lpc_parser.Parse,
 		Validator: lpc_parser.NewValidator(),
-		Sanitizer: lpc_parser.NewSanitizer(),
 	},
 	"LPA115": {
 		Parser: lpa115_parser.Parse,

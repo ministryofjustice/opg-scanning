@@ -7,5 +7,4 @@ type CommonValidator interface {
 
 type CommonSanitizer interface {
 	Setup(doc any) error
-	Sanitize() (any, error)
 }

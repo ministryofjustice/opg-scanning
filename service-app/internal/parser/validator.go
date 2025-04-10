@@ -13,7 +13,7 @@ import (
 
 // Validator is a struct that holds document data and validation error messages
 type BaseValidator struct {
-	doc           interface{}
+	doc           any
 	errorMessages []string
 	dates         []time.Time
 }
@@ -79,12 +79,12 @@ func (v *BaseValidator) GetFieldByPath(page string, section string, fields ...st
 
 	switch current.Kind() {
 	case reflect.String:
-		return []interface{}{current.String()}, nil
+		return []any{current.String()}, nil
 	case reflect.Bool:
-		return []interface{}{current.Bool()}, nil
+		return []any{current.Bool()}, nil
 	case reflect.Slice, reflect.Array:
-		var result []interface{}
-		for i := 0; i < current.Len(); i++ {
+		var result []any
+		for i := range current.Len() {
 			result = append(result, current.Index(i).Interface())
 		}
 		return result, nil
