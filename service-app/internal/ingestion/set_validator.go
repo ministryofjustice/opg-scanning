@@ -46,7 +46,7 @@ func (v *Validator) ValidateSet(parsedSet *types.BaseSet) error {
 	newCaseDocuments := v.getEmbeddedDocumentTypes(parsedSet, constants.NewCaseNumberDocuments)
 
 	if len(newCaseDocuments) > 1 {
-		return errors.New("Set cannot contain multiple cases which would create a case")
+		return errors.New("set cannot contain multiple cases which would create a case")
 	}
 
 	if len(newCaseDocuments) > 0 {
