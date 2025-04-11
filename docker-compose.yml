@@ -44,7 +44,7 @@ services:
         condition: service_healthy
 
   localstack:
-    image: localstack/localstack:4.2
+    image: localstack/localstack:4.3
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "./scripts/localstack/init:/etc/localstack/init/ready.d"
@@ -66,7 +66,7 @@ services:
     restart: unless-stopped
 
   sirius-mock:
-    image: outofcoffee/imposter:4.6.2
+    image: outofcoffee/imposter:4.6.5
     volumes:
       - ./docker/sirius:/opt/imposter/config
     healthcheck:
