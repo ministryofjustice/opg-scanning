@@ -18,7 +18,7 @@ func (c *IndexController) ProcessQueue(ctx context.Context, scannedCaseResponse 
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
 		// Here we use AddToQueueSequentially to ensure that the documents are processed in order.
-		c.Queue.AddToQueueSequentially(ctx, c.config, doc, "xml", func(ctx context.Context, processedDoc any, originalDoc *types.BaseDocument) error {
+		err := c.Queue.AddToQueueSequentially(ctx, c.config, doc, "xml", func(ctx context.Context, processedDoc any, originalDoc *types.BaseDocument) error {
 			// Create a new service instance for attaching documents.
 			service := NewService(NewClient(c.httpMiddleware), parsedBaseXml)
 			service.originalDoc = originalDoc
@@ -76,6 +76,13 @@ func (c *IndexController) ProcessQueue(ctx context.Context, scannedCaseResponse 
 
 			return nil
 		})
+
+		if err != nil {
+			c.logger.ErrorWithContext(ctx, err.Error(), map[string]any{
+				"set_uid":       scannedCaseResponse.UID,
+				"document_type": doc.Type,
+			})
+		}
 
 		c.logger.InfoWithContext(ctx, "Document added for processing", map[string]any{
 			"set_uid":       scannedCaseResponse.UID,

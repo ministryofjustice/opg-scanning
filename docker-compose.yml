@@ -82,7 +82,7 @@ services:
     volumes:
       - ./:/go/src/app
       - ./.cache/golangci-lint/v1.64.5:/root/.cache
-    command: golangci-lint run -v --timeout 5m --out-format=sarif:/go/src/app/test-results/go-lint.sarif,colored-line-number --modules-download-mode=readonly
+    command: golangci-lint run -v --timeout 5m --output.text.path stdout --output.sarif.path /go/src/app/test-results/go-lint.sarif --modules-download-mode=readonly
 
   gosec:
     image: securego/gosec:latest

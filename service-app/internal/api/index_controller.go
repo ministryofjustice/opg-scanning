@@ -170,7 +170,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	contentType := r.Header.Get("Content-Type")
-	if !(strings.HasPrefix(contentType, "application/xml") || strings.HasPrefix(contentType, "text/xml")) {
+	if !strings.HasPrefix(contentType, "application/xml") && !strings.HasPrefix(contentType, "text/xml") {
 		c.respondWithError(reqCtx, w, http.StatusBadRequest, "Invalid content type", fmt.Errorf("expected application/xml or text/xml, got %s", contentType))
 		return
 	}
@@ -287,7 +287,7 @@ func (c *IndexController) readRequestBody(r *http.Request) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer r.Body.Close()
+	defer r.Body.Close() //nolint:errcheck // no need to check error when closing body
 	return string(body), nil
 }
 

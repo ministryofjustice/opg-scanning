@@ -117,7 +117,7 @@ func TestSetValidatorValidationRules(t *testing.T) {
 					},
 				},
 			},
-			ErrorMessage: "Set cannot contain multiple cases which would create a case",
+			ErrorMessage: "set cannot contain multiple cases which would create a case",
 		},
 		{
 			Name: "accepts new case document without CaseNo",

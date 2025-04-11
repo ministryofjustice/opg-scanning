@@ -13,25 +13,14 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type Job struct {
-	ctx        context.Context
-	cfg        *config.Config
-	Data       *types.BaseDocument
-	format     string
-	onComplete func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) error
-}
-
 type JobQueue struct {
-	Jobs    chan Job
 	wg      *sync.WaitGroup
 	logger  *logger.Logger
 	errors  []error
-	errorMu sync.Mutex
 }
 
 func NewJobQueue(config *config.Config) *JobQueue {
 	queue := &JobQueue{
-		Jobs:   make(chan Job, 10), // Buffer size can be adjusted based on needs
 		wg:     &sync.WaitGroup{},
 		logger: logger.GetLogger(config),
 		errors: make([]error, 0),
