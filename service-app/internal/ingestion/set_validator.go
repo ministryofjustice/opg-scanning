@@ -43,7 +43,8 @@ func (v *Validator) ValidateSet(parsedSet *types.BaseSet) error {
 	}
 
 	// Validate combinations of instruments and applications
-	newCaseDocuments := v.getEmbeddedDocumentTypes(parsedSet, constants.NewCaseNumberDocuments)
+	createCaseDocumentTypes := append(constants.CreateEPADocuments, constants.CreateLPADocuments...)
+	newCaseDocuments := v.getEmbeddedDocumentTypes(parsedSet, createCaseDocumentTypes)
 
 	if len(newCaseDocuments) > 1 {
 		return errors.New("set cannot contain multiple cases which would create a case")
