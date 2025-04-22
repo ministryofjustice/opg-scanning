@@ -12,14 +12,14 @@ func determineCaseRequest(set *types.BaseSet) (*types.ScannedCaseRequest, error)
 	now := time.Now().Format(time.RFC3339)
 
 	for _, doc := range set.Body.Documents {
-		if util.Contains(constants.LPATypeDocuments, doc.Type) {
+		if util.Contains(constants.CreateLPADocuments, doc.Type) {
 			return &types.ScannedCaseRequest{
 				BatchID:     set.Header.Schedule,
 				CaseType:    "lpa",
 				ReceiptDate: formatScannedDate(set.Header.ScanTime),
 				CreatedDate: now,
 			}, nil
-		} else if util.Contains(constants.EPATypeDocuments, doc.Type) {
+		} else if util.Contains(constants.CreateEPADocuments, doc.Type) {
 			return &types.ScannedCaseRequest{
 				BatchID:     set.Header.Schedule,
 				CaseType:    "epa",

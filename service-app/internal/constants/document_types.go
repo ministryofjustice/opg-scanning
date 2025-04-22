@@ -53,23 +53,14 @@ var (
 		DocumentTypeFINDOCS,
 	}
 
-	LPATypeDocuments = []string{
-		DocumentTypeLPA002,
+	CreateLPADocuments = []string{
 		DocumentTypeLP1F,
 		DocumentTypeLP1H,
 		DocumentTypeLP2,
 	}
 
-	EPATypeDocuments = []string{
+	CreateEPADocuments = []string{
 		DocumentTypeEP2PG,
-		DocumentTypeEPA,
-	}
-
-	NewCaseNumberDocuments = []string{
-		DocumentTypeEP2PG,
-		DocumentTypeLP2,
-		DocumentTypeLP1F,
-		DocumentTypeLP1H,
 	}
 
 	// these documents should be sent to Sirius to be extracted

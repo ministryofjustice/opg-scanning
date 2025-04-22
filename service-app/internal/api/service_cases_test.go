@@ -60,7 +60,7 @@ func buildTestCases() []requestCaseStub {
 		},
 		{
 			name:       "LPA Case without CaseNo",
-			xmlPayload: fmt.Sprintf(withoutCaseNoPayload, "LPA002"),
+			xmlPayload: fmt.Sprintf(withoutCaseNoPayload, "LP1F"),
 			expectedReq: &types.ScannedCaseRequest{
 				BatchID:  "02-0001112-20160909185000",
 				CaseType: "lpa",
@@ -68,13 +68,25 @@ func buildTestCases() []requestCaseStub {
 			expectedErr: false,
 		},
 		{
+			name:       "Other LPA Document with CaseNo",
+			xmlPayload: fmt.Sprintf(withCaseNoPayload, "LPA002"),
+			expectedReq: nil,
+			expectedErr: true,
+		},
+		{
 			name:       "EPA Case without CaseNo",
-			xmlPayload: fmt.Sprintf(withoutCaseNoPayload, "EPA"),
+			xmlPayload: fmt.Sprintf(withoutCaseNoPayload, "EP2PG"),
 			expectedReq: &types.ScannedCaseRequest{
 				BatchID:  "02-0001112-20160909185000",
 				CaseType: "epa",
 			},
 			expectedErr: false,
+		},
+		{
+			name:       "Other EPA Document with CaseNo",
+			xmlPayload: fmt.Sprintf(withCaseNoPayload, "EPA"),
+			expectedReq: nil,
+			expectedErr: true,
 		},
 		{
 			name:        "Invalid Document Type without CaseNo",
