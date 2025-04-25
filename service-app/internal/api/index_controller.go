@@ -64,7 +64,7 @@ func NewIndexController(awsClient aws.AwsClientInterface, appConfig *config.Conf
 	// Create authentication middleware
 	authMiddleware := auth.NewMiddleware(authenticator, tokenGenerator, cookieHelper, logger)
 	// Create HTTP middleware
-	httpMiddleware, _ := httpclient.NewMiddleware(httpClient, tokenGenerator)
+	httpMiddleware, _ := httpclient.NewMiddleware(httpClient)
 
 	return &IndexController{
 		config:         appConfig,
@@ -115,7 +115,7 @@ func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Authenticate user credentials and issue JWT token
-	ctx, err := c.authMiddleware.Authenticator.Authenticate(w, r)
+	ctx, token, err := c.authMiddleware.Authenticator.Authenticate(w, r)
 	if err != nil {
 		errMsg := fmt.Sprintf("Authentication failed: %v", err)
 		c.logger.Error(errMsg, nil)
@@ -131,8 +131,6 @@ func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
 		c.authResponse(ctx, w, ErrorResponse{Error: errMsg})
 		return
 	}
-
-	token := c.authMiddleware.TokenGenerator.GetToken()
 
 	// Build response with email and token
 	resp := struct {
@@ -201,8 +199,9 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	client := NewClient(c.httpMiddleware)
 	service := NewService(client, parsedBaseXml)
 	ctx, cancel := context.WithTimeout(r.Context(), time.Duration(c.config.HTTP.Timeout)*time.Second)
+	ctxWithToken := context.WithValue(ctx, constants.UserContextKey, reqCtx.Value(constants.UserContextKey))
 	defer cancel()
-	scannedCaseResponse, err := service.CreateCaseStub(ctx)
+	scannedCaseResponse, err := service.CreateCaseStub(ctxWithToken)
 	if err != nil {
 		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Failed to create case stub in Sirius", err)
 		return
