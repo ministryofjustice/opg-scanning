@@ -2,6 +2,11 @@ package auth
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/ministryofjustice/opg-scanning/config"
@@ -53,4 +58,22 @@ func TestAuthenticatorCredentials(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAuthenticate(t *testing.T) {
+	cfg := config.NewConfig()
+	logger := logger.GetLogger(cfg)
+
+	_, authMiddleware, _, _ := PrepareMocks(cfg, logger)
+
+	w := httptest.NewRecorder()
+	request := &http.Request{
+		Body: io.NopCloser(strings.NewReader(fmt.Sprintf(`{"user":{"email":"%s","password":"password"}}`, cfg.Auth.ApiUsername))),
+	}
+
+	ctx, token, err := authMiddleware.Authenticator.Authenticate(w, request)
+	assert.Nil(t, err)
+	assert.NotNil(t, ctx)
+
+	assert.Contains(t, w.Header().Get("Set-Cookie"), fmt.Sprintf("membrane=%s;", token))
 }
