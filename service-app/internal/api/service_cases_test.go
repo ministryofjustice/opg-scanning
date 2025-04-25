@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/ministryofjustice/opg-scanning/config"
-	"github.com/ministryofjustice/opg-scanning/internal/auth"
+	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
@@ -68,8 +68,8 @@ func buildTestCases() []requestCaseStub {
 			expectedErr: false,
 		},
 		{
-			name:       "Other LPA Document with CaseNo",
-			xmlPayload: fmt.Sprintf(withCaseNoPayload, "LPA002"),
+			name:        "Other LPA Document with CaseNo",
+			xmlPayload:  fmt.Sprintf(withCaseNoPayload, "LPA002"),
 			expectedReq: nil,
 			expectedErr: true,
 		},
@@ -83,8 +83,8 @@ func buildTestCases() []requestCaseStub {
 			expectedErr: false,
 		},
 		{
-			name:       "Other EPA Document with CaseNo",
-			xmlPayload: fmt.Sprintf(withCaseNoPayload, "EPA"),
+			name:        "Other EPA Document with CaseNo",
+			xmlPayload:  fmt.Sprintf(withCaseNoPayload, "EPA"),
 			expectedReq: nil,
 			expectedErr: true,
 		},
@@ -154,14 +154,13 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 			mockConfig.App.SiriusBaseURL = baseURL
 
 			// Mock dependencies
-			_, _, _, tokenGenerator := auth.PrepareMocks(mockConfig, logger)
 			httpClient := httpclient.NewHttpClient(*mockConfig, *logger)
-			httpMiddleware, _ := httpclient.NewMiddleware(httpClient, tokenGenerator)
+			httpMiddleware, _ := httpclient.NewMiddleware(httpClient)
 
 			client := NewClient(httpMiddleware)
 			service := NewService(client, &set)
 
-			ctx := context.Background()
+			ctx := context.WithValue(context.Background(), constants.UserContextKey, "my-token")
 
 			response, err := service.CreateCaseStub(ctx)
 

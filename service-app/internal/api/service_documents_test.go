@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/ministryofjustice/opg-scanning/config"
-	"github.com/ministryofjustice/opg-scanning/internal/auth"
+	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
@@ -73,9 +73,8 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 		mockConfig.App.SiriusBaseURL = baseURL
 		logger := logger.GetLogger(mockConfig)
 
-		_, _, _, tokenGenerator := auth.PrepareMocks(mockConfig, logger)
 		httpClient := httpclient.NewHttpClient(*mockConfig, *logger)
-		httpMiddleware, _ := httpclient.NewMiddleware(httpClient, tokenGenerator)
+		httpMiddleware, _ := httpclient.NewMiddleware(httpClient)
 
 		// Prepare service instance
 		service := &Service{
@@ -96,7 +95,8 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 			UID: "7000-3764-4871",
 		}
 
-		ctx := context.Background()
+		ctx := context.WithValue(context.Background(), constants.UserContextKey, "my-token")
+
 		response, decodedXML, err := service.AttachDocuments(ctx, caseResponse)
 		if err != nil {
 			t.Fatalf("AttachDocuments returned error: %v", err)

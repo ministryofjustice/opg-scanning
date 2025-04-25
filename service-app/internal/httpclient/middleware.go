@@ -3,22 +3,22 @@ package httpclient
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ministryofjustice/opg-scanning/config"
-	"github.com/ministryofjustice/opg-scanning/internal/auth"
+	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 )
 
 // Middleware handles HTTP requests with authorization.
 type Middleware struct {
-	Client         HttpClientInterface
-	Config         *config.Config
-	Logger         *logger.Logger
-	TokenGenerator auth.TokenGenerator
+	Client HttpClientInterface
+	Config *config.Config
+	Logger *logger.Logger
 }
 
-func NewMiddleware(client HttpClientInterface, tokenGenerator auth.TokenGenerator) (*Middleware, error) {
+func NewMiddleware(client HttpClientInterface) (*Middleware, error) {
 	config := client.GetConfig()
 	logger := client.GetLogger()
 
@@ -31,22 +31,19 @@ func NewMiddleware(client HttpClientInterface, tokenGenerator auth.TokenGenerato
 	}
 
 	return &Middleware{
-		Client:         client,
-		Config:         config,
-		Logger:         logger,
-		TokenGenerator: tokenGenerator,
+		Client: client,
+		Config: config,
+		Logger: logger,
 	}, nil
 }
 
 // Acts as an HTTP wrapper for existing client with Authorization header set.
 func (m *Middleware) HTTPRequest(ctx context.Context, url, method string, payload []byte, headers map[string]string) ([]byte, error) {
-	// Ensure token is valid using the TokenGenerator from auth package
-	if err := m.TokenGenerator.EnsureToken(ctx); err != nil {
-		return nil, fmt.Errorf("failed to ensure token: %w", err)
-	}
-
 	// Retrieve the token
-	token := m.TokenGenerator.GetToken()
+	token, ok := ctx.Value(constants.UserContextKey).(string)
+	if !ok {
+		return nil, errors.New("could not fetch user token from context")
+	}
 
 	// Add the Authorization header
 	if headers == nil {
