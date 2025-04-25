@@ -17,6 +17,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/auth"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
+	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
@@ -44,8 +45,8 @@ func setupController() *IndexController {
 	logger := logger.GetLogger(appConfig)
 
 	// Create mock dependencies
-	mockHttpClient, mockAuthMiddleware, awsClient, tokenGenerator := auth.PrepareMocks(appConfig, logger)
-	httpMiddleware, _ := httpclient.NewMiddleware(mockHttpClient, tokenGenerator)
+	mockHttpClient, mockAuthMiddleware, awsClient, _ := auth.PrepareMocks(appConfig, logger)
+	httpMiddleware, _ := httpclient.NewMiddleware(mockHttpClient)
 
 	mockHttpClient.On("HTTPRequest", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return([]byte(`{"UID": "7000-1234-1234"}`), nil)
@@ -69,6 +70,9 @@ func TestIngestHandler_SetValid(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayload)))
 	req.Header.Set("Content-Type", "application/xml")
 	w := httptest.NewRecorder()
+
+	reqCtx := context.WithValue(context.Background(), constants.UserContextKey, "my-token")
+	req = req.WithContext(reqCtx)
 
 	controller.IngestHandler(w, req)
 

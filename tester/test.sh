@@ -6,7 +6,7 @@ get_token() {
 	auth_reponse=$(curl --location "$HOST/auth/sessions" \
 		--silent \
 		--header 'Content-Type: application/json' \
-		--data-raw '{"user":{"email":"opg_document_and_d@publicguardian.gsi.gov.uk","password":"$2y$10$Xlq5mrdU6ZSh7kU5Yi.vpuCOrWCekNl9BwLcAg5G5bwr22ehTEpEa"}}')
+		--data-raw '{"user":{"email":"opg_document_and_d@publicguardian.gsi.gov.uk","password":"password"}}')
 
 	echo $auth_reponse | jq -r '.authentication_token'
 }
