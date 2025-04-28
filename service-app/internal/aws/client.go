@@ -106,7 +106,8 @@ func (a *AwsClient) PersistFormData(ctx context.Context, body io.Reader, docType
 	}
 
 	// Generate the filename using the required format
-	currentTime := time.Now().Format("20060102150405")
+	currentTime := time.Now().Format("20060102150405.000000")
+	currentTime = strings.Replace(currentTime, ".", "_", 1)
 	fileName := fmt.Sprintf("FORM_DDC_%s_%s.xml", currentTime, docType)
 
 	// Check body is valid XML before S3 input
@@ -148,7 +149,8 @@ func (a *AwsClient) PersistSetData(ctx context.Context, body []byte) (string, er
 		return "", fmt.Errorf("JOBSQUEUE_BUCKET is not set")
 	}
 
-	currentTime := time.Now().Format("20060102150405")
+	currentTime := time.Now().Format("20060102150405.000000")
+	currentTime = strings.Replace(currentTime, ".", "_", 1)
 	fileName := fmt.Sprintf("SET_%s.xml", currentTime)
 
 	// Create a new reader from the buffered data

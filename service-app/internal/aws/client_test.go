@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"testing"
 	"time"
 
@@ -46,7 +47,7 @@ func TestPersistFormData_LocalStack(t *testing.T) {
 	body := bytes.NewReader([]byte("<?xml version=\"1.0\" encoding=\"UTF-8\"?><test>test</test>"))
 	fileName, err := awsClient.PersistFormData(ctx, body, docType)
 	assert.NoError(t, err, "PersistFormData should not return an error")
-	assert.Contains(t, fileName, "FORM_DDC_", "Expected file name to start with 'FORM_DDC_'")
+	assert.Regexp(t, regexp.MustCompile(`^FORM_DDC_\d{14}_\d{6}_TestDoc.xml$`), fileName)
 
 	// Test PersistFormData invalid
 	docType = "TestDoc"
@@ -54,8 +55,6 @@ func TestPersistFormData_LocalStack(t *testing.T) {
 	_, err = awsClient.PersistFormData(ctx, body, docType)
 	assert.Error(t, err, "PersistFormData should return an error for invalid XML")
 
-	currentTime := time.Now().Format("20060102150405")
-	expectedKey := fmt.Sprintf("FORM_DDC_%s_%s.xml", currentTime, docType)
 	listObjectsOutput, err := awsClient.S3.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
 		Bucket: aws.String(appConfig.Aws.JobsQueueBucket),
 	})
@@ -64,12 +63,12 @@ func TestPersistFormData_LocalStack(t *testing.T) {
 
 	var found bool
 	for _, object := range listObjectsOutput.Contents {
-		if *object.Key == expectedKey {
+		if *object.Key == fileName {
 			found = true
 			break
 		}
 	}
-	assert.True(t, found, fmt.Sprintf("Expected object key '%s' not found in the bucket", expectedKey))
+	assert.True(t, found, fmt.Sprintf("Expected object key '%s' not found in the bucket", fileName))
 }
 
 func TestPersistSetData(t *testing.T) {
@@ -88,10 +87,8 @@ func TestPersistSetData(t *testing.T) {
 	body := []byte("<?xml version=\"1.0\" encoding=\"UTF-8\"?><Set>test</Set>")
 	fileName, err := awsClient.PersistSetData(ctx, body)
 	assert.NoError(t, err)
-	assert.Regexp(t, "^SET_", fileName)
+	assert.Regexp(t, regexp.MustCompile(`^SET_\d{14}_\d{6}.xml$`), fileName)
 
-	currentTime := time.Now().Format("20060102150405")
-	expectedKey := fmt.Sprintf("SET_%s.xml", currentTime)
 	listObjectsOutput, err := awsClient.S3.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
 		Bucket: aws.String(appConfig.Aws.JobsQueueBucket),
 	})
@@ -100,12 +97,12 @@ func TestPersistSetData(t *testing.T) {
 
 	var found bool
 	for _, object := range listObjectsOutput.Contents {
-		if *object.Key == expectedKey {
+		if *object.Key == fileName {
 			found = true
 			break
 		}
 	}
-	assert.True(t, found, fmt.Sprintf("Expected object key '%s' not found in the bucket", expectedKey))
+	assert.True(t, found, fmt.Sprintf("Expected object key '%s' not found in the bucket", fileName))
 }
 
 func TestAwsQueue_PHPSerialization(t *testing.T) {
