@@ -129,6 +129,7 @@ func (a *AwsClient) PersistFormData(ctx context.Context, body io.Reader, docType
 		Body:                 readerForS3,
 		ServerSideEncryption: types.ServerSideEncryptionAwsKms,
 		SSEKMSKeyId:          &a.config.Aws.JobsQueueBucketKmsKey,
+		IfNoneMatch:          aws.String("*"),
 	}
 
 	// Upload the file to S3
@@ -162,6 +163,7 @@ func (a *AwsClient) PersistSetData(ctx context.Context, body []byte) (string, er
 		Body:                 readerForS3,
 		ServerSideEncryption: types.ServerSideEncryptionAwsKms,
 		SSEKMSKeyId:          &a.config.Aws.JobsQueueBucketKmsKey,
+		IfNoneMatch:          aws.String("*"),
 	}
 
 	_, err := a.S3.PutObject(ctx, input)

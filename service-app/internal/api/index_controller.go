@@ -215,9 +215,9 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Processing qeueue
+	// Processing queue
 	if err := c.ProcessQueue(reqCtx, scannedCaseResponse, parsedBaseXml); err != nil {
-		c.respondWithError(reqCtx, w, http.StatusInternalServerError, err.Error(), err)
+		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Failed to persist document to Sirius", err)
 		return
 	}
 
