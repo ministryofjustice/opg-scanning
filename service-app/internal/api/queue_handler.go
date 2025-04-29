@@ -82,6 +82,8 @@ func (c *IndexController) ProcessQueue(ctx context.Context, scannedCaseResponse 
 				"set_uid":       scannedCaseResponse.UID,
 				"document_type": doc.Type,
 			})
+
+			return err
 		}
 
 		c.logger.InfoWithContext(ctx, "Document added for processing", map[string]any{
