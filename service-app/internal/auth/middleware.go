@@ -24,24 +24,17 @@ func NewMiddleware(authenticator Authenticator, tokenGenerator TokenGenerator, c
 	}
 }
 
-func (m *Middleware) AuthenticateMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, err := m.Authenticator.Authenticate(w, r)
-		if err != nil {
-			m.respondWithError(w, http.StatusUnauthorized, "Unauthorized", err)
-			return
-		}
-
-		// Pass the new context with user info to the next handler
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
 func (m *Middleware) CheckAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, err := m.CookieHelper.GetTokenFromCookie(r)
 		if err != nil {
 			m.respondWithError(w, http.StatusUnauthorized, "Unauthorized: Missing token", err)
+			return
+		}
+
+		err = m.TokenGenerator.ValidateToken(token)
+		if err != nil {
+			m.respondWithError(w, http.StatusUnauthorized, "Unauthorized: Invalid token", err)
 			return
 		}
 

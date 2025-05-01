@@ -12,7 +12,7 @@ import (
 )
 
 type Authenticator interface {
-	Authenticate(w http.ResponseWriter, r *http.Request) (context.Context, error)
+	Authenticate(w http.ResponseWriter, r *http.Request) (context.Context, string, error)
 	ValidateCredentials(ctx context.Context, creds UserLogin) (context.Context, error)
 }
 
@@ -30,32 +30,30 @@ func NewBasicAuthAuthenticator(awsClient aws.AwsClientInterface, cookieHelper Co
 	}
 }
 
-func (a *BasicAuthAuthenticator) Authenticate(w http.ResponseWriter, r *http.Request) (context.Context, error) {
+func (a *BasicAuthAuthenticator) Authenticate(w http.ResponseWriter, r *http.Request) (context.Context, string, error) {
 	var creds UserLogin
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&creds); err != nil {
-		return nil, fmt.Errorf("invalid JSON payload: %w", err)
+		return nil, "", fmt.Errorf("invalid JSON payload: %w", err)
 	}
 
 	// Validate credentials first
 	ctx, err := a.ValidateCredentials(r.Context(), creds)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	if err := a.TokenGenerator.EnsureToken(ctx); err != nil {
-		return nil, fmt.Errorf("failed to ensure token: %w", err)
+	token, expiry, err := a.TokenGenerator.GenerateToken()
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to generate token: %w", err)
 	}
-
-	token := a.TokenGenerator.GetToken()
-	expiry := a.TokenGenerator.GetExpiry()
 
 	if err := a.CookieHelper.SetTokenInCookie(w, token, expiry); err != nil {
-		return nil, fmt.Errorf("failed to set cookie: %w", err)
+		return nil, "", fmt.Errorf("failed to set cookie: %w", err)
 	}
 
-	return ctx, nil
+	return ctx, token, nil
 }
 
 func (a *BasicAuthAuthenticator) ValidateCredentials(ctx context.Context, user UserLogin) (context.Context, error) {
