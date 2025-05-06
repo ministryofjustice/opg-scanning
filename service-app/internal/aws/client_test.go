@@ -47,7 +47,7 @@ func TestPersistFormData_LocalStack(t *testing.T) {
 	body := bytes.NewReader([]byte("<?xml version=\"1.0\" encoding=\"UTF-8\"?><test>test</test>"))
 	fileName, err := awsClient.PersistFormData(ctx, body, docType)
 	assert.NoError(t, err, "PersistFormData should not return an error")
-	assert.Regexp(t, regexp.MustCompile(`^FORM_DDC_\d{14}_\d{6}_TestDoc.xml$`), fileName)
+	assert.Regexp(t, regexp.MustCompile(`^FORM_DDC_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}_TestDoc.xml$`), fileName)
 
 	// Test PersistFormData invalid
 	docType = "TestDoc"
@@ -87,7 +87,7 @@ func TestPersistSetData(t *testing.T) {
 	body := []byte("<?xml version=\"1.0\" encoding=\"UTF-8\"?><Set>test</Set>")
 	fileName, err := awsClient.PersistSetData(ctx, body)
 	assert.NoError(t, err)
-	assert.Regexp(t, regexp.MustCompile(`^SET_\d{14}_\d{6}.xml$`), fileName)
+	assert.Regexp(t, regexp.MustCompile(`^SET_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}.xml$`), fileName)
 
 	listObjectsOutput, err := awsClient.S3.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
 		Bucket: aws.String(appConfig.Aws.JobsQueueBucket),

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -15,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
+	"github.com/google/uuid"
 	"github.com/ministryofjustice/opg-scanning/config"
 	appTypes "github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
@@ -106,9 +106,8 @@ func (a *AwsClient) PersistFormData(ctx context.Context, body io.Reader, docType
 	}
 
 	// Generate the filename using the required format
-	currentTime := time.Now().Format("20060102150405.000000")
-	currentTime = strings.Replace(currentTime, ".", "_", 1)
-	fileName := fmt.Sprintf("FORM_DDC_%s_%s.xml", currentTime, docType)
+	uuid := uuid.Must(uuid.NewV7()).String()
+	fileName := fmt.Sprintf("FORM_DDC_%s_%s.xml", uuid, docType)
 
 	// Check body is valid XML before S3 input
 	bodyBytes, bodyErr := io.ReadAll(body)
@@ -150,9 +149,8 @@ func (a *AwsClient) PersistSetData(ctx context.Context, body []byte) (string, er
 		return "", fmt.Errorf("JOBSQUEUE_BUCKET is not set")
 	}
 
-	currentTime := time.Now().Format("20060102150405.000000")
-	currentTime = strings.Replace(currentTime, ".", "_", 1)
-	fileName := fmt.Sprintf("SET_%s.xml", currentTime)
+	uuid := uuid.Must(uuid.NewV7()).String()
+	fileName := fmt.Sprintf("SET_%s.xml", uuid)
 
 	// Create a new reader from the buffered data
 	readerForS3 := bytes.NewReader(body)
