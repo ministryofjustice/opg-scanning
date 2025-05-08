@@ -216,7 +216,14 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 
 	// Processing queue
 	if err := c.ProcessQueue(reqCtx, scannedCaseResponse, parsedBaseXml); err != nil {
-		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Failed to persist document to Sirius", err)
+		if errors.Is(err, httpclient.ErrNotFound) {
+			publicMessage := fmt.Sprintf("Case not found with UID %s", scannedCaseResponse.UID)
+
+			c.respondWithError(reqCtx, w, http.StatusBadRequest, publicMessage, err)
+		} else {
+			c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Failed to persist document to Sirius", err)
+		}
+
 		return
 	}
 

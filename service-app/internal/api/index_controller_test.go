@@ -21,6 +21,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
+	"github.com/ministryofjustice/opg-scanning/internal/mocks"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"github.com/stretchr/testify/assert"
@@ -180,6 +181,51 @@ func TestIngestHandler_InvalidEmbeddedXMLProvidesDetails(t *testing.T) {
 	assert.Nil(t, err)
 	assert.False(t, responseObj.Data.Success)
 	assert.Contains(t, responseObj.Data.ValidationErrors, "Element 'LP2': Missing child element(s). Expected is ( Page1 ).")
+}
+
+func TestIngestHandler_CaseNotFound(t *testing.T) {
+	controller := setupController()
+
+	mockHttpClient := new(mocks.MockHttpClient)
+	mockHttpClient.On("GetConfig").Return(controller.config)
+	mockHttpClient.On("GetLogger").Return(controller.logger)
+	mockHttpClient.On("HTTPRequest", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return([]byte{}, httpclient.ErrNotFound)
+
+	httpMiddleware, _ := httpclient.NewMiddleware(mockHttpClient)
+	controller.httpMiddleware = httpMiddleware
+
+	xmlPayloadCorrespondence := `<Set xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SET.xsd">
+		<Header CaseNo="700012341234" Scanner="9" ScanTime="2014-09-26T12:38:53" ScannerOperator="Administrator" Schedule="02-0001112-20160909185000" />
+		<Body>
+			<Document Type="Correspondence" Encoding="UTF-8" NoPages="19">
+				<XML>PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPENvcnJlc3BvbmRlbmNlIHhtbG5zOnhzaT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2UiCiAgeHNpOm5vTmFtZXNwYWNlU2NoZW1hTG9jYXRpb249IkNvcnJlc3BvbmRlbmNlLnhzZCI+CiAgPFN1YlR5cGU+TGVnYWw8L1N1YlR5cGU+CiAgPENhc2VOdW1iZXI+MTIzNDU8L0Nhc2VOdW1iZXI+CiAgPENhc2VOdW1iZXI+Njc4OTA8L0Nhc2VOdW1iZXI+CiAgPFBhZ2U+CiAgICA8QlVSTj4xMjNBQkM8L0JVUk4+CiAgICA8UGh5c2ljYWxQYWdlPjE8L1BoeXNpY2FsUGFnZT4KICA8L1BhZ2U+CiAgPFBhZ2U+CiAgICA8QlVSTj40NTZERUY8L0JVUk4+CiAgICA8UGh5c2ljYWxQYWdlPjI8L1BoeXNpY2FsUGFnZT4KICA8L1BhZ2U+CjwvQ29ycmVzcG9uZGVuY2U+Cg==</XML>
+				<PDF>SGVsbG8gd29ybGQ=</PDF>
+			</Document>
+		</Body>
+	</Set>`
+
+	req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayloadCorrespondence)))
+	req.Header.Set("Content-Type", "application/xml")
+	w := httptest.NewRecorder()
+
+	reqCtx := context.WithValue(context.Background(), constants.UserContextKey, "my-token")
+	req = req.WithContext(reqCtx)
+
+	controller.IngestHandler(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("expected status %d; got %d", http.StatusAccepted, resp.StatusCode)
+	}
+
+	responseBody, _ := io.ReadAll(resp.Body)
+	var responseObj response
+
+	err := json.Unmarshal(responseBody, &responseObj)
+	assert.Nil(t, err)
+	assert.False(t, responseObj.Data.Success)
+	assert.Equal(t, "Case not found with UID 700012341234", responseObj.Data.Message)
 }
 
 func TestProcessAndPersist_IncludesXMLDeclaration(t *testing.T) {
