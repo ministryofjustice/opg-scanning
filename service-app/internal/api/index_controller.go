@@ -216,7 +216,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 
 	// Processing queue
 	if err := c.ProcessQueue(reqCtx, scannedCaseResponse, parsedBaseXml); err != nil {
-		if errors.Is(err, httpclient.NotFoundError) {
+		if errors.Is(err, httpclient.ErrNotFound) {
 			publicMessage := fmt.Sprintf("Case not found with UID %s", scannedCaseResponse.UID)
 
 			c.respondWithError(reqCtx, w, http.StatusBadRequest, publicMessage, err)

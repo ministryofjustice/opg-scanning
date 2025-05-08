@@ -190,7 +190,7 @@ func TestIngestHandler_CaseNotFound(t *testing.T) {
 	mockHttpClient.On("GetConfig").Return(controller.config)
 	mockHttpClient.On("GetLogger").Return(controller.logger)
 	mockHttpClient.On("HTTPRequest", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return([]byte{}, httpclient.NotFoundError)
+		Return([]byte{}, httpclient.ErrNotFound)
 
 	httpMiddleware, _ := httpclient.NewMiddleware(mockHttpClient)
 	controller.httpMiddleware = httpMiddleware

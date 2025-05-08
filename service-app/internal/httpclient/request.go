@@ -14,7 +14,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
-var NotFoundError = errors.New("received 404 response from")
+var ErrNotFound = errors.New("received 404 response from")
 
 type HttpClient struct {
 	HttpClient *http.Client
@@ -55,7 +55,7 @@ func (r *HttpClient) HTTPRequest(ctx context.Context, url, method string, payloa
 
 	// Handle non-2xx responses
 	if resp.StatusCode == 404 {
-		return nil, NotFoundError
+		return nil, ErrNotFound
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
