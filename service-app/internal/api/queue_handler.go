@@ -55,6 +55,10 @@ func (c *IndexController) ProcessQueue(ctx context.Context, scannedCaseResponse 
 				return nil
 			}
 
+			c.logger.InfoWithContext(ctx, "Stored Form data", map[string]any{
+				"filename": fileName,
+			})
+
 			// Queue the document for external processing.
 			messageID, err := c.AwsClient.QueueSetForProcessing(ctx, scannedCaseResponse, fileName)
 			if err != nil {
