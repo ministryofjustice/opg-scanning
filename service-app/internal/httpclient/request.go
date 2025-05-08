@@ -3,6 +3,7 @@ package httpclient
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +13,8 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
+
+var ErrNotFound = errors.New("received 404 response from")
 
 type HttpClient struct {
 	HttpClient *http.Client
@@ -51,6 +54,10 @@ func (r *HttpClient) HTTPRequest(ctx context.Context, url, method string, payloa
 	defer resp.Body.Close() //nolint:errcheck // no need to check error when closing body
 
 	// Handle non-2xx responses
+	if resp.StatusCode == 404 {
+		return nil, ErrNotFound
+	}
+
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, readErr := io.ReadAll(resp.Body)
 		if readErr != nil {
