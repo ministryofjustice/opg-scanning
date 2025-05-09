@@ -13,12 +13,12 @@ import (
 
 // Middleware handles HTTP requests with authorization.
 type Middleware struct {
-	Client HttpClientInterface
+	Client httpClientInterface
 	Config *config.Config
 	Logger *logger.Logger
 }
 
-func NewMiddleware(client HttpClientInterface) (*Middleware, error) {
+func NewMiddleware(client httpClientInterface) (*Middleware, error) {
 	config := client.GetConfig()
 	logger := client.GetLogger()
 

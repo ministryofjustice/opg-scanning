@@ -15,7 +15,7 @@ var (
 // It ensures that NewLogger is only called once.
 func GetLogger(appConfig *config.Config) *Logger {
 	once.Do(func() {
-		globalLogger = NewLogger(appConfig)
+		globalLogger = newLogger(appConfig)
 	})
 	return globalLogger
 }

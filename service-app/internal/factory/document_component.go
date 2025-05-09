@@ -17,56 +17,56 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/parser/lpc_parser"
 )
 
-// Component defines a registry entry for a document type.
-type Component struct {
-	Parser    func([]byte) (interface{}, error)
-	Validator parser.CommonValidator
+// component defines a registry entry for a document type.
+type component struct {
+	parser    func([]byte) (interface{}, error)
+	validator parser.CommonValidator
 }
 
 // Stores the mapping of document types to their respective components.
-var componentRegistry = map[string]Component{
+var componentRegistry = map[string]component{
 	"LP1H": {
-		Parser:    lp1h_parser.Parse,
-		Validator: lp1h_parser.NewValidator(),
+		parser:    lp1h_parser.Parse,
+		validator: lp1h_parser.NewValidator(),
 	},
 	"LP1F": {
-		Parser:    lp1f_parser.Parse,
-		Validator: lp1f_parser.NewValidator(),
+		parser:    lp1f_parser.Parse,
+		validator: lp1f_parser.NewValidator(),
 	},
 	"Correspondence": {
-		Parser:    corresp_parser.Parse,
-		Validator: corresp_parser.NewValidator(),
+		parser:    corresp_parser.Parse,
+		validator: corresp_parser.NewValidator(),
 	},
 	"LPC": {
-		Parser:    lpc_parser.Parse,
-		Validator: lpc_parser.NewValidator(),
+		parser:    lpc_parser.Parse,
+		validator: lpc_parser.NewValidator(),
 	},
 	"LPA115": {
-		Parser: lpa115_parser.Parse,
+		parser: lpa115_parser.Parse,
 	},
 	"LPA116": {
-		Parser: lpa116_parser.Parse,
+		parser: lpa116_parser.Parse,
 	},
 	"LPA120": {
-		Parser: lpa120_parser.Parse,
+		parser: lpa120_parser.Parse,
 	},
 	"LP2": {
-		Parser:    lp2_parser.Parse,
-		Validator: lp2_parser.NewValidator(),
+		parser:    lp2_parser.Parse,
+		validator: lp2_parser.NewValidator(),
 	},
 }
 
 // Returns the component for the specified document type.
-func GetComponent(docType string) (Component, error) {
+func getComponent(docType string) (component, error) {
 	if component, exists := componentRegistry[docType]; exists {
 		return component, nil
 	}
 
 	if slices.Contains(constants.SupportedDocumentTypes, docType) {
-		return Component{
-			Parser: generic_parser.Parse,
+		return component{
+			parser: generic_parser.Parse,
 		}, nil
 	}
 
-	return Component{}, fmt.Errorf("unsupported docType: %s", docType)
+	return component{}, fmt.Errorf("unsupported docType: %s", docType)
 }
