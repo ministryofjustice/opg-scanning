@@ -77,8 +77,8 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 		httpMiddleware, _ := httpclient.NewMiddleware(httpClient)
 
 		// Prepare service instance
-		service := &Service{
-			Client: &Client{Middleware: httpMiddleware},
+		service := &service{
+			Client: &client{Middleware: httpMiddleware},
 			originalDoc: &types.BaseDocument{
 				EmbeddedXML: xmlBase64,
 				EmbeddedPDF: pdfBase64,

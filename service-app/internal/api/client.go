@@ -8,17 +8,17 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 )
 
-type Client struct {
+type client struct {
 	Middleware *httpclient.Middleware
 }
 
-func NewClient(middleware *httpclient.Middleware) *Client {
-	return &Client{
+func newClient(middleware *httpclient.Middleware) *client {
+	return &client{
 		Middleware: middleware,
 	}
 }
 
-func (c *Client) ClientRequest(ctx context.Context, reqData interface{}, url string) (*[]byte, error) {
+func (c *client) clientRequest(ctx context.Context, reqData interface{}, url string) (*[]byte, error) {
 	if reqData == nil {
 		return nil, fmt.Errorf("request data is nil")
 	}

@@ -9,13 +9,13 @@ import (
 )
 
 type Middleware struct {
-	Authenticator  Authenticator
-	TokenGenerator TokenGenerator
-	CookieHelper   CookieHelper
+	Authenticator  authenticator
+	TokenGenerator tokenGenerator
+	CookieHelper   cookieHelper
 	logger         *logger.Logger
 }
 
-func NewMiddleware(authenticator Authenticator, tokenGenerator TokenGenerator, cookieHelper CookieHelper, logger *logger.Logger) *Middleware {
+func NewMiddleware(authenticator authenticator, tokenGenerator tokenGenerator, cookieHelper cookieHelper, logger *logger.Logger) *Middleware {
 	return &Middleware{
 		Authenticator:  authenticator,
 		TokenGenerator: tokenGenerator,
@@ -26,13 +26,13 @@ func NewMiddleware(authenticator Authenticator, tokenGenerator TokenGenerator, c
 
 func (m *Middleware) CheckAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token, err := m.CookieHelper.GetTokenFromCookie(r)
+		token, err := m.CookieHelper.getTokenFromCookie(r)
 		if err != nil {
 			m.respondWithError(w, http.StatusUnauthorized, "Unauthorized: Missing token", err)
 			return
 		}
 
-		err = m.TokenGenerator.ValidateToken(token)
+		err = m.TokenGenerator.validateToken(token)
 		if err != nil {
 			m.respondWithError(w, http.StatusUnauthorized, "Unauthorized: Invalid token", err)
 			return
