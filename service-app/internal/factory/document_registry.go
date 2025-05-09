@@ -8,26 +8,26 @@ import (
 )
 
 // Defines the behavior for a document registry.
-type RegistryInterface interface {
-	GetParser(docType string) (func([]byte) (interface{}, error), error)
-	GetValidator(docType string) (parser.CommonValidator, error)
+type registryInterface interface {
+	getParser(docType string) (func([]byte) (interface{}, error), error)
+	getValidator(docType string) (parser.CommonValidator, error)
 }
 
 // Registry manages parsers, validators, and sanitizers for document types.
 type Registry struct {
-	components map[string]Component
+	components map[string]component
 }
 
 // Initializes the registry with doc type handlers.
 func NewRegistry() (*Registry, error) {
-	components := make(map[string]Component)
+	components := make(map[string]component)
 
 	// List of supported document types
 	docTypes := constants.SupportedDocumentTypes
 
 	// Populate the registry using the utility function
 	for _, docType := range docTypes {
-		component, err := GetComponent(docType)
+		component, err := getComponent(docType)
 		if err != nil {
 			return nil, fmt.Errorf("error getting component for %s: %v", docType, err)
 		}
@@ -39,18 +39,18 @@ func NewRegistry() (*Registry, error) {
 	}, nil
 }
 
-func (r *Registry) GetParser(docType string) (func([]byte) (interface{}, error), error) {
+func (r *Registry) getParser(docType string) (func([]byte) (interface{}, error), error) {
 	component, exists := r.components[docType]
 	if !exists {
 		return nil, fmt.Errorf("parser for document type '%s' not found", docType)
 	}
-	return component.Parser, nil
+	return component.parser, nil
 }
 
-func (r *Registry) GetValidator(docType string) (parser.CommonValidator, error) {
+func (r *Registry) getValidator(docType string) (parser.CommonValidator, error) {
 	component, exists := r.components[docType]
 	if !exists {
 		return nil, fmt.Errorf("validator for document type '%s' not found", docType)
 	}
-	return component.Validator, nil
+	return component.validator, nil
 }

@@ -19,7 +19,7 @@ type Logger struct {
 
 type loggerContextKey struct{}
 
-func NewLogger(cfg *config.Config) *Logger {
+func newLogger(cfg *config.Config) *Logger {
 	// Create the base logger using telemetry.NewLogger.
 	baseLogger := telemetry.NewLogger("opg-scanning-service")
 
