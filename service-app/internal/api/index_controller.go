@@ -88,12 +88,12 @@ func (c *IndexController) HandleRequests() {
 
 	// Create the route to handle user authentication and issue JWT token
 	http.Handle("/auth/sessions", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c.AuthHandler(w, r)
+		c.authHandler(w, r)
 	}))
 
 	// Protect the route with JWT validation (using the authMiddleware)
 	http.Handle("/api/ddc", otelhttp.NewHandler(logger.LoggingMiddleware(c.logger.SlogLogger)(
-		c.authMiddleware.CheckAuthMiddleware(http.HandlerFunc(c.IngestHandler)),
+		c.authMiddleware.CheckAuthMiddleware(http.HandlerFunc(c.ingestHandler)),
 	), "scanning"))
 
 	c.logger.Info("Starting server on :"+c.config.HTTP.Port, nil)
@@ -108,7 +108,7 @@ func (c *IndexController) HandleRequests() {
 	}
 }
 
-func (c *IndexController) AuthHandler(w http.ResponseWriter, r *http.Request) {
+func (c *IndexController) authHandler(w http.ResponseWriter, r *http.Request) {
 	// Define response error struct
 	type ErrorResponse struct {
 		Error string `json:"error"`
@@ -151,7 +151,7 @@ func (c *IndexController) authResponse(ctx context.Context, w http.ResponseWrite
 	}
 }
 
-func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) {
+func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) {
 	reqCtx := r.Context()
 
 	if r.Method != http.MethodPost {
@@ -196,8 +196,8 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	client := NewClient(c.httpMiddleware)
-	service := NewService(client, parsedBaseXml)
+	client := newClient(c.httpMiddleware)
+	service := newService(client, parsedBaseXml)
 	ctx, cancel := context.WithTimeout(r.Context(), time.Duration(c.config.HTTP.Timeout)*time.Second)
 	ctxWithToken := context.WithValue(ctx, constants.UserContextKey, reqCtx.Value(constants.UserContextKey))
 	defer cancel()
@@ -215,7 +215,7 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Processing queue
-	if err := c.ProcessQueue(reqCtx, scannedCaseResponse, parsedBaseXml); err != nil {
+	if err := c.processQueue(reqCtx, scannedCaseResponse, parsedBaseXml); err != nil {
 		if errors.Is(err, httpclient.ErrNotFound) {
 			publicMessage := fmt.Sprintf("Case not found with UID %s", scannedCaseResponse.UID)
 
@@ -271,7 +271,7 @@ func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseW
 		},
 	}
 
-	if problem, ok := err.(Problem); ok {
+	if problem, ok := err.(problem); ok {
 		resp.Data.Message = problem.Title
 		resp.Data.ValidationErrors = problem.ValidationErrors
 	}
@@ -315,7 +315,7 @@ func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr st
 			for _, error := range schemaValidationError.Errors() {
 				validationErrors = append(validationErrors, error.Error())
 			}
-			return nil, Problem{
+			return nil, problem{
 				Title:            "Validate and sanitize XML failed",
 				ValidationErrors: validationErrors,
 			}
@@ -343,7 +343,7 @@ func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr st
 
 func (c *IndexController) validateDocument(document types.BaseDocument) error {
 	if !slices.Contains(constants.SupportedDocumentTypes, document.Type) {
-		return Problem{
+		return problem{
 			Title: fmt.Sprintf("Document type %s is not supported", document.Type),
 		}
 	}
@@ -369,7 +369,7 @@ func (c *IndexController) validateDocument(document types.BaseDocument) error {
 			for _, error := range schemaValidationError.Errors() {
 				validationErrors = append(validationErrors, error.Error())
 			}
-			return Problem{
+			return problem{
 				Title:            fmt.Sprintf("XML for %s failed XSD validation", document.Type),
 				ValidationErrors: validationErrors,
 			}

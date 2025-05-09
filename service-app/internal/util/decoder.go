@@ -17,16 +17,3 @@ func DecodeEmbeddedXML(encodedXML string) ([]byte, error) {
 
 	return decodedXML, nil
 }
-
-func DecodeEmbeddedImage(encodedImage string) ([]byte, error) {
-	if encodedImage == "" {
-		return nil, fmt.Errorf("embedded image is empty")
-	}
-
-	decodedImage, err := base64.StdEncoding.DecodeString(encodedImage)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode embedded image: %w", err)
-	}
-
-	return decodedImage, nil
-}

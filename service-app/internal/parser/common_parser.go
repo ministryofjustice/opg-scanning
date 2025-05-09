@@ -14,7 +14,7 @@ func DocumentParser(data []byte, doc interface{}) (interface{}, error) {
 	}
 
 	// Validate required fields based on struct tags
-	if err := ValidateStruct(doc); err != nil {
+	if err := validateStruct(doc); err != nil {
 		return nil, err
 	}
 
@@ -30,11 +30,11 @@ func BaseParserXml(data []byte) (*types.BaseSet, error) {
 	return &parsed, nil
 }
 
-// ValidateStruct checks if the provided struct or its nested structs
+// validateStruct checks if the provided struct or its nested structs
 // have all fields marked with the "required" tag present and non-empty.
 // It supports pointer dereferencing and recursive validation for nested structs.
 // Returns an error if any required field is missing or empty; otherwise, returns nil.
-func ValidateStruct(s any) error {
+func validateStruct(s any) error {
 	val := reflect.ValueOf(s)
 
 	// Check if val is a pointer and dereference it
@@ -50,7 +50,7 @@ func ValidateStruct(s any) error {
 
 		// Handle nested structs by recursively validating them
 		if field.Kind() == reflect.Struct {
-			if err := ValidateStruct(field.Addr().Interface()); err != nil {
+			if err := validateStruct(field.Addr().Interface()); err != nil {
 				return err
 			}
 			continue

@@ -15,12 +15,12 @@ import (
 // Refresh token after 10 minutes
 const secretTTL = 10 * time.Minute
 
-type TokenGenerator interface {
-	GenerateToken() (string, time.Time, error)
-	ValidateToken(string) error
+type tokenGenerator interface {
+	generateToken() (string, time.Time, error)
+	validateToken(string) error
 }
 
-type JWTTokenGenerator struct {
+type jwtTokenGenerator struct {
 	awsClient       aws.AwsClientInterface
 	config          *config.Config
 	logger          *logger.Logger
@@ -28,29 +28,29 @@ type JWTTokenGenerator struct {
 	lastSecretFetch time.Time
 }
 
-type Claims struct {
+type claims struct {
 	SessionData string `json:"session-data"`
 	Iat         int64  `json:"iat"`
 	Exp         int64  `json:"exp"`
 }
 
-func NewJWTTokenGenerator(awsClient aws.AwsClientInterface, config *config.Config, logger *logger.Logger) *JWTTokenGenerator {
-	return &JWTTokenGenerator{
+func NewJWTTokenGenerator(awsClient aws.AwsClientInterface, config *config.Config, logger *logger.Logger) *jwtTokenGenerator {
+	return &jwtTokenGenerator{
 		awsClient: awsClient,
 		config:    config,
 		logger:    logger,
 	}
 }
 
-func (tg *JWTTokenGenerator) NewClaims() (Claims, error) {
-	return Claims{
+func (tg *jwtTokenGenerator) newClaims() (claims, error) {
+	return claims{
 		SessionData: tg.config.Auth.ApiUsername,
 		Iat:         time.Now().Unix(),
 		Exp:         time.Now().Add(time.Duration(tg.config.Auth.JWTExpiration) * time.Second).Unix(),
 	}, nil
 }
 
-func (tg *JWTTokenGenerator) fetchSigningSecret() error {
+func (tg *jwtTokenGenerator) fetchSigningSecret() error {
 	shouldFetch := time.Since(tg.lastSecretFetch) >= secretTTL || tg.signingSecret == ""
 	if !shouldFetch {
 		return nil
@@ -66,12 +66,12 @@ func (tg *JWTTokenGenerator) fetchSigningSecret() error {
 }
 
 // Creates a new JWT token.
-func (tg *JWTTokenGenerator) GenerateToken() (string, time.Time, error) {
+func (tg *jwtTokenGenerator) generateToken() (string, time.Time, error) {
 	if err := tg.fetchSigningSecret(); err != nil {
 		return "", time.Time{}, err
 	}
 
-	claims, err := tg.NewClaims()
+	claims, err := tg.newClaims()
 	if err != nil {
 		return "", time.Time{}, fmt.Errorf("failed to create claims: %w", err)
 	}
@@ -95,7 +95,7 @@ func (tg *JWTTokenGenerator) GenerateToken() (string, time.Time, error) {
 	return signedToken, expiry, nil
 }
 
-func (tg *JWTTokenGenerator) ValidateToken(tokenString string) error {
+func (tg *jwtTokenGenerator) validateToken(tokenString string) error {
 	if err := tg.fetchSigningSecret(); err != nil {
 		return err
 	}
