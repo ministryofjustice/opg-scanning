@@ -40,7 +40,7 @@ func NewXSDValidator(xsdPath string, xmlContent string) (*XSDValidator, error) {
 }
 
 func (v *XSDValidator) ValidateXsd() error {
-	doc, err := libxml2.ParseString(v.xmlContent, parser.XMLParseNoNet)
+	doc, err := libxml2.ParseString(v.xmlContent, parser.XMLParseNoNet+parser.XMLParseHuge)
 	if err != nil {
 		return err
 	}
