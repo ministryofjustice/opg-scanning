@@ -216,10 +216,9 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 
 	// Processing queue
 	if err := c.ProcessQueue(reqCtx, scannedCaseResponse, parsedBaseXml); err != nil {
-		if errors.Is(err, httpclient.ErrNotFound) {
-			publicMessage := fmt.Sprintf("Case not found with UID %s", scannedCaseResponse.UID)
-
-			c.respondWithError(reqCtx, w, http.StatusBadRequest, publicMessage, err)
+		message := getPublicError(err, scannedCaseResponse.UID)
+		if message != "" {
+			c.respondWithError(reqCtx, w, http.StatusBadRequest, message, err)
 		} else {
 			c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Failed to persist document to Sirius", err)
 		}
@@ -251,6 +250,26 @@ func (c *IndexController) IngestHandler(w http.ResponseWriter, r *http.Request) 
 			"uid": scannedCaseResponse.UID,
 		})
 	}
+}
+
+func getPublicError(err error, uid string) string {
+	var clientError httpclient.SiriusClientError
+	if !errors.As(err, &clientError) {
+		return ""
+	}
+
+	if clientError.StatusCode == 404 {
+		return fmt.Sprintf("Case not found with UID %s", uid)
+	}
+
+	if clientError.StatusCode == 400 {
+		_, ok := clientError.ValidationErrors["caseReference"]
+		if ok {
+			return fmt.Sprintf("%s is not a valid case UID", uid)
+		}
+	}
+
+	return ""
 }
 
 func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseWriter, statusCode int, message string, err error) {

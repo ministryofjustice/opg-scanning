@@ -3,7 +3,7 @@ package httpclient
 import (
 	"bytes"
 	"context"
-	"errors"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,7 +14,14 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
-var ErrNotFound = errors.New("received 404 response from")
+type SiriusClientError struct {
+	StatusCode       int
+	ValidationErrors map[string]map[string]string
+}
+
+func (sce SiriusClientError) Error() string {
+	return fmt.Sprintf("received %d response from Sirius", sce.StatusCode)
+}
 
 type HttpClient struct {
 	HttpClient *http.Client
@@ -53,24 +60,34 @@ func (r *HttpClient) HTTPRequest(ctx context.Context, url, method string, payloa
 	}
 	defer resp.Body.Close() //nolint:errcheck // no need to check error when closing body
 
-	// Handle non-2xx responses
-	if resp.StatusCode == 404 {
-		return nil, ErrNotFound
-	}
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, readErr := io.ReadAll(resp.Body)
-		if readErr != nil {
-			return nil, fmt.Errorf("unexpected status code: %d - failed to read error response body: %w", resp.StatusCode, readErr)
-		}
-		return nil, fmt.Errorf("unexpected status code: %d - Response: %s", resp.StatusCode, string(body))
-	}
-
-	// Handle successful responses
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
+	// Handle non-2xx responses
+	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
+		errOut := SiriusClientError{
+			StatusCode: resp.StatusCode,
+		}
+
+		if resp.StatusCode == 400 {
+			var respBody struct {
+				ValidationErrors map[string]map[string]string `json:"validation_errors"`
+			}
+
+			if json.Unmarshal(body, &respBody) == nil {
+				errOut.ValidationErrors = respBody.ValidationErrors
+			}
+		}
+
+		return nil, errOut
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("unexpected status code: %d - Response: %s", resp.StatusCode, string(body))
+	}
+
+	// Handle successful responses
 	return body, nil
 }
