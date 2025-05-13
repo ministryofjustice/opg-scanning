@@ -1,10 +1,10 @@
 package api
 
-type Problem struct {
+type problem struct {
 	Title            string
 	ValidationErrors []string
 }
 
-func (p Problem) Error() string {
+func (p problem) Error() string {
 	return p.Title
 }

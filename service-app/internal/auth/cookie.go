@@ -5,9 +5,9 @@ import (
 	"time"
 )
 
-type CookieHelper interface {
-	GetTokenFromCookie(r *http.Request) (string, error)
-	SetTokenInCookie(w http.ResponseWriter, token string, expiry time.Time) error
+type cookieHelper interface {
+	getTokenFromCookie(r *http.Request) (string, error)
+	setTokenInCookie(w http.ResponseWriter, token string, expiry time.Time) error
 }
 
 type MembraneCookieHelper struct {
@@ -15,7 +15,7 @@ type MembraneCookieHelper struct {
 	Secure     bool
 }
 
-func (h MembraneCookieHelper) GetTokenFromCookie(r *http.Request) (string, error) {
+func (h MembraneCookieHelper) getTokenFromCookie(r *http.Request) (string, error) {
 	cookie, err := r.Cookie(h.CookieName)
 	if err != nil {
 		return "", err
@@ -23,7 +23,7 @@ func (h MembraneCookieHelper) GetTokenFromCookie(r *http.Request) (string, error
 	return cookie.Value, nil
 }
 
-func (h MembraneCookieHelper) SetTokenInCookie(w http.ResponseWriter, token string, expiry time.Time) error {
+func (h MembraneCookieHelper) setTokenInCookie(w http.ResponseWriter, token string, expiry time.Time) error {
 	http.SetCookie(w, &http.Cookie{
 		Name:     h.CookieName,
 		Value:    token,

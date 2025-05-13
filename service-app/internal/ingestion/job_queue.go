@@ -29,7 +29,7 @@ func NewJobQueue(config *config.Config) *JobQueue {
 	return queue
 }
 
-func NewJobContext(reqCtx context.Context) context.Context {
+func newJobContext(reqCtx context.Context) context.Context {
 	enrichedLogger := logger.LoggerFromContext(reqCtx)
 	span := trace.SpanFromContext(reqCtx)
 	ctx := trace.ContextWithSpan(context.Background(), span)
@@ -38,7 +38,7 @@ func NewJobContext(reqCtx context.Context) context.Context {
 
 func (q *JobQueue) AddToQueueSequentially(ctx context.Context, cfg *config.Config, data *types.BaseDocument, format string, onComplete func(ctx context.Context, processedDoc interface{}, originalDoc *types.BaseDocument) error) error {
 	// Create a job context
-	jobCtx := NewJobContext(ctx)
+	jobCtx := newJobContext(ctx)
 
 	// Initialize the registry and processor synchronously
 	registry, err := factory.NewRegistry()
