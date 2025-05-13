@@ -29,6 +29,7 @@ type (
 		JobsQueueURL          string `envconfig:"JOBQUEUE_SQS_QUEUE_URL" default:"000000000000/ddc.fifo"`
 		JobsQueueBucket       string `envconfig:"JOBQUEUE_S3_BUCKET_NAME" default:"opg-backoffice-jobsqueue-local"`
 		JobsQueueBucketKmsKey string `envconfig:"JOBQUEUE_S3_ENCRYPTION_KEY" default:"alias/aws/s3"`
+		LogTableName          string `envconfig:"DYNAMODB_LOG_TABLE_NAME" default:"scanning-log-local"`
 		Endpoint              string `envconfig:"AWS_ENDPOINT"`
 		Region                string `envconfig:"AWS_REGION" default:"eu-west-1"`
 	}

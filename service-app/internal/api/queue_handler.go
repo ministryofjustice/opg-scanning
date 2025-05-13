@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
@@ -22,6 +23,11 @@ func (c *IndexController) ProcessQueue(ctx context.Context, scannedCaseResponse 
 			// Create a new service instance for attaching documents.
 			service := NewService(NewClient(c.httpMiddleware), parsedBaseXml)
 			service.originalDoc = originalDoc
+
+			logErr := c.AwsClient.LogDocument(ctx, parsedBaseXml.Header.Schedule, scannedCaseResponse.UID, doc.Type)
+			if logErr != nil {
+				c.logger.ErrorWithContext(ctx, fmt.Sprintf("could not log received document: %s", logErr.Error()), nil)
+			}
 
 			attchResp, decodedXML, docErr := service.AttachDocuments(ctx, scannedCaseResponse)
 			if docErr != nil {

@@ -7,8 +7,11 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
@@ -26,15 +29,24 @@ type AwsClientInterface interface {
 	PersistFormData(ctx context.Context, body io.Reader, docType string) (string, error)
 	PersistSetData(ctx context.Context, body []byte) (string, error)
 	QueueSetForProcessing(ctx context.Context, scannedCaseResponse *appTypes.ScannedCaseResponse, fileName string) (MessageID *string, err error)
+	LogDocument(ctx context.Context, batchID string, caseUid string, documentType string) error
 }
 
 type AwsClient struct {
 	config         *config.Config
 	siriusQueueURL string
+	DynamoDB       *dynamodb.Client
 	SecretsManager *secretsmanager.Client
 	SSM            *ssm.Client
 	S3             *s3.Client
 	SQS            *sqs.Client
+}
+
+type LogTableItem struct {
+	BatchID      string `dynamodbav:"BatchID"`
+	Timestamp    int64  `dynamodbav:"Timestamp"`
+	CaseUID      string `dynamodbav:"CaseUID"`
+	DocumentType string `dynamodbav:"DocumentType"`
 }
 
 // Initializes all required AWS service clients.
@@ -44,6 +56,10 @@ func NewAwsClient(ctx context.Context, cfg aws.Config, appConfig *config.Config)
 	if appConfig.Aws.Endpoint != "" {
 		customEndpoint = aws.String(appConfig.Aws.Endpoint)
 	}
+
+	dynamoDBClient := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
+		o.BaseEndpoint = customEndpoint
+	})
 
 	smClient := secretsmanager.NewFromConfig(cfg, func(o *secretsmanager.Options) {
 		o.BaseEndpoint = customEndpoint
@@ -65,6 +81,7 @@ func NewAwsClient(ctx context.Context, cfg aws.Config, appConfig *config.Config)
 	return &AwsClient{
 		config:         appConfig,
 		siriusQueueURL: appConfig.Aws.JobsQueueURL,
+		DynamoDB:       dynamoDBClient,
 		SecretsManager: smClient,
 		SSM:            SsmClient,
 		S3:             s3Client,
@@ -233,4 +250,29 @@ func createMessageBody(scannedCaseResponse *appTypes.ScannedCaseResponse, fileNa
 	}
 
 	return message
+}
+
+func (a *AwsClient) LogDocument(ctx context.Context, batchID string, caseUid string, documentType string) error {
+	item, err := attributevalue.MarshalMap(LogTableItem{
+		BatchID:      batchID,
+		Timestamp:    time.Now().UnixNano(),
+		CaseUID:      caseUid,
+		DocumentType: documentType,
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to marshal log entry: %w", err)
+	}
+
+	input := &dynamodb.PutItemInput{
+		TableName: aws.String(a.config.Aws.LogTableName),
+		Item:      item,
+	}
+
+	_, err = a.DynamoDB.PutItem(ctx, input)
+	if err != nil {
+		return fmt.Errorf("failed to save log entry: %w", err)
+	}
+
+	return nil
 }

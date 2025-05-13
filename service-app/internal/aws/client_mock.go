@@ -39,3 +39,8 @@ func (m *MockAwsClient) QueueSetForProcessing(ctx context.Context, scannedCaseRe
 
 	return &messageId, args.Error(1)
 }
+
+func (m *MockAwsClient) LogDocument(ctx context.Context, batchID string, caseUid string, documentType string) error {
+	args := m.Called(ctx, batchID, caseUid, documentType)
+	return args.Error(0)
+}

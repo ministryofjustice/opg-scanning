@@ -68,6 +68,12 @@ func setupController() *IndexController {
 func TestIngestHandler_SetValid(t *testing.T) {
 	controller := setupController()
 
+	if awsClient, ok := controller.AwsClient.(*aws.MockAwsClient); ok {
+		awsClient.
+			On("LogDocument", mock.Anything, "02-0001112-20160909185000", "7000-1234-1234", "LP2").
+			Return(nil)
+	}
+
 	req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayload)))
 	req.Header.Set("Content-Type", "application/xml")
 	w := httptest.NewRecorder()
@@ -246,6 +252,12 @@ func TestIngestHandler_SiriusErrors(t *testing.T) {
 
 			httpMiddleware, _ := httpclient.NewMiddleware(mockHttpClient)
 			controller.httpMiddleware = httpMiddleware
+
+			if awsClient, ok := controller.AwsClient.(*aws.MockAwsClient); ok {
+				awsClient.
+					On("LogDocument", mock.Anything, "02-0001112-20160909185000", "700012341234", "Correspondence").
+					Return(nil)
+			}
 
 			req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayloadCorrespondence)))
 			req.Header.Set("Content-Type", "application/xml")

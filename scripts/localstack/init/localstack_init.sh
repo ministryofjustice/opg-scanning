@@ -69,3 +69,9 @@ awslocal ssm put-parameter --name "/local/local-credentials" --type "SecureStrin
 # S3
 create_bucket "opg-backoffice-datastore-local"
 create_bucket "opg-backoffice-jobsqueue-local"
+
+# DynamoDB
+awslocal dynamodb create-table --table-name scanning-log-local \
+    --attribute-definitions AttributeName=BatchID,AttributeType=S AttributeName=Timestamp,AttributeType=N \
+    --key-schema AttributeName=BatchID,KeyType=HASH AttributeName=Timestamp,KeyType=RANGE \
+    --provisioned-throughput ReadCapacityUnits=1000,WriteCapacityUnits=1000
