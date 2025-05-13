@@ -183,18 +183,7 @@ func TestIngestHandler_InvalidEmbeddedXMLProvidesDetails(t *testing.T) {
 	assert.Contains(t, responseObj.Data.ValidationErrors, "Element 'LP2': Missing child element(s). Expected is ( Page1 ).")
 }
 
-func TestIngestHandler_CaseNotFound(t *testing.T) {
-	controller := setupController()
-
-	mockHttpClient := new(mocks.MockHttpClient)
-	mockHttpClient.On("GetConfig").Return(controller.config)
-	mockHttpClient.On("GetLogger").Return(controller.logger)
-	mockHttpClient.On("HTTPRequest", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return([]byte{}, httpclient.ErrNotFound)
-
-	httpMiddleware, _ := httpclient.NewMiddleware(mockHttpClient)
-	controller.httpMiddleware = httpMiddleware
-
+func TestIngestHandler_SiriusErrors(t *testing.T) {
 	xmlPayloadCorrespondence := `<Set xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SET.xsd">
 		<Header CaseNo="700012341234" Scanner="9" ScanTime="2014-09-26T12:38:53" ScannerOperator="Administrator" Schedule="02-0001112-20160909185000" />
 		<Body>
@@ -205,27 +194,80 @@ func TestIngestHandler_CaseNotFound(t *testing.T) {
 		</Body>
 	</Set>`
 
-	req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayloadCorrespondence)))
-	req.Header.Set("Content-Type", "application/xml")
-	w := httptest.NewRecorder()
-
-	reqCtx := context.WithValue(context.Background(), constants.UserContextKey, "my-token")
-	req = req.WithContext(reqCtx)
-
-	controller.IngestHandler(w, req)
-
-	resp := w.Result()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Errorf("expected status %d; got %d", http.StatusAccepted, resp.StatusCode)
+	testCases := map[string]struct {
+		siriusError        httpclient.SiriusClientError
+		expectedStatusCode int
+		expectedMessage    string
+	}{
+		"404": {
+			siriusError: httpclient.SiriusClientError{
+				StatusCode: 404,
+			},
+			expectedStatusCode: 400,
+			expectedMessage:    "Case not found with UID 700012341234",
+		},
+		"400 on case reference": {
+			siriusError: httpclient.SiriusClientError{
+				StatusCode: 400,
+				ValidationErrors: map[string]map[string]string{
+					"caseReference": {
+						"regexNotMatch": "The input does not match against pattern",
+					},
+				},
+			},
+			expectedStatusCode: 400,
+			expectedMessage:    "700012341234 is not a valid case UID",
+		},
+		"other 400": {
+			siriusError: httpclient.SiriusClientError{
+				StatusCode: 400,
+			},
+			expectedStatusCode: 500,
+			expectedMessage:    "Failed to persist document to Sirius",
+		},
+		"500": {
+			siriusError: httpclient.SiriusClientError{
+				StatusCode: 500,
+			},
+			expectedStatusCode: 500,
+			expectedMessage:    "Failed to persist document to Sirius",
+		},
 	}
 
-	responseBody, _ := io.ReadAll(resp.Body)
-	var responseObj response
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			controller := setupController()
 
-	err := json.Unmarshal(responseBody, &responseObj)
-	assert.Nil(t, err)
-	assert.False(t, responseObj.Data.Success)
-	assert.Equal(t, "Case not found with UID 700012341234", responseObj.Data.Message)
+			mockHttpClient := new(mocks.MockHttpClient)
+			mockHttpClient.On("GetConfig").Return(controller.config)
+			mockHttpClient.On("GetLogger").Return(controller.logger)
+			mockHttpClient.On("HTTPRequest", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				Return([]byte{}, tc.siriusError)
+
+			httpMiddleware, _ := httpclient.NewMiddleware(mockHttpClient)
+			controller.httpMiddleware = httpMiddleware
+
+			req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayloadCorrespondence)))
+			req.Header.Set("Content-Type", "application/xml")
+			w := httptest.NewRecorder()
+
+			reqCtx := context.WithValue(context.Background(), constants.UserContextKey, "my-token")
+			req = req.WithContext(reqCtx)
+
+			controller.IngestHandler(w, req)
+
+			resp := w.Result()
+			assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
+
+			responseBody, _ := io.ReadAll(resp.Body)
+			var responseObj response
+
+			err := json.Unmarshal(responseBody, &responseObj)
+			assert.Nil(t, err)
+			assert.False(t, responseObj.Data.Success)
+			assert.Equal(t, tc.expectedMessage, responseObj.Data.Message)
+		})
+	}
 }
 
 func TestProcessAndPersist_IncludesXMLDeclaration(t *testing.T) {
