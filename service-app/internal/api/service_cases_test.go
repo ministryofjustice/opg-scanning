@@ -157,8 +157,8 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 			httpClient := httpclient.NewHttpClient(*mockConfig, *logger)
 			httpMiddleware, _ := httpclient.NewMiddleware(httpClient)
 
-			client := NewClient(httpMiddleware)
-			service := NewService(client, &set)
+			client := newClient(httpMiddleware)
+			service := newService(client, &set)
 
 			ctx := context.WithValue(context.Background(), constants.UserContextKey, "my-token")
 

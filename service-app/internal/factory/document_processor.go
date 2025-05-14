@@ -17,7 +17,7 @@ type DocumentProcessor struct {
 }
 
 // Initializes a new DocumentProcessor.
-func NewDocumentProcessor(data *types.BaseDocument, docType, format string, registry RegistryInterface, logger *logger.Logger) (*DocumentProcessor, error) {
+func NewDocumentProcessor(data *types.BaseDocument, docType, format string, registry registryInterface, logger *logger.Logger) (*DocumentProcessor, error) {
 	// Decode the embedded XML
 	embeddedXML, err := util.DecodeEmbeddedXML(data.EmbeddedXML)
 	if err != nil {
@@ -25,7 +25,7 @@ func NewDocumentProcessor(data *types.BaseDocument, docType, format string, regi
 	}
 
 	// Fetch the parser
-	parser, err := registry.GetParser(docType)
+	parser, err := registry.getParser(docType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve parser: %w", err)
 	}
@@ -37,7 +37,7 @@ func NewDocumentProcessor(data *types.BaseDocument, docType, format string, regi
 	}
 
 	// Fetch and create the validator
-	validator, err := registry.GetValidator(docType)
+	validator, err := registry.getValidator(docType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve validator factory: %w", err)
 	}

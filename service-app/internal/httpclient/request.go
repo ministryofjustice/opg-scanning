@@ -24,21 +24,21 @@ func (sce SiriusClientError) Error() string {
 }
 
 type HttpClient struct {
-	HttpClient *http.Client
-	Config     *config.Config
-	Logger     *logger.Logger
+	httpClient *http.Client
+	config     *config.Config
+	logger     *logger.Logger
 }
 
 func NewHttpClient(config config.Config, logger logger.Logger) *HttpClient {
 	httpClient := &HttpClient{
-		HttpClient: &http.Client{
+		httpClient: &http.Client{
 			Timeout: time.Duration(config.HTTP.Timeout) * time.Second,
 		},
-		Config: &config,
-		Logger: &logger,
+		config: &config,
+		logger: &logger,
 	}
 
-	httpClient.HttpClient.Transport = otelhttp.NewTransport(httpClient.HttpClient.Transport)
+	httpClient.httpClient.Transport = otelhttp.NewTransport(httpClient.httpClient.Transport)
 
 	return httpClient
 }
@@ -54,7 +54,7 @@ func (r *HttpClient) HTTPRequest(ctx context.Context, url, method string, payloa
 	}
 
 	// Use the shared HTTP client
-	resp, err := r.HttpClient.Do(req)
+	resp, err := r.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make request: %w", err)
 	}

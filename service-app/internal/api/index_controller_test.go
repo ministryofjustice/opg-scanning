@@ -75,7 +75,7 @@ func TestIngestHandler_SetValid(t *testing.T) {
 	reqCtx := context.WithValue(context.Background(), constants.UserContextKey, "my-token")
 	req = req.WithContext(reqCtx)
 
-	controller.IngestHandler(w, req)
+	controller.ingestHandler(w, req)
 
 	resp := w.Result()
 	if resp.StatusCode != http.StatusAccepted {
@@ -99,7 +99,7 @@ func TestIngestHandler_InvalidContentType(t *testing.T) {
 	req.Header.Set("Content-Type", "text/plain")
 	w := httptest.NewRecorder()
 
-	controller.IngestHandler(w, req)
+	controller.ingestHandler(w, req)
 
 	resp := w.Result()
 	if resp.StatusCode != http.StatusBadRequest {
@@ -117,7 +117,7 @@ func TestIngestHandler_InvalidXML(t *testing.T) {
 	req.Header.Set("Content-Type", "application/xml")
 	w := httptest.NewRecorder()
 
-	controller.IngestHandler(w, req)
+	controller.ingestHandler(w, req)
 
 	resp := w.Result()
 	if resp.StatusCode != http.StatusBadRequest {
@@ -136,7 +136,7 @@ func TestIngestHandler_InvalidXMLExplainsXSDErrors(t *testing.T) {
 	req.Header.Set("Content-Type", "application/xml")
 	w := httptest.NewRecorder()
 
-	controller.IngestHandler(w, req)
+	controller.ingestHandler(w, req)
 
 	resp := w.Result()
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
@@ -167,7 +167,7 @@ func TestIngestHandler_InvalidEmbeddedXMLProvidesDetails(t *testing.T) {
 	req.Header.Set("Content-Type", "application/xml")
 	w := httptest.NewRecorder()
 
-	controller.IngestHandler(w, req)
+	controller.ingestHandler(w, req)
 
 	resp := w.Result()
 	if resp.StatusCode != http.StatusBadRequest {
@@ -254,7 +254,7 @@ func TestIngestHandler_SiriusErrors(t *testing.T) {
 			reqCtx := context.WithValue(context.Background(), constants.UserContextKey, "my-token")
 			req = req.WithContext(reqCtx)
 
-			controller.IngestHandler(w, req)
+			controller.ingestHandler(w, req)
 
 			resp := w.Result()
 			assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
@@ -321,7 +321,7 @@ func TestValidateDocumentWarnsOnUnsupportedDocumentType(t *testing.T) {
 
 	err := c.validateDocument(document)
 
-	problem, ok := err.(Problem)
+	problem, ok := err.(problem)
 	assert.True(t, ok)
 
 	assert.Equal(t, "Document type BadDocumentType is not supported", problem.Title)
