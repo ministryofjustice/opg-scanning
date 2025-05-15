@@ -38,7 +38,7 @@ services:
       - .:/app
       - ./test-results:/tmp/test-results
     working_dir: /app/service-app
-    command: go test -v ./... -covermode=atomic -coverprofile=/tmp/test-results/coverage.out
+    command: go test ./... -covermode=atomic -coverprofile=/tmp/test-results/coverage.out
     depends_on:
       localstack:
         condition: service_healthy
