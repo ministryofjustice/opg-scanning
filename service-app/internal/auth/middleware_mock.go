@@ -4,12 +4,11 @@ import (
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
-	"github.com/ministryofjustice/opg-scanning/internal/mocks"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func PrepareMocks(mockConfig *config.Config, logger *logger.Logger) (*mocks.MockHttpClient, *Middleware, *aws.MockAwsClient, *jwtTokenGenerator) {
+func PrepareMocks(mockConfig *config.Config, logger *logger.Logger) (*Middleware, *aws.MockAwsClient, *jwtTokenGenerator) {
 	// Initialize the mock AWS client
 	mockAwsClient := new(aws.MockAwsClient)
 	mockAwsClient.On("GetSecretValue", mock.Anything, "local/jwt-key").Maybe().Return("mysupersecrettestkeythatis128bits", nil)
@@ -30,10 +29,6 @@ func PrepareMocks(mockConfig *config.Config, logger *logger.Logger) (*mocks.Mock
 		Return("123", nil).
 		Maybe()
 
-	mockHttpClient := new(mocks.MockHttpClient)
-	mockHttpClient.On("GetConfig").Return(mockConfig)
-	mockHttpClient.On("GetLogger").Return(logger)
-
 	tokenGenerator := NewJWTTokenGenerator(mockAwsClient, mockConfig, logger)
 	cookieHelper := MembraneCookieHelper{
 		CookieName: "membrane",
@@ -42,7 +37,7 @@ func PrepareMocks(mockConfig *config.Config, logger *logger.Logger) (*mocks.Mock
 	authenticator := NewBasicAuthAuthenticator(mockAwsClient, cookieHelper, tokenGenerator)
 	authMiddleware := NewMiddleware(authenticator, tokenGenerator, cookieHelper, logger)
 
-	return mockHttpClient, authMiddleware, mockAwsClient, tokenGenerator
+	return authMiddleware, mockAwsClient, tokenGenerator
 }
 
 func hashPassword(password string) string {
