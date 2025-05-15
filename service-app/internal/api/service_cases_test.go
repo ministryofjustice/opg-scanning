@@ -8,8 +8,7 @@ import (
 
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
-	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
-	"github.com/ministryofjustice/opg-scanning/internal/logger"
+	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/pact-foundation/pact-go/v2/consumer"
 	"github.com/pact-foundation/pact-go/v2/matchers"
@@ -116,7 +115,6 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 	t.Run(tt.name, func(t *testing.T) {
 		set := parseXMLPayload(t, tt.xmlPayload)
 		mockConfig := config.NewConfig()
-		logger := logger.GetLogger(mockConfig)
 
 		// Set up expected interactions
 		if tt.expectedReq != nil {
@@ -154,10 +152,7 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 			mockConfig.App.SiriusBaseURL = baseURL
 
 			// Mock dependencies
-			httpClient := httpclient.NewHttpClient(*mockConfig, *logger)
-			httpMiddleware, _ := httpclient.NewMiddleware(httpClient)
-
-			client := newClient(httpMiddleware)
+			client := sirius.NewClient(mockConfig)
 			service := newService(client, &set)
 
 			ctx := context.WithValue(context.Background(), constants.UserContextKey, "my-token")

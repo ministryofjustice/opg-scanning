@@ -20,7 +20,7 @@ func testHandler(w http.ResponseWriter, r *http.Request) {
 func TestCheckAuthMiddleware(t *testing.T) {
 	mockConfig := config.NewConfig()
 	logger := logger.GetLogger(mockConfig)
-	_, middleware, _, _ := PrepareMocks(mockConfig, logger)
+	middleware, _, _ := PrepareMocks(mockConfig, logger)
 
 	w := httptest.NewRecorder()
 	handler := middleware.CheckAuthMiddleware(http.HandlerFunc(testHandler))
