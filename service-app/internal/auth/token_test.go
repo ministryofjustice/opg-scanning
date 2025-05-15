@@ -23,7 +23,7 @@ func TestGenerateToken(t *testing.T) {
 	outBuf := bytes.NewBuffer([]byte{})
 	mockLogger := &logger.Logger{SlogLogger: slog.New(slog.NewJSONHandler(outBuf, nil))}
 
-	tg := JWTTokenGenerator{
+	tg := jwtTokenGenerator{
 		config: &config.Config{
 			Auth: config.Auth{
 				ApiUsername:   "user@host.example",
@@ -35,7 +35,7 @@ func TestGenerateToken(t *testing.T) {
 		logger:    mockLogger,
 	}
 
-	tokenString, expiry, err := tg.GenerateToken()
+	tokenString, expiry, err := tg.generateToken()
 	assert.Nil(t, err)
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
@@ -101,7 +101,7 @@ func TestValidateToken(t *testing.T) {
 				On("GetSecretValue", mock.Anything, "aws::my-secret-arn").
 				Return("my-secret", nil)
 
-			tg := JWTTokenGenerator{
+			tg := jwtTokenGenerator{
 				config: &config.Config{
 					Auth: config.Auth{
 						JWTSecretARN: "aws::my-secret-arn",
@@ -113,7 +113,7 @@ func TestValidateToken(t *testing.T) {
 			token := jwt.NewWithClaims(jwt.SigningMethodHS256, tc.claims)
 			tokenString, _ := token.SignedString([]byte("my-secret"))
 
-			err := tg.ValidateToken(tokenString)
+			err := tg.validateToken(tokenString)
 
 			if tc.expectedOk {
 				assert.Nil(t, err)

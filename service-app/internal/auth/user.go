@@ -6,7 +6,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 )
 
-type UserLogin struct {
+type userLogin struct {
 	User User `json:"user"`
 }
 

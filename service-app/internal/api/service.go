@@ -12,26 +12,21 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
-type ServiceInterface interface {
-	AttachDocuments(ctx context.Context, set types.BaseSet) (*types.ScannedDocumentResponse, error)
-	CreateCaseStub(ctx context.Context, set types.BaseSet) (*types.ScannedCaseResponse, error)
-}
-
-type Service struct {
-	Client      *Client
+type service struct {
+	Client      *client
 	set         *types.BaseSet
 	originalDoc *types.BaseDocument
 }
 
-func NewService(client *Client, set *types.BaseSet) *Service {
-	return &Service{
+func newService(client *client, set *types.BaseSet) *service {
+	return &service{
 		Client: client,
 		set:    set,
 	}
 }
 
 // Attach documents to cases
-func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.ScannedCaseResponse) (*types.ScannedDocumentResponse, []byte, error) {
+func (s *service) AttachDocuments(ctx context.Context, caseResponse *types.ScannedCaseResponse) (*types.ScannedDocumentResponse, []byte, error) {
 	var documentSubType string
 	var originalDocType = s.originalDoc.Type
 
@@ -67,7 +62,7 @@ func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.Scann
 	// Send the request
 	url := fmt.Sprintf("%s/%s", s.Client.Middleware.Config.App.SiriusBaseURL, s.Client.Middleware.Config.App.SiriusAttachDocURL)
 
-	resp, err := s.Client.ClientRequest(ctx, request, url)
+	resp, err := s.Client.clientRequest(ctx, request, url)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to attach document %s: %w", s.originalDoc.Type, err)
 	}
@@ -82,7 +77,7 @@ func (s *Service) AttachDocuments(ctx context.Context, caseResponse *types.Scann
 }
 
 // Create a case stub
-func (s *Service) CreateCaseStub(ctx context.Context) (*types.ScannedCaseResponse, error) {
+func (s *service) CreateCaseStub(ctx context.Context) (*types.ScannedCaseResponse, error) {
 	scannedCaseRequest, err := determineCaseRequest(s.set)
 	if err != nil {
 		return nil, err
@@ -104,7 +99,7 @@ func (s *Service) CreateCaseStub(ctx context.Context) (*types.ScannedCaseRespons
 
 	url := fmt.Sprintf("%s/%s", s.Client.Middleware.Config.App.SiriusBaseURL, s.Client.Middleware.Config.App.SiriusCaseStubURL)
 
-	resp, err := s.Client.ClientRequest(ctx, scannedCaseRequest, url)
+	resp, err := s.Client.clientRequest(ctx, scannedCaseRequest, url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request to Sirius: %w", err)
 	}

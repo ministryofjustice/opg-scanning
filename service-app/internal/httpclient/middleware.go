@@ -13,12 +13,12 @@ import (
 
 // Middleware handles HTTP requests with authorization.
 type Middleware struct {
-	Client HttpClientInterface
+	client httpClientInterface
 	Config *config.Config
-	Logger *logger.Logger
+	logger *logger.Logger
 }
 
-func NewMiddleware(client HttpClientInterface) (*Middleware, error) {
+func NewMiddleware(client httpClientInterface) (*Middleware, error) {
 	config := client.GetConfig()
 	logger := client.GetLogger()
 
@@ -31,9 +31,9 @@ func NewMiddleware(client HttpClientInterface) (*Middleware, error) {
 	}
 
 	return &Middleware{
-		Client: client,
+		client: client,
 		Config: config,
-		Logger: logger,
+		logger: logger,
 	}, nil
 }
 
@@ -52,7 +52,7 @@ func (m *Middleware) HTTPRequest(ctx context.Context, url, method string, payloa
 	headers["Authorization"] = "Bearer " + token
 
 	// Perform the target HTTP request
-	response, err := m.Client.HTTPRequest(ctx, url, method, payload, headers)
+	response, err := m.client.HTTPRequest(ctx, url, method, payload, headers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to perform HTTP request: %w", err)
 	}

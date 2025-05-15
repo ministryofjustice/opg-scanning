@@ -10,13 +10,13 @@ import (
 
 type (
 	Config struct {
-		App  App
-		Aws  Aws
+		App  app
+		Aws  aws
 		Auth Auth
-		HTTP HTTP
+		HTTP http
 	}
 
-	App struct {
+	app struct {
 		Environment        string `envconfig:"ENVIRONMENT"`
 		SiriusBaseURL      string `envconfig:"SIRIUS_BASE_URL"`
 		SiriusCaseStubURL  string `envconfig:"SIRIUS_CASE_STUB_URL" default:"api/public/v1/scanned-cases"`
@@ -25,7 +25,7 @@ type (
 		ProjectFullPath    string
 	}
 
-	Aws struct {
+	aws struct {
 		JobsQueueURL          string `envconfig:"JOBQUEUE_SQS_QUEUE_URL" default:"000000000000/ddc.fifo"`
 		JobsQueueBucket       string `envconfig:"JOBQUEUE_S3_BUCKET_NAME" default:"opg-backoffice-jobsqueue-local"`
 		JobsQueueBucketKmsKey string `envconfig:"JOBQUEUE_S3_ENCRYPTION_KEY" default:"alias/aws/s3"`
@@ -40,7 +40,7 @@ type (
 		JWTExpiration  int    `envconfig:"JWT_EXPIRATION" default:"3600"`
 	}
 
-	HTTP struct {
+	http struct {
 		Port    string `envconfig:"HTTP_PORT" default:"8081"`
 		Timeout int    `envconfig:"HTTP_TIMEOUT" default:"10"`
 	}
