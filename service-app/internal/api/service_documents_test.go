@@ -9,8 +9,7 @@ import (
 
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
-	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
-	"github.com/ministryofjustice/opg-scanning/internal/logger"
+	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"github.com/pact-foundation/pact-go/v2/consumer"
@@ -71,14 +70,10 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 		// Mock dependencies
 		mockConfig := config.NewConfig()
 		mockConfig.App.SiriusBaseURL = baseURL
-		logger := logger.GetLogger(mockConfig)
-
-		httpClient := httpclient.NewHttpClient(*mockConfig, *logger)
-		httpMiddleware, _ := httpclient.NewMiddleware(httpClient)
 
 		// Prepare service instance
 		service := &service{
-			Client: &client{Middleware: httpMiddleware},
+			siriusClient: sirius.NewClient(mockConfig),
 			originalDoc: &types.BaseDocument{
 				EmbeddedXML: xmlBase64,
 				EmbeddedPDF: pdfBase64,
@@ -91,7 +86,7 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 			},
 		}
 
-		caseResponse := &types.ScannedCaseResponse{
+		caseResponse := &sirius.ScannedCaseResponse{
 			UID: "7000-3764-4871",
 		}
 

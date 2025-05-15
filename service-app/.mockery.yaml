@@ -1,0 +1,13 @@
+issue-845-fix: true
+disable-version-string: true
+resolve-type-alias: false
+with-expecter: true
+inpackage: true
+dir: "{{.InterfaceDir}}"
+mockname: "mock{{.InterfaceName|firstUpper}}"
+outpkg: "{{.PackageName}}"
+filename: "mock_{{.InterfaceName}}_test.go"
+all: true
+packages:
+  github.com/ministryofjustice/opg-scanning/internal/api:
+  github.com/ministryofjustice/opg-scanning/internal/sirius:

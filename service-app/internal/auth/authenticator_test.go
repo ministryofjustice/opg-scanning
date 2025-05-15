@@ -18,7 +18,7 @@ func TestAuthenticatorCredentials(t *testing.T) {
 	cfg := config.NewConfig()
 	logger := logger.GetLogger(cfg)
 
-	_, authMiddleware, _, _ := PrepareMocks(cfg, logger)
+	authMiddleware, _, _ := PrepareMocks(cfg, logger)
 
 	tests := []struct {
 		name    string
@@ -64,7 +64,7 @@ func TestAuthenticate(t *testing.T) {
 	cfg := config.NewConfig()
 	logger := logger.GetLogger(cfg)
 
-	_, authMiddleware, _, _ := PrepareMocks(cfg, logger)
+	authMiddleware, _, _ := PrepareMocks(cfg, logger)
 
 	w := httptest.NewRecorder()
 	request := &http.Request{
