@@ -25,7 +25,7 @@ start:
 start-sirius:
 	@${MAKE} build
 	@echo "Running the application using Docker Compose, integrated with local Sirius..."
-	@docker compose -f docker-compose.yml -f docker-compose.sirius.yml up -d || { echo "Failed to start Docker Compose"; exit 1; }
+	@docker compose -f docker-compose.yml -f docker-compose.sirius.yml up -d service-app || { echo "Failed to start Docker Compose"; exit 1; }
 
 clean:
 	@echo "Stopping and cleaning up Docker Compose resources..."
