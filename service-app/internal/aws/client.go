@@ -16,7 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/google/uuid"
 	"github.com/ministryofjustice/opg-scanning/config"
-	appTypes "github.com/ministryofjustice/opg-scanning/internal/types"
+	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
@@ -25,7 +25,7 @@ type AwsClientInterface interface {
 	FetchCredentials(ctx context.Context) (map[string]string, error)
 	PersistFormData(ctx context.Context, body io.Reader, docType string) (string, error)
 	PersistSetData(ctx context.Context, body []byte) (string, error)
-	QueueSetForProcessing(ctx context.Context, scannedCaseResponse *appTypes.ScannedCaseResponse, fileName string) (MessageID *string, err error)
+	QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (MessageID *string, err error)
 }
 
 type AwsClient struct {
@@ -195,7 +195,7 @@ func (a *AwsClient) FetchCredentials(ctx context.Context) (map[string]string, er
 	return credentials, nil
 }
 
-func (a *AwsClient) QueueSetForProcessing(ctx context.Context, scannedCaseResponse *appTypes.ScannedCaseResponse, fileName string) (MessageID *string, err error) {
+func (a *AwsClient) QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (MessageID *string, err error) {
 	message := createMessageBody(scannedCaseResponse, fileName)
 	messageJson, err := json.Marshal(message)
 	if err != nil {
@@ -217,7 +217,7 @@ func (a *AwsClient) QueueSetForProcessing(ctx context.Context, scannedCaseRespon
 	return output.MessageId, nil
 }
 
-func createMessageBody(scannedCaseResponse *appTypes.ScannedCaseResponse, fileName string) map[string]interface{} {
+func createMessageBody(scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) map[string]interface{} {
 	// Create a message structure
 	content := map[string]interface{}{
 		"uid":      scannedCaseResponse.UID,

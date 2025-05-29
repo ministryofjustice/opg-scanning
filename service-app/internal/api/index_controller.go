@@ -18,9 +18,9 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/auth"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
-	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
 	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
+	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -30,7 +30,7 @@ type IndexController struct {
 	config         *config.Config
 	logger         *logger.Logger
 	validator      *ingestion.Validator
-	httpMiddleware *httpclient.Middleware
+	siriusClient   SiriusClient
 	authMiddleware *auth.Middleware
 	Queue          *ingestion.JobQueue
 	AwsClient      aws.AwsClientInterface
@@ -53,7 +53,6 @@ func NewIndexController(awsClient aws.AwsClientInterface, appConfig *config.Conf
 	logger := logger.GetLogger(appConfig)
 
 	// Create dependencies
-	httpClient := httpclient.NewHttpClient(*appConfig, *logger)
 	tokenGenerator := auth.NewJWTTokenGenerator(awsClient, appConfig, logger)
 	cookieHelper := auth.MembraneCookieHelper{
 		CookieName: "membrane",
@@ -63,14 +62,12 @@ func NewIndexController(awsClient aws.AwsClientInterface, appConfig *config.Conf
 
 	// Create authentication middleware
 	authMiddleware := auth.NewMiddleware(authenticator, tokenGenerator, cookieHelper, logger)
-	// Create HTTP middleware
-	httpMiddleware, _ := httpclient.NewMiddleware(httpClient)
 
 	return &IndexController{
 		config:         appConfig,
 		logger:         logger,
 		validator:      ingestion.NewValidator(),
-		httpMiddleware: httpMiddleware,
+		siriusClient:   sirius.NewClient(appConfig),
 		authMiddleware: authMiddleware,
 		Queue:          ingestion.NewJobQueue(appConfig),
 		AwsClient:      awsClient,
@@ -196,8 +193,7 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	client := newClient(c.httpMiddleware)
-	service := newService(client, parsedBaseXml)
+	service := newService(c.siriusClient, parsedBaseXml)
 	ctx, cancel := context.WithTimeout(r.Context(), time.Duration(c.config.HTTP.Timeout)*time.Second)
 	ctxWithToken := context.WithValue(ctx, constants.UserContextKey, reqCtx.Value(constants.UserContextKey))
 	defer cancel()
@@ -253,7 +249,7 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func getPublicError(err error, uid string) string {
-	var clientError httpclient.SiriusClientError
+	var clientError sirius.Error
 	if !errors.As(err, &clientError) {
 		return ""
 	}

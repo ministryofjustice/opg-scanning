@@ -15,11 +15,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 
 	"github.com/ministryofjustice/opg-scanning/config"
-	"github.com/ministryofjustice/opg-scanning/internal/types"
+	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/stretchr/testify/assert"
 )
 
-var scannedCaseResponse = &types.ScannedCaseResponse{
+var scannedCaseResponse = &sirius.ScannedCaseResponse{
 	UID: "700000001219",
 }
 

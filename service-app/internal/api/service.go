@@ -3,30 +3,35 @@ package api
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 
 	"github.com/ministryofjustice/opg-scanning/internal/parser/corresp_parser"
+	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/types/corresp_types"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
-type service struct {
-	Client      *client
-	set         *types.BaseSet
-	originalDoc *types.BaseDocument
+type SiriusClient interface {
+	AttachDocument(ctx context.Context, data *sirius.ScannedDocumentRequest) (*sirius.ScannedDocumentResponse, error)
+	CreateCaseStub(ctx context.Context, data *sirius.ScannedCaseRequest) (*sirius.ScannedCaseResponse, error)
 }
 
-func newService(client *client, set *types.BaseSet) *service {
+type service struct {
+	siriusClient SiriusClient
+	set          *types.BaseSet
+	originalDoc  *types.BaseDocument
+}
+
+func newService(client SiriusClient, set *types.BaseSet) *service {
 	return &service{
-		Client: client,
-		set:    set,
+		siriusClient: client,
+		set:          set,
 	}
 }
 
 // Attach documents to cases
-func (s *service) AttachDocuments(ctx context.Context, caseResponse *types.ScannedCaseResponse) (*types.ScannedDocumentResponse, []byte, error) {
+func (s *service) AttachDocuments(ctx context.Context, caseResponse *sirius.ScannedCaseResponse) (*sirius.ScannedDocumentResponse, []byte, error) {
 	var documentSubType string
 	var originalDocType = s.originalDoc.Type
 
@@ -51,7 +56,7 @@ func (s *service) AttachDocuments(ctx context.Context, caseResponse *types.Scann
 	}
 
 	// Prepare the request payload
-	request := types.ScannedDocumentRequest{
+	request := &sirius.ScannedDocumentRequest{
 		CaseReference:   caseResponse.UID,
 		Content:         s.originalDoc.EmbeddedPDF,
 		DocumentType:    originalDocType,
@@ -60,24 +65,16 @@ func (s *service) AttachDocuments(ctx context.Context, caseResponse *types.Scann
 	}
 
 	// Send the request
-	url := fmt.Sprintf("%s/%s", s.Client.Middleware.Config.App.SiriusBaseURL, s.Client.Middleware.Config.App.SiriusAttachDocURL)
-
-	resp, err := s.Client.clientRequest(ctx, request, url)
+	scannedResponse, err := s.siriusClient.AttachDocument(ctx, request)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to attach document %s: %w", s.originalDoc.Type, err)
 	}
 
-	var scannedResponse types.ScannedDocumentResponse
-	err = json.Unmarshal(*resp, &scannedResponse)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to unmarshal response: %w", err)
-	}
-
-	return &scannedResponse, decodedXML, nil
+	return scannedResponse, decodedXML, nil
 }
 
 // Create a case stub
-func (s *service) CreateCaseStub(ctx context.Context) (*types.ScannedCaseResponse, error) {
+func (s *service) CreateCaseStub(ctx context.Context) (*sirius.ScannedCaseResponse, error) {
 	scannedCaseRequest, err := determineCaseRequest(s.set)
 	if err != nil {
 		return nil, err
@@ -88,27 +85,15 @@ func (s *service) CreateCaseStub(ctx context.Context) (*types.ScannedCaseRespons
 	}
 
 	if scannedCaseRequest == nil && s.set.Header.CaseNo != "" {
-		return &types.ScannedCaseResponse{
+		return &sirius.ScannedCaseResponse{
 			UID: s.set.Header.CaseNo,
 		}, nil
 	}
 
-	if s.Client.Middleware == nil {
-		return nil, fmt.Errorf("middleware is nil")
-	}
-
-	url := fmt.Sprintf("%s/%s", s.Client.Middleware.Config.App.SiriusBaseURL, s.Client.Middleware.Config.App.SiriusCaseStubURL)
-
-	resp, err := s.Client.clientRequest(ctx, scannedCaseRequest, url)
+	scannedResponse, err := s.siriusClient.CreateCaseStub(ctx, scannedCaseRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request to Sirius: %w", err)
 	}
 
-	var scannedResponse types.ScannedCaseResponse
-	err = json.Unmarshal(*resp, &scannedResponse)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
-	}
-
-	return &scannedResponse, nil
+	return scannedResponse, nil
 }

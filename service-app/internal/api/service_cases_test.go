@@ -8,8 +8,7 @@ import (
 
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
-	"github.com/ministryofjustice/opg-scanning/internal/httpclient"
-	"github.com/ministryofjustice/opg-scanning/internal/logger"
+	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/pact-foundation/pact-go/v2/consumer"
 	"github.com/pact-foundation/pact-go/v2/matchers"
@@ -19,7 +18,7 @@ import (
 type requestCaseStub struct {
 	name        string
 	xmlPayload  string
-	expectedReq *types.ScannedCaseRequest
+	expectedReq *sirius.ScannedCaseRequest
 	expectedErr bool
 }
 
@@ -45,7 +44,7 @@ func buildTestCases() []requestCaseStub {
 		{
 			name:       "Order Case with CaseNo",
 			xmlPayload: fmt.Sprintf(withCaseNoPayload, "COPORD"),
-			expectedReq: &types.ScannedCaseRequest{
+			expectedReq: &sirius.ScannedCaseRequest{
 				BatchID:        "02-0001112-20160909185000",
 				CaseType:       "order",
 				CourtReference: "123",
@@ -61,7 +60,7 @@ func buildTestCases() []requestCaseStub {
 		{
 			name:       "LPA Case without CaseNo",
 			xmlPayload: fmt.Sprintf(withoutCaseNoPayload, "LP1F"),
-			expectedReq: &types.ScannedCaseRequest{
+			expectedReq: &sirius.ScannedCaseRequest{
 				BatchID:  "02-0001112-20160909185000",
 				CaseType: "lpa",
 			},
@@ -76,7 +75,7 @@ func buildTestCases() []requestCaseStub {
 		{
 			name:       "EPA Case without CaseNo",
 			xmlPayload: fmt.Sprintf(withoutCaseNoPayload, "EP2PG"),
-			expectedReq: &types.ScannedCaseRequest{
+			expectedReq: &sirius.ScannedCaseRequest{
 				BatchID:  "02-0001112-20160909185000",
 				CaseType: "epa",
 			},
@@ -116,7 +115,6 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 	t.Run(tt.name, func(t *testing.T) {
 		set := parseXMLPayload(t, tt.xmlPayload)
 		mockConfig := config.NewConfig()
-		logger := logger.GetLogger(mockConfig)
 
 		// Set up expected interactions
 		if tt.expectedReq != nil {
@@ -154,10 +152,7 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 			mockConfig.App.SiriusBaseURL = baseURL
 
 			// Mock dependencies
-			httpClient := httpclient.NewHttpClient(*mockConfig, *logger)
-			httpMiddleware, _ := httpclient.NewMiddleware(httpClient)
-
-			client := newClient(httpMiddleware)
+			client := sirius.NewClient(mockConfig)
 			service := newService(client, &set)
 
 			ctx := context.WithValue(context.Background(), constants.UserContextKey, "my-token")

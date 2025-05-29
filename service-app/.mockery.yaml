@@ -1,0 +1,10 @@
+all: true
+dir: '{{.InterfaceDir}}'
+structname: mock{{.InterfaceName|firstUpper}}
+pkgname: '{{.SrcPackageName}}'
+template: testify
+template-data:
+  unroll-variadic: true
+packages:
+  github.com/ministryofjustice/opg-scanning/internal/api:
+  github.com/ministryofjustice/opg-scanning/internal/sirius:

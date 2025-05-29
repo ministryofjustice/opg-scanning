@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/ministryofjustice/opg-scanning/internal/types"
+	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -32,7 +32,7 @@ func (m *MockAwsClient) PersistSetData(ctx context.Context, body []byte) (string
 	return args.String(0), args.Error(1)
 }
 
-func (m *MockAwsClient) QueueSetForProcessing(ctx context.Context, scannedCaseResponse *types.ScannedCaseResponse, fileName string) (MessageID *string, err error) {
+func (m *MockAwsClient) QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (MessageID *string, err error) {
 	args := m.Called(ctx, scannedCaseResponse, fileName)
 
 	messageId := args.String(0)
