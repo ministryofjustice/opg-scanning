@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"slices"
 
 	"github.com/ministryofjustice/opg-scanning/internal/parser/corresp_parser"
 	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/types/corresp_types"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
 type SiriusClient interface {
@@ -42,7 +42,7 @@ func (s *service) AttachDocuments(ctx context.Context, caseResponse *sirius.Scan
 	}
 
 	// Check for Correspondence or SupCorrespondence and extract SubType
-	if util.Contains([]string{"Correspondence", "SupCorrespondence"}, originalDocType) {
+	if slices.Contains([]string{"Correspondence", "SupCorrespondence"}, originalDocType) {
 		// Parse the XML
 		correspInterface, err := corresp_parser.Parse([]byte(decodedXML))
 		if err != nil {

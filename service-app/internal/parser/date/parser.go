@@ -1,4 +1,4 @@
-package util
+package date
 
 import (
 	"errors"
@@ -20,13 +20,9 @@ var dateFormats = []string{
 	"2 January 2006",      // j F Y (Outgoing Correspondence format)
 }
 
-// Attempts to parse a date string against multiple formats.
-// It returns a parsed time.Time if successful, or an error if no format matches.
-func ParseDate(input string, format string) (time.Time, error) {
-	if format != "" {
-		return time.Parse(format, input)
-	}
-
+// Parse a date string against multiple possible formats. Returns a time.Time if
+// successful, or an error if no format matches.
+func Parse(input string) (time.Time, error) {
 	input = strings.TrimSpace(input)
 
 	for _, format := range dateFormats {

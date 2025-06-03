@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/lestrrat-go/libxml2"
@@ -23,7 +24,7 @@ type Root struct {
 }
 
 func NewXSDValidator(xsdPath string, xmlContent string) (*XSDValidator, error) {
-	validPath, err := util.ValidatePath(xsdPath)
+	validPath, err := validatePath(xsdPath)
 	if err != nil {
 		return nil, err
 	}
@@ -68,4 +69,23 @@ func ExtractSchemaLocation(xmlContent string) (string, error) {
 	}
 
 	return root.SchemaLocation, nil
+}
+
+func validatePath(inputPath string) (string, error) {
+	trustedPath, err := util.GetProjectRoot()
+	if err != nil {
+		return "", err
+	}
+
+	absPath, err := filepath.Abs(inputPath)
+	if err != nil {
+		return "", err
+	}
+
+	// Ensure the file is within the allowed directory
+	if !strings.HasPrefix(absPath, trustedPath) {
+		return "", errors.New("invalid file path")
+	}
+
+	return absPath, nil
 }

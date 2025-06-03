@@ -11,14 +11,14 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"github.com/pact-foundation/pact-go/v2/consumer"
 	"github.com/pact-foundation/pact-go/v2/matchers"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAttachDocument_Correspondence(t *testing.T) {
-	// Set up Pact
+	// Set up Pact
 	mockProvider, err := consumer.NewV4Pact(consumer.MockHTTPProviderConfig{
 		Consumer: "scanning",
 		Provider: "sirius",
@@ -26,14 +26,15 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 	assert.Nil(t, err)
 
 	// Load PDF from the test file
-	pdfRaw, err := os.ReadFile("../../pdf/dummy.pdf")
+	pdfRaw, err := os.ReadFile("../../testdata/pdf/dummy.pdf")
 	if pdfRaw == nil || err != nil {
 		t.Fatal("failed to load dummy PDF")
 	}
 	pdfBase64 := base64.StdEncoding.EncodeToString(pdfRaw)
 
 	// Load XML data from the test file
-	xmlStringData := util.LoadXMLFileTesting(t, "../../xml/Correspondence-valid.xml")
+	xmlStringData, err := os.ReadFile("../../testdata/xml/Correspondence-valid.xml")
+	require.NoError(t, err)
 	xmlBase64 := base64.StdEncoding.EncodeToString(xmlStringData)
 	if xmlBase64 == "" {
 		t.Fatal("failed to load sample XML")

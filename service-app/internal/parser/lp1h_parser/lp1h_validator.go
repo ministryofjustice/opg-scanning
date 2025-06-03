@@ -6,7 +6,6 @@ import (
 
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
 	"github.com/ministryofjustice/opg-scanning/internal/types/lp1h_types"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
 type Validator struct {
@@ -70,7 +69,7 @@ func (v *Validator) extractDate(page, section, path string) (*time.Time, error) 
 		return nil, fmt.Errorf("invalid date format or empty value")
 	}
 
-	date, err := util.ParseDate(dateStr, "02012006")
+	date, err := time.Parse("02012006", dateStr)
 	if err != nil {
 		return nil, err
 	}
