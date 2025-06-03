@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -17,7 +19,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/sirius"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
 type AwsClientInterface interface {
@@ -114,7 +115,7 @@ func (a *AwsClient) PersistFormData(ctx context.Context, body io.Reader, docType
 	if bodyErr != nil {
 		return "", fmt.Errorf("failed to read body: %w", bodyErr)
 	}
-	if bodyErr = util.IsValidXML(bodyBytes); bodyErr != nil {
+	if bodyErr = isValidXML(bodyBytes); bodyErr != nil {
 		return "", fmt.Errorf("invalid XML: %w", bodyErr)
 	}
 
@@ -217,20 +218,53 @@ func (a *AwsClient) QueueSetForProcessing(ctx context.Context, scannedCaseRespon
 	return output.MessageId, nil
 }
 
-func createMessageBody(scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) map[string]interface{} {
+func createMessageBody(scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) map[string]any {
 	// Create a message structure
-	content := map[string]interface{}{
+	content := map[string]any{
 		"uid":      scannedCaseResponse.UID,
 		"filename": fileName,
 	}
 
 	// Create the final message structure
-	message := map[string]interface{}{
-		"content": util.PhpSerialize(content),
-		"metadata": map[string]interface{}{
+	message := map[string]any{
+		"content": phpSerialize(content),
+		"metadata": map[string]any{
 			"__name__": "Ddc\\Job\\FormJob",
 		},
 	}
 
 	return message
+}
+
+func isValidXML(data []byte) error {
+	var v any
+	if err := xml.Unmarshal(data, &v); err != nil {
+		return fmt.Errorf("xml unmarshal error: %w", err)
+	}
+	return nil
+}
+
+// Serializes a map of string keys and values of type string or int into a PHP serialized string format.
+// It supports only string and integer types for values.
+// Only supports flat arrays.
+func phpSerialize(data map[string]interface{}) string {
+	var sb strings.Builder
+	// Serialize the map as a PHP array
+	sb.WriteString("a:" + strconv.Itoa(len(data)) + ":{")
+
+	for key, value := range data {
+		// Serialize the key
+		sb.WriteString("s:" + strconv.Itoa(len(key)) + `:"` + key + `";`)
+
+		// Serialize the value based on type
+		switch v := value.(type) {
+		case string:
+			sb.WriteString("s:" + strconv.Itoa(len(v)) + `:"` + v + `";`)
+		case int:
+			sb.WriteString("i:" + strconv.Itoa(v) + ";")
+		}
+	}
+
+	sb.WriteString("}")
+	return sb.String()
 }

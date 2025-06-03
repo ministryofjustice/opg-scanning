@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
+	"github.com/ministryofjustice/opg-scanning/internal/parser/date"
 	"github.com/ministryofjustice/opg-scanning/internal/types/lp2_types"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
 type Validator struct {
@@ -54,7 +54,7 @@ func (v *Validator) Validate() []string {
 		if attorney.Date == "" {
 			continue
 		}
-		if _, err := util.ParseDate(attorney.Date, ""); err != nil {
+		if _, err := date.Parse(attorney.Date); err != nil {
 			v.baseValidator.AddValidatorErrorMessage("Failed to parse attorney signature date: " + err.Error())
 		}
 	}
@@ -64,7 +64,7 @@ func (v *Validator) Validate() []string {
 		if attorney.DOB == "" {
 			continue
 		}
-		if _, err := util.ParseDate(attorney.DOB, ""); err != nil {
+		if _, err := date.Parse(attorney.DOB); err != nil {
 			v.baseValidator.AddValidatorErrorMessage("Failed to parse attorney date of birth: " + err.Error())
 		}
 	}

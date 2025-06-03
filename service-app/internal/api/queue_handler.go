@@ -2,11 +2,11 @@ package api
 
 import (
 	"context"
+	"slices"
 
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
 // Handles the queueing of documents for processing.
@@ -46,7 +46,7 @@ func (c *IndexController) processQueue(ctx context.Context, scannedCaseResponse 
 			}
 
 			// If not a Sirius extraction document, skip external job processing.
-			if !util.Contains(constants.SiriusExtractionDocuments, originalDoc.Type) {
+			if !slices.Contains(constants.SiriusExtractionDocuments, originalDoc.Type) {
 				c.logger.InfoWithContext(ctx, "Skipping external job processing, checks completed for document", map[string]any{
 					"set_uid":       scannedCaseResponse.UID,
 					"pdf_uuid":      attchResp.UUID,

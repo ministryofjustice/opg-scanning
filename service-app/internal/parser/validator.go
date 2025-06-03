@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ministryofjustice/opg-scanning/internal/util"
+	"github.com/ministryofjustice/opg-scanning/internal/parser/date"
 )
 
 // Validator is a struct that holds document data and validation error messages
@@ -173,7 +173,7 @@ func (v *BaseValidator) ApplicantSignatureValidator(page string) []time.Time {
 		}
 
 		dateStr := dateField.String()
-		signatureDate, err := util.ParseDate(dateStr, "")
+		signatureDate, err := date.Parse(dateStr)
 		if err != nil {
 			v.AddValidatorErrorMessage("applicant date is invalid")
 			continue
@@ -194,7 +194,7 @@ func (v *BaseValidator) ApplicantSignatureValidator(page string) []time.Time {
 
 // Checks if the date string is valid and not in the future
 func validateSignatureDate(dateStr, label string) (time.Time, error) {
-	parsedDate, err := util.ParseDate(dateStr, "")
+	parsedDate, err := date.Parse(dateStr)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("invalid %s date format: %w", label, err)
 	}

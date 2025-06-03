@@ -2,10 +2,10 @@ package ep2pg_parser
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
 	"github.com/ministryofjustice/opg-scanning/internal/types/ep2pg_types"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
 type Validator struct {
@@ -32,13 +32,13 @@ func (v *Validator) Setup(doc any) error {
 
 func (v *Validator) Validate() []string {
 	if v.doc.Page1.Part1.DOB != "" {
-		if _, err := util.ParseDate(v.doc.Page1.Part1.DOB, "02012006"); err != nil {
+		if _, err := time.Parse("02012006", v.doc.Page1.Part1.DOB); err != nil {
 			v.baseValidator.AddValidatorErrorMessage("Failed to parse date of birth for Donor: " + err.Error())
 		}
 	}
 
 	if v.doc.Page4.Part4.DOB != "" {
-		if _, err := util.ParseDate(v.doc.Page4.Part4.DOB, "02012006"); err != nil {
+		if _, err := time.Parse("02012006", v.doc.Page4.Part4.DOB); err != nil {
 			v.baseValidator.AddValidatorErrorMessage("Failed to parse date of birth for Attorney: " + err.Error())
 		}
 	}
