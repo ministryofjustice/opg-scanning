@@ -14,7 +14,6 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/types/lp1h_types"
 	"github.com/ministryofjustice/opg-scanning/internal/types/lpa120_types"
 	"github.com/ministryofjustice/opg-scanning/internal/types/lpc_types"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -124,11 +123,7 @@ func prepareDocument(t *testing.T, docType string, fileName string) interface{} 
 }
 
 func loadXMLFile(t *testing.T, filepath string) string {
-	validPath, err := util.ValidatePath(filepath)
-	if err != nil {
-		require.FailNow(t, "Invalid file path", err.Error())
-	}
-	data, err := os.ReadFile(validPath)
+	data, err := os.ReadFile(filepath)
 	require.NoError(t, err, "Failed to read XML file")
 	return base64.StdEncoding.EncodeToString(data)
 }

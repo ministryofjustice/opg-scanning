@@ -1,10 +1,10 @@
 package ep2pg_parser
 
 import (
+	"os"
 	"testing"
 
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +24,8 @@ func TestInvalidXML(t *testing.T) {
 }
 
 func getValidator(t *testing.T, fileName string) parser.CommonValidator {
-	xml := util.LoadXMLFileTesting(t, "../../../xml/"+fileName)
+	xml, err := os.ReadFile("../../../xml/" + fileName)
+	require.NoError(t, err)
 	doc, err := Parse(xml)
 	require.NoError(t, err)
 	validator := NewValidator()
