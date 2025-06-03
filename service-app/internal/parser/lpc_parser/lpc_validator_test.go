@@ -26,7 +26,7 @@ func TestInvalidLPCXML(t *testing.T) {
 }
 
 func getLPCValidator(t *testing.T, fileName string) parser.CommonValidator {
-	xml, err := os.ReadFile("../../../xml/" + fileName)
+	xml, err := os.ReadFile("../../../testdata/xml/" + fileName)
 	require.NoError(t, err)
 
 	doc, err := Parse(xml)

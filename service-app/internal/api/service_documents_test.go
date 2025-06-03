@@ -26,14 +26,14 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 	assert.Nil(t, err)
 
 	// Load PDF from the test file
-	pdfRaw, err := os.ReadFile("../../pdf/dummy.pdf")
+	pdfRaw, err := os.ReadFile("../../testdata/pdf/dummy.pdf")
 	if pdfRaw == nil || err != nil {
 		t.Fatal("failed to load dummy PDF")
 	}
 	pdfBase64 := base64.StdEncoding.EncodeToString(pdfRaw)
 
 	// Load XML data from the test file
-	xmlStringData, err := os.ReadFile("../../xml/Correspondence-valid.xml")
+	xmlStringData, err := os.ReadFile("../../testdata/xml/Correspondence-valid.xml")
 	require.NoError(t, err)
 	xmlBase64 := base64.StdEncoding.EncodeToString(xmlStringData)
 	if xmlBase64 == "" {

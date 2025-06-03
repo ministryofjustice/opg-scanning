@@ -92,7 +92,7 @@ func TestProcessGenericDocuments(t *testing.T) {
 
 func prepareDocument(t *testing.T, docType string, fileName string) interface{} {
 	// Load the sample XML from the xml directory
-	encodedXML := loadXMLFile(t, "../../xml/"+fileName+".xml")
+	encodedXML := loadXMLFile(t, "../../testdata/xml/"+fileName+".xml")
 	if encodedXML == "" {
 		t.Fatal("failed to load sample XML")
 	}
