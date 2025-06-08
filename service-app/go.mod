@@ -2,7 +2,7 @@ module github.com/ministryofjustice/opg-scanning
 
 go 1.24
 
-toolchain go1.24.3
+toolchain go1.24.4
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.36.3
@@ -84,7 +84,7 @@ require (
 	github.com/spf13/cobra v1.9.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/vektra/mockery/v3 v3.3.1 // indirect
+	github.com/vektra/mockery/v3 v3.3.2 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
