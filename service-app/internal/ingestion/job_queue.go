@@ -53,7 +53,7 @@ func (q *JobQueue) AddToQueueSequentially(ctx context.Context, cfg *config.Confi
 
 	// Use a per-job timeout context.
 	processCtx, cancel := context.WithTimeout(jobCtx, time.Duration(cfg.HTTP.Timeout)*time.Second)
-	processCtx = context.WithValue(processCtx, constants.UserContextKey, ctx.Value(constants.UserContextKey))
+	processCtx = context.WithValue(processCtx, constants.TokenContextKey, ctx.Value(constants.TokenContextKey))
 	defer cancel()
 
 	parsedDoc, err := processor.Process(processCtx)
