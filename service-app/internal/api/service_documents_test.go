@@ -91,7 +91,7 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 			UID: "7000-3764-4871",
 		}
 
-		ctx := context.WithValue(context.Background(), constants.UserContextKey, "my-token")
+		ctx := context.WithValue(context.Background(), constants.TokenContextKey, "my-token")
 
 		response, decodedXML, err := service.AttachDocuments(ctx, caseResponse)
 		if err != nil {

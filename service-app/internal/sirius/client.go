@@ -94,7 +94,7 @@ func newRequest(ctx context.Context, url string, data any) (*http.Request, error
 		return nil, fmt.Errorf("data is nil")
 	}
 
-	token, ok := ctx.Value(constants.UserContextKey).(string)
+	token, ok := ctx.Value(constants.TokenContextKey).(string)
 	if !ok {
 		return nil, fmt.Errorf("could not fetch user token from context")
 	}
