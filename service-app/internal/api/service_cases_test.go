@@ -155,7 +155,7 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 			client := sirius.NewClient(mockConfig)
 			service := newService(client, &set)
 
-			ctx := context.WithValue(context.Background(), constants.UserContextKey, "my-token")
+			ctx := context.WithValue(context.Background(), constants.TokenContextKey, "my-token")
 
 			response, err := service.CreateCaseStub(ctx)
 
