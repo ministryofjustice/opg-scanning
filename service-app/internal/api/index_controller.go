@@ -26,14 +26,25 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
+type Auth interface {
+	Authenticate(w http.ResponseWriter, r *http.Request) (auth.User, string, error)
+	UseCheckAuth(next http.Handler) http.HandlerFunc
+}
+
+type AwsClient interface {
+	PersistFormData(ctx context.Context, body io.Reader, docType string) (string, error)
+	PersistSetData(ctx context.Context, body []byte) (string, error)
+	QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (MessageID *string, err error)
+}
+
 type IndexController struct {
 	config         *config.Config
 	logger         *logger.Logger
 	validator      *ingestion.Validator
 	siriusClient   SiriusClient
-	authMiddleware *auth.Middleware
+	authMiddleware Auth
 	Queue          *ingestion.JobQueue
-	AwsClient      aws.AwsClientInterface
+	AwsClient      AwsClient
 }
 
 type response struct {
@@ -52,23 +63,12 @@ var uidReplacementRegex = regexp.MustCompile(`^7[0-9]{3}-[0-9]{4}-[0-9]{4}$`)
 func NewIndexController(awsClient aws.AwsClientInterface, appConfig *config.Config) *IndexController {
 	logger := logger.GetLogger(appConfig)
 
-	// Create dependencies
-	tokenGenerator := auth.NewJWTTokenGenerator(awsClient, appConfig, logger)
-	cookieHelper := auth.MembraneCookieHelper{
-		CookieName: "membrane",
-		Secure:     appConfig.App.Environment != "local",
-	}
-	authenticator := auth.NewBasicAuthAuthenticator(awsClient, cookieHelper, tokenGenerator)
-
-	// Create authentication middleware
-	authMiddleware := auth.NewMiddleware(authenticator, tokenGenerator, cookieHelper, logger)
-
 	return &IndexController{
 		config:         appConfig,
 		logger:         logger,
 		validator:      ingestion.NewValidator(),
 		siriusClient:   sirius.NewClient(appConfig),
-		authMiddleware: authMiddleware,
+		authMiddleware: auth.New(appConfig, logger, awsClient),
 		Queue:          ingestion.NewJobQueue(appConfig),
 		AwsClient:      awsClient,
 	}
@@ -90,7 +90,7 @@ func (c *IndexController) HandleRequests() {
 
 	// Protect the route with JWT validation (using the authMiddleware)
 	http.Handle("/api/ddc", otelhttp.NewHandler(logger.LoggingMiddleware(c.logger.SlogLogger)(
-		c.authMiddleware.CheckAuthMiddleware(http.HandlerFunc(c.ingestHandler)),
+		c.authMiddleware.UseCheckAuth(http.HandlerFunc(c.ingestHandler)),
 	), "scanning"))
 
 	c.logger.Info("Starting server on :"+c.config.HTTP.Port, nil)
@@ -112,20 +112,11 @@ func (c *IndexController) authHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Authenticate user credentials and issue JWT token
-	ctx, token, err := c.authMiddleware.Authenticator.Authenticate(w, r)
+	user, token, err := c.authMiddleware.Authenticate(w, r)
 	if err != nil {
 		errMsg := fmt.Sprintf("Authentication failed: %v", err)
 		c.logger.Error(errMsg, nil)
-		c.authResponse(ctx, w, ErrorResponse{Error: errMsg})
-		return
-	}
-
-	// Retrieve user from context
-	userFromCtx, ok := auth.UserFromContext(ctx)
-	if !ok {
-		errMsg := "Failed to retrieve user from context"
-		c.logger.Error(errMsg, nil)
-		c.authResponse(ctx, w, ErrorResponse{Error: errMsg})
+		c.authResponse(r.Context(), w, ErrorResponse{Error: errMsg})
 		return
 	}
 
@@ -134,11 +125,11 @@ func (c *IndexController) authHandler(w http.ResponseWriter, r *http.Request) {
 		Email string `json:"email"`
 		Token string `json:"authentication_token"`
 	}{
-		Email: userFromCtx.Email,
+		Email: user.Email,
 		Token: token,
 	}
 
-	c.authResponse(ctx, w, resp)
+	c.authResponse(r.Context(), w, resp)
 }
 
 func (c *IndexController) authResponse(ctx context.Context, w http.ResponseWriter, resp any) {
@@ -195,7 +186,7 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 
 	service := newService(c.siriusClient, parsedBaseXml)
 	ctx, cancel := context.WithTimeout(r.Context(), time.Duration(c.config.HTTP.Timeout)*time.Second)
-	ctxWithToken := context.WithValue(ctx, constants.UserContextKey, reqCtx.Value(constants.UserContextKey))
+	ctxWithToken := context.WithValue(ctx, constants.TokenContextKey, reqCtx.Value(constants.TokenContextKey))
 	defer cancel()
 	scannedCaseResponse, err := service.CreateCaseStub(ctxWithToken)
 	if err != nil {
