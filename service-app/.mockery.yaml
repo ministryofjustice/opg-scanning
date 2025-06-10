@@ -7,4 +7,5 @@ template-data:
   unroll-variadic: true
 packages:
   github.com/ministryofjustice/opg-scanning/internal/api:
+  github.com/ministryofjustice/opg-scanning/internal/auth:
   github.com/ministryofjustice/opg-scanning/internal/sirius:
