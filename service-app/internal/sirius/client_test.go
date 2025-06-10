@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var ctx = context.WithValue(context.Background(), constants.UserContextKey, "testing-key")
+var ctx = context.WithValue(context.Background(), constants.TokenContextKey, "testing-key")
 
 func TestNewClient(t *testing.T) {
 	config := &config.Config{}
