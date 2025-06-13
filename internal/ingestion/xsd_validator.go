@@ -11,7 +11,7 @@ import (
 	"github.com/lestrrat-go/libxml2"
 	"github.com/lestrrat-go/libxml2/parser"
 	"github.com/lestrrat-go/libxml2/xsd"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
+	"github.com/ministryofjustice/opg-scanning/config"
 )
 
 type XSDValidator struct {
@@ -23,11 +23,12 @@ type Root struct {
 	SchemaLocation string `xml:"http://www.w3.org/2001/XMLSchema-instance noNamespaceSchemaLocation,attr"`
 }
 
-func NewXSDValidator(xsdPath string, xmlContent string) (*XSDValidator, error) {
-	validPath, err := validatePath(xsdPath)
-	if err != nil {
-		return nil, err
+func NewXSDValidator(config *config.Config, schemaLocation string, xmlContent string) (*XSDValidator, error) {
+	if !filepath.IsLocal(schemaLocation) {
+		return nil, errors.New("schema location not local path")
 	}
+	validPath := filepath.Join(config.App.XSDPath, schemaLocation)
+
 	xsdContent, err := os.ReadFile(validPath) //#nosec G304 false positive: we check the path above
 	if err != nil {
 		return nil, err
@@ -69,23 +70,4 @@ func ExtractSchemaLocation(xmlContent string) (string, error) {
 	}
 
 	return root.SchemaLocation, nil
-}
-
-func validatePath(inputPath string) (string, error) {
-	trustedPath, err := util.GetProjectRoot()
-	if err != nil {
-		return "", err
-	}
-
-	absPath, err := filepath.Abs(inputPath)
-	if err != nil {
-		return "", err
-	}
-
-	// Ensure the file is within the allowed directory
-	if !strings.HasPrefix(absPath, trustedPath) {
-		return "", errors.New("invalid file path")
-	}
-
-	return absPath, nil
 }
