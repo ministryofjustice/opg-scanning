@@ -29,6 +29,7 @@ services:
       dockerfile: Dockerfile.test
     environment:
       - SIRIUS_BASE_URL=http://sirius-mock:8080
+      - XSD_PATH=/app/xsd
       - AWS_ENDPOINT=http://localstack:4566
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test

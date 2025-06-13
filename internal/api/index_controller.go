@@ -302,7 +302,7 @@ func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr st
 
 	// Validate against XSD
 	c.logger.InfoWithContext(ctx, "Validating against XSD", nil)
-	xsdValidator, err := ingestion.NewXSDValidator(c.config.App.ProjectFullPath+"/xsd/"+schemaLocation, bodyStr)
+	xsdValidator, err := ingestion.NewXSDValidator(c.config, schemaLocation, bodyStr)
 	if err != nil {
 		return nil, err
 	}
@@ -355,7 +355,7 @@ func (c *IndexController) validateDocument(document types.BaseDocument) error {
 		return fmt.Errorf("failed to extract schema from %s: %w", document.Type, err)
 	}
 
-	xsdValidator, err := ingestion.NewXSDValidator(c.config.App.ProjectFullPath+"/xsd/"+schemaLocation, string(decodedXML))
+	xsdValidator, err := ingestion.NewXSDValidator(c.config, schemaLocation, string(decodedXML))
 	if err != nil {
 		return fmt.Errorf("failed to load schema %s: %w", schemaLocation, err)
 	}
