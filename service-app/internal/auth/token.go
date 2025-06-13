@@ -8,78 +8,38 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/ministryofjustice/opg-scanning/config"
-	"github.com/ministryofjustice/opg-scanning/internal/aws"
-	"github.com/ministryofjustice/opg-scanning/internal/logger"
 )
 
 // Refresh token after 10 minutes
 const secretTTL = 10 * time.Minute
 
-type tokenGenerator interface {
-	generateToken() (string, time.Time, error)
-	validateToken(string) error
+type secretsClient interface {
+	GetSecretValue(ctx context.Context, secretName string) (string, error)
 }
 
-type jwtTokenGenerator struct {
-	awsClient       aws.AwsClientInterface
-	config          *config.Config
-	logger          *logger.Logger
+type tokenHelper struct {
+	awsClient secretsClient
+	config    *config.Config
+
+	// TODO: should prevent these being updated at the same time
 	signingSecret   string
 	lastSecretFetch time.Time
 }
 
-type claims struct {
-	SessionData string `json:"session-data"`
-	Iat         int64  `json:"iat"`
-	Exp         int64  `json:"exp"`
-}
-
-func NewJWTTokenGenerator(awsClient aws.AwsClientInterface, config *config.Config, logger *logger.Logger) *jwtTokenGenerator {
-	return &jwtTokenGenerator{
-		awsClient: awsClient,
-		config:    config,
-		logger:    logger,
-	}
-}
-
-func (tg *jwtTokenGenerator) newClaims() (claims, error) {
-	return claims{
-		SessionData: tg.config.Auth.ApiUsername,
-		Iat:         time.Now().Unix(),
-		Exp:         time.Now().Add(time.Duration(tg.config.Auth.JWTExpiration) * time.Second).Unix(),
-	}, nil
-}
-
-func (tg *jwtTokenGenerator) fetchSigningSecret() error {
-	shouldFetch := time.Since(tg.lastSecretFetch) >= secretTTL || tg.signingSecret == ""
-	if !shouldFetch {
-		return nil
-	}
-
-	secret, err := tg.awsClient.GetSecretValue(context.Background(), tg.config.Auth.JWTSecretARN)
-	if err != nil {
-		return fmt.Errorf("failed to fetch signing secret: %w", err)
-	}
-	tg.signingSecret = secret
-	tg.lastSecretFetch = time.Now()
-	return nil
-}
-
-// Creates a new JWT token.
-func (tg *jwtTokenGenerator) generateToken() (string, time.Time, error) {
+// Generate creates a new JWT token and also returns how many seconds until the
+// token expires.
+func (tg *tokenHelper) Generate() (string, time.Time, error) {
 	if err := tg.fetchSigningSecret(); err != nil {
 		return "", time.Time{}, err
 	}
 
-	claims, err := tg.newClaims()
-	if err != nil {
-		return "", time.Time{}, fmt.Errorf("failed to create claims: %w", err)
-	}
+	now := time.Now()
+	expiry := now.Add(time.Duration(tg.config.Auth.JWTExpiration) * time.Second)
 
 	jwtClaims := jwt.MapClaims{
-		"session-data": claims.SessionData,
-		"iat":          claims.Iat,
-		"exp":          claims.Exp,
+		"session-data": tg.config.Auth.ApiUsername,
+		"iat":          now.Unix(),
+		"exp":          expiry.Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtClaims)
@@ -88,19 +48,15 @@ func (tg *jwtTokenGenerator) generateToken() (string, time.Time, error) {
 		return "", time.Time{}, fmt.Errorf("failed to sign token: %w", err)
 	}
 
-	expiry := time.Unix(claims.Exp, 0)
-
-	tg.logger.Info("Generated new JWT token.", nil)
-
-	return signedToken, expiry, nil
+	return signedToken, expiry.Truncate(time.Second), nil
 }
 
-func (tg *jwtTokenGenerator) validateToken(tokenString string) error {
+func (tg *tokenHelper) Validate(tokenString string) error {
 	if err := tg.fetchSigningSecret(); err != nil {
 		return err
 	}
 
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 		return []byte(tg.signingSecret), nil
 	}, jwt.WithIssuedAt(), jwt.WithExpirationRequired())
 
@@ -112,6 +68,23 @@ func (tg *jwtTokenGenerator) validateToken(tokenString string) error {
 	if sessionData == nil || sessionData == "" {
 		return errors.New("session-data claim is required")
 	}
+
+	return nil
+}
+
+func (tg *tokenHelper) fetchSigningSecret() error {
+	shouldFetch := time.Since(tg.lastSecretFetch) >= secretTTL || tg.signingSecret == ""
+	if !shouldFetch {
+		return nil
+	}
+
+	secret, err := tg.awsClient.GetSecretValue(context.Background(), tg.config.Auth.JWTSecretARN)
+	if err != nil {
+		return fmt.Errorf("failed to fetch signing secret: %w", err)
+	}
+
+	tg.signingSecret = secret
+	tg.lastSecretFetch = time.Now()
 
 	return nil
 }
