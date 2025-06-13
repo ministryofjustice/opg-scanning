@@ -30,7 +30,6 @@ func New(appConfig *config.Config, logger *logger.Logger, awsClient aws.AwsClien
 		tokens: &tokenHelper{
 			awsClient: awsClient,
 			config:    appConfig,
-			logger:    logger,
 		},
 		logger:       logger,
 		credentials:  awsClient,

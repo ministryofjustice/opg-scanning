@@ -8,7 +8,6 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/ministryofjustice/opg-scanning/config"
-	"github.com/ministryofjustice/opg-scanning/internal/logger"
 )
 
 // Refresh token after 10 minutes
@@ -21,7 +20,6 @@ type secretsClient interface {
 type tokenHelper struct {
 	awsClient secretsClient
 	config    *config.Config
-	logger    *logger.Logger
 
 	// TODO: should prevent these being updated at the same time
 	signingSecret   string
@@ -49,8 +47,6 @@ func (tg *tokenHelper) Generate() (string, time.Time, error) {
 	if err != nil {
 		return "", time.Time{}, fmt.Errorf("failed to sign token: %w", err)
 	}
-
-	tg.logger.Info("Generated new JWT token.", nil)
 
 	return signedToken, expiry.Truncate(time.Second), nil
 }

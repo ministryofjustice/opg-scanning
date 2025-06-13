@@ -1,14 +1,11 @@
 package auth
 
 import (
-	"bytes"
-	"log/slog"
 	"testing"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/ministryofjustice/opg-scanning/config"
-	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -19,9 +16,6 @@ func TestGenerateToken(t *testing.T) {
 		GetSecretValue(mock.Anything, "aws::my-secret-arn").
 		Return("my-secret", nil)
 
-	outBuf := bytes.NewBuffer([]byte{})
-	mockLogger := &logger.Logger{SlogLogger: slog.New(slog.NewJSONHandler(outBuf, nil))}
-
 	tg := tokenHelper{
 		config: &config.Config{
 			Auth: config.Auth{
@@ -31,7 +25,6 @@ func TestGenerateToken(t *testing.T) {
 			},
 		},
 		awsClient: secretsClient,
-		logger:    mockLogger,
 	}
 
 	tokenString, expiry, err := tg.Generate()
@@ -46,7 +39,6 @@ func TestGenerateToken(t *testing.T) {
 	assert.Equal(t, tokenExpiry.Time, expiry)
 
 	assert.Equal(t, "user@host.example", token.Claims.(jwt.MapClaims)["session-data"])
-	assert.Contains(t, outBuf.String(), "Generated new JWT token.")
 }
 
 func TestValidateToken(t *testing.T) {
