@@ -15,7 +15,6 @@ import (
 	"testing"
 
 	"github.com/ministryofjustice/opg-scanning/config"
-	"github.com/ministryofjustice/opg-scanning/internal/auth"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
@@ -43,9 +42,23 @@ var xmlPayload = `
 func setupController(t *testing.T) *IndexController {
 	appConfig := config.NewConfig()
 	logger := logger.GetLogger(appConfig)
+	id := "123"
 
-	// Create mock dependencies
-	mockAuthMiddleware, awsClient, _ := auth.PrepareMocks(appConfig, logger)
+	mockAuth := newMockAuth(t)
+
+	awsClient := newMockAwsClient(t)
+	awsClient.EXPECT().
+		PersistSetData(mock.Anything, mock.Anything).
+		Return("path/my-set.xml", nil).
+		Maybe()
+	awsClient.EXPECT().
+		PersistFormData(mock.Anything, mock.Anything, mock.Anything).
+		Return("testFileName", nil).
+		Maybe()
+	awsClient.EXPECT().
+		QueueSetForProcessing(mock.Anything, mock.Anything, mock.Anything).
+		Return(&id, nil).
+		Maybe()
 
 	mockHttpClient := newMockSiriusClient(t)
 	mockHttpClient.EXPECT().
@@ -58,13 +71,13 @@ func setupController(t *testing.T) *IndexController {
 		Maybe()
 
 	controller := &IndexController{
-		config:         appConfig,
-		logger:         logger,
-		validator:      ingestion.NewValidator(),
-		siriusClient:   mockHttpClient,
-		authMiddleware: mockAuthMiddleware,
-		Queue:          ingestion.NewJobQueue(appConfig),
-		AwsClient:      awsClient,
+		config:       appConfig,
+		logger:       logger,
+		validator:    ingestion.NewValidator(),
+		siriusClient: mockHttpClient,
+		auth:         mockAuth,
+		Queue:        ingestion.NewJobQueue(appConfig),
+		AwsClient:    awsClient,
 	}
 
 	return controller
@@ -77,7 +90,7 @@ func TestIngestHandler_SetValid(t *testing.T) {
 	req.Header.Set("Content-Type", "application/xml")
 	w := httptest.NewRecorder()
 
-	reqCtx := context.WithValue(context.Background(), constants.UserContextKey, "my-token")
+	reqCtx := context.WithValue(context.Background(), constants.TokenContextKey, "my-token")
 	req = req.WithContext(reqCtx)
 
 	controller.ingestHandler(w, req)
@@ -258,7 +271,7 @@ func TestIngestHandler_SiriusErrors(t *testing.T) {
 			req.Header.Set("Content-Type", "application/xml")
 			w := httptest.NewRecorder()
 
-			reqCtx := context.WithValue(context.Background(), constants.UserContextKey, "my-token")
+			reqCtx := context.WithValue(context.Background(), constants.TokenContextKey, "my-token")
 			req = req.WithContext(reqCtx)
 
 			controller.ingestHandler(w, req)
