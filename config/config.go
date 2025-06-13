@@ -21,7 +21,7 @@ type (
 		SiriusBaseURL      string `envconfig:"SIRIUS_BASE_URL"`
 		SiriusCaseStubURL  string `envconfig:"SIRIUS_CASE_STUB_URL" default:"api/public/v1/scanned-cases"`
 		SiriusAttachDocURL string `envconfig:"SIRIUS_ATTACH_DOC_URL" default:"api/public/v1/scanned-documents"`
-		ProjectPath        string `envconfig:"PROJECT_PATH" default:"service-app"`
+		ProjectPath        string `envconfig:"PROJECT_PATH" default:"."`
 		ProjectFullPath    string
 	}
 

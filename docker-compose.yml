@@ -1,8 +1,8 @@
 services:
-  service-app:
+  app:
     image: 311462405659.dkr.ecr.eu-west-1.amazonaws.com/sirius/scanning/app:latest
     build:
-      context: ./service-app
+      context: .
     ports:
       - "8081:8081"
     environment:
@@ -23,9 +23,9 @@ services:
       sirius-mock:
         condition: service_healthy
 
-  service-app-test:
+  app-test:
     build:
-      context: ./service-app
+      context: .
       dockerfile: Dockerfile.test
     environment:
       - SIRIUS_BASE_URL=http://sirius-mock:8080
@@ -37,7 +37,7 @@ services:
     volumes:
       - .:/app
       - ./test-results:/tmp/test-results
-    working_dir: /app/service-app
+    working_dir: /app
     command: go test ./... -covermode=atomic -coverprofile=/tmp/test-results/coverage.out
     depends_on:
       localstack:
@@ -78,7 +78,7 @@ services:
 
   go-lint:
     build: docker/go-lint
-    working_dir: /go/src/app/service-app
+    working_dir: /go/src/app
     volumes:
       - ./:/go/src/app
       - ./.cache/golangci-lint/v1.64.5:/root/.cache
@@ -86,10 +86,10 @@ services:
 
   gosec:
     image: securego/gosec:latest
-    working_dir: /app/service-app
+    working_dir: /app
     volumes:
       - .:/app
-    command: -exclude-dir=.gocache -fmt=sarif -out=/app/test-results/gosec.sarif -stdout -verbose=text /app/service-app/...
+    command: -exclude-dir=.gocache -fmt=sarif -out=/app/test-results/gosec.sarif -stdout -verbose=text /app/...
 
   trivy:
     image: aquasec/trivy:latest

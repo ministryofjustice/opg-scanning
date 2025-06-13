@@ -2,14 +2,14 @@ services:
   localstack: !reset null
   sirius-mock: !reset null
 
-  service-app:
+  app:
     environment:
       - SIRIUS_BASE_URL=http://api
     networks:
       - opg-sirius_default
     depends_on: !reset null
 
-  service-app-test:
+  app-test:
     environment:
       - SIRIUS_BASE_URL=http://api
     networks:

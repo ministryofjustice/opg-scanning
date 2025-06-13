@@ -2,7 +2,7 @@ FROM golang:1.24-bookworm
 
 RUN apt-get update && apt-get install -y netcat-openbsd libxml2-dev
 
-WORKDIR /app/service-app
+WORKDIR /app
 
 COPY go.mod .
 COPY go.sum .
