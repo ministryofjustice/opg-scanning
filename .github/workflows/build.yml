@@ -57,7 +57,6 @@ jobs:
         with:
           sarif_file: "test-results/go-lint.sarif"
           category: golangci-lint
-          checkout_path: service-app
 
   gosec:
     name: Go Sec
@@ -72,7 +71,6 @@ jobs:
         with:
           sarif_file: "test-results/gosec.sarif"
           category: gosec
-          checkout_path: service-app
 
   # Unit test
   unit-test:
@@ -99,7 +97,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Publish pacts
         run: |
-          docker run --rm -v $(pwd)/service-app/internal/api/pacts:/tmp/pacts pactfoundation/pact-cli:latest \
+          docker run --rm -v $(pwd)/internal/api/pacts:/tmp/pacts pactfoundation/pact-cli:latest \
             pact-broker publish /tmp/pacts \
             --consumer-app-version ${{ steps.get_commit.outputs.COMMIT }} \
             --branch ${{ needs.branch_name.outputs.branch_name }} \
@@ -113,7 +111,7 @@ jobs:
     uses: ministryofjustice/opg-github-workflows/.github/workflows/build-multi-architecture-image.yml@6bc0246b5cca2f4c85d06986c82a9a42643f6851 # v3.13.0
     with:
       image_name: 311462405659.dkr.ecr.eu-west-1.amazonaws.com/sirius/scanning/app
-      build_path: ./service-app
+      build_path: .
 
   # Integration test
   integration-test:
