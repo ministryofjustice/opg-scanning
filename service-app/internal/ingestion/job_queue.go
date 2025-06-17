@@ -62,9 +62,7 @@ func (q *JobQueue) AddToQueueSequentially(ctx context.Context, cfg *config.Confi
 	}
 
 	if onComplete != nil {
-		if err = onComplete(processCtx, parsedDoc, data); err != nil {
-			return fmt.Errorf("onComplete error: %w", err)
-		}
+		return onComplete(processCtx, parsedDoc, data)
 	}
 
 	return nil

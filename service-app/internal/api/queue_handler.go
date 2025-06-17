@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"slices"
 
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
@@ -26,22 +27,12 @@ func (c *IndexController) processQueue(ctx context.Context, scannedCaseResponse 
 
 			attchResp, decodedXML, docErr := service.AttachDocuments(ctx, scannedCaseResponse)
 			if docErr != nil {
-				c.logger.ErrorWithContext(ctx, "Failed to attach document", map[string]any{
-					"set_uid":       scannedCaseResponse.UID,
-					"document_type": originalDoc.Type,
-					"error":         docErr.Error(),
-				})
 				return docErr
 			}
 
 			// Persist the processed document.
 			fileName, persistErr := c.processAndPersist(ctx, decodedXML, originalDoc)
 			if persistErr != nil {
-				c.logger.ErrorWithContext(ctx, "Failed to persist document", map[string]any{
-					"set_uid":       scannedCaseResponse.UID,
-					"document_type": originalDoc.Type,
-					"error":         persistErr.Error(),
-				})
 				return persistErr
 			}
 
@@ -83,10 +74,12 @@ func (c *IndexController) processQueue(ctx context.Context, scannedCaseResponse 
 		})
 
 		if err != nil {
-			c.logger.ErrorWithContext(ctx, err.Error(), map[string]any{
-				"set_uid":       scannedCaseResponse.UID,
-				"document_type": doc.Type,
-			})
+			if (!errors.As(err, &sirius.Error{})) {
+				c.logger.ErrorWithContext(ctx, err.Error(), map[string]any{
+					"set_uid":       scannedCaseResponse.UID,
+					"document_type": doc.Type,
+				})
+			}
 
 			return err
 		}
