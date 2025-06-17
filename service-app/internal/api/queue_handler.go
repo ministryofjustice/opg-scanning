@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
@@ -27,13 +28,13 @@ func (c *IndexController) processQueue(ctx context.Context, scannedCaseResponse 
 
 			attchResp, decodedXML, docErr := service.AttachDocuments(ctx, scannedCaseResponse)
 			if docErr != nil {
-				return docErr
+				return fmt.Errorf("failed to attach document: %w", docErr)
 			}
 
 			// Persist the processed document.
 			fileName, persistErr := c.processAndPersist(ctx, decodedXML, originalDoc)
 			if persistErr != nil {
-				return persistErr
+				return fmt.Errorf("failed to persist document: %w", persistErr)
 			}
 
 			// If not a Sirius extraction document, skip external job processing.
