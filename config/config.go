@@ -2,10 +2,8 @@ package config
 
 import (
 	"log"
-	"path/filepath"
 
 	"github.com/kelseyhightower/envconfig"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
 type (
@@ -21,8 +19,7 @@ type (
 		SiriusBaseURL      string `envconfig:"SIRIUS_BASE_URL"`
 		SiriusCaseStubURL  string `envconfig:"SIRIUS_CASE_STUB_URL" default:"api/public/v1/scanned-cases"`
 		SiriusAttachDocURL string `envconfig:"SIRIUS_ATTACH_DOC_URL" default:"api/public/v1/scanned-documents"`
-		ProjectPath        string `envconfig:"PROJECT_PATH" default:"service-app"`
-		ProjectFullPath    string
+		XSDPath            string `envconfig:"XSD_PATH" default:"xsd"`
 	}
 
 	aws struct {
@@ -48,17 +45,10 @@ type (
 
 // Loads configuration from .env and environment variables.
 func NewConfig() *Config {
-	projectRoot, err := util.GetProjectRoot()
-	if err != nil {
-		log.Fatalf("failed to get project root: %v", err)
-	}
-
 	var cfg Config
 	if err := envconfig.Process("", &cfg); err != nil {
 		log.Fatalf("failed to load environment variables into config: %v", err)
 	}
-
-	cfg.App.ProjectFullPath = filepath.Join(projectRoot, cfg.App.ProjectPath)
 
 	return &cfg
 }

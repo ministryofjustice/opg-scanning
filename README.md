@@ -20,8 +20,8 @@ The Makefile includes several targets to simplify common development tasks:
 
 - **Build and Test**
   - **`make`**: Runs tests, starts the application, and then cleans up.
-  - **`make test`**: Builds the `service-app-test` container and runs unit tests.
-  - **`make integration-test`**: Starts the application, runs integration tests via `tester/test.sh`, and then cleans up.
+  - **`make test`**: Builds the `app-test` container and runs unit tests.
+  - **`make integration-test`**: Starts the application, runs integration tests via `scripts/test.sh`, and then cleans up.
 - **Build and Run**
   - **`make build`**: Builds the application Docker image.
   - **`make start`**: Builds the application and starts it using Docker Compose.
@@ -38,8 +38,8 @@ The project uses two Docker Compose files to manage service configurations:
 
 - **docker-compose.yml**  
   Defines the following services:
-  - **service-app**: The main application container.
-  - **service-app-test**: A container running tests with a dedicated Dockerfile.
+  - **app**: The main application container.
+  - **app-test**: A container running tests with a dedicated Dockerfile.
   - **localstack**: A local AWS stack emulator for S3, Secrets Manager, SQS, SSM, etc.
   - **sirius-mock**: A mock service to emulate Sirius endpoints.
   - **go-lint**: A container to run golangci-lint with preset cache and output settings.

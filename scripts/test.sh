@@ -42,7 +42,7 @@ upload() {
 		caseno=""
 	fi
 
-	xml=$(cat "./service-app/testdata/xml/$file_name")
+	xml=$(cat "./testdata/xml/$file_name")
 	set=$(xml_to_set $type "$xml" "$caseno")
 
 	response=$(curl --location "$HOST/api/ddc" \
