@@ -21,7 +21,7 @@ The Makefile includes several targets to simplify common development tasks:
 - **Build and Test**
   - **`make`**: Runs tests, starts the application, and then cleans up.
   - **`make test`**: Builds the `app-test` container and runs unit tests.
-  - **`make integration-test`**: Starts the application, runs integration tests via `tester/test.sh`, and then cleans up.
+  - **`make integration-test`**: Starts the application, runs integration tests via `scripts/test.sh`, and then cleans up.
 - **Build and Run**
   - **`make build`**: Builds the application Docker image.
   - **`make start`**: Builds the application and starts it using Docker Compose.
