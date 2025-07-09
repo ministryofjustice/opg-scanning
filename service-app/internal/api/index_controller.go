@@ -195,11 +195,7 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 	// Processing queue
 	if err := c.processQueue(reqCtx, scannedCaseResponse, parsedBaseXml); err != nil {
 		statusCode, message := getPublicError(err, scannedCaseResponse.UID)
-		if message != "" {
-			c.respondWithError(reqCtx, w, statusCode, message, err)
-		} else {
-			c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Failed to persist document to Sirius", err)
-		}
+		c.respondWithError(reqCtx, w, statusCode, message, err)
 
 		return
 	}
@@ -233,7 +229,7 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 func getPublicError(err error, uid string) (int, string) {
 	var clientError sirius.Error
 	if !errors.As(err, &clientError) {
-		return 500, ""
+		return 500, "Failed to persist document to Sirius"
 	}
 
 	if clientError.StatusCode == 404 {
@@ -251,7 +247,7 @@ func getPublicError(err error, uid string) (int, string) {
 		return 413, "Request content too large: the XML document exceeds the maximum allowed size"
 	}
 
-	return 500, ""
+	return 500, "Failed to persist document to Sirius"
 }
 
 func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseWriter, statusCode int, message string, err error) {
