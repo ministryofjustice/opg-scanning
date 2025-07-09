@@ -3,29 +3,29 @@
 all: test start clean
 
 test:
-	@echo "Running tests in the service-app-test container..."
-	@docker compose build service-app-test || { echo "Failed to build the service-app-test image"; exit 1; }
-	@docker compose run --rm service-app-test || { echo "Tests failed"; exit 1; }
-	@docker compose down --remove-orphans --volumes service-app-test
+	@echo "Running tests in the app-test container..."
+	@docker compose build app-test || { echo "Failed to build the app-test image"; exit 1; }
+	@docker compose run --rm app-test || { echo "Tests failed"; exit 1; }
+	@docker compose down --remove-orphans --volumes app-test
 
 integration-test:
 	@${MAKE} start
-	bash ./tester/test.sh
+	bash ./scripts/test.sh
 	@${MAKE} clean
 
 build:
 	@echo "Building the application..."
-	@docker compose build service-app || { echo "Failed to build the application image"; exit 1; }
+	@docker compose build app || { echo "Failed to build the application image"; exit 1; }
 
 start:
 	@${MAKE} build
 	@echo "Running the application using Docker Compose..."
-	@docker compose up -d service-app || { echo "Failed to start Docker Compose"; exit 1; }
+	@docker compose up -d app || { echo "Failed to start Docker Compose"; exit 1; }
 
 start-sirius:
 	@${MAKE} build
 	@echo "Running the application using Docker Compose, integrated with local Sirius..."
-	@docker compose -f docker-compose.yml -f docker-compose.sirius.yml up -d service-app || { echo "Failed to start Docker Compose"; exit 1; }
+	@docker compose -f docker-compose.yml -f docker-compose.sirius.yml up -d app || { echo "Failed to start Docker Compose"; exit 1; }
 
 clean:
 	@echo "Stopping and cleaning up Docker Compose resources..."

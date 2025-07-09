@@ -19,7 +19,7 @@ RUN apk update && \
     apk add libxml2-dev && \
     apk upgrade --no-cache libcrypto3 libssl3
     
-ENV PROJECT_PATH=/go
+ENV XSD_PATH=/go/xsd
 
 WORKDIR /go/bin
 
