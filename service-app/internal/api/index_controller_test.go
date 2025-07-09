@@ -243,6 +243,13 @@ func TestIngestHandler_SiriusErrors(t *testing.T) {
 			expectedStatusCode: 500,
 			expectedMessage:    "Failed to persist document to Sirius",
 		},
+		"413": {
+			siriusError: sirius.Error{
+				StatusCode: 413,
+			},
+			expectedStatusCode: 413,
+			expectedMessage:    "Request content too large: the XML document exceeds the maximum allowed size",
+		},
 		"500": {
 			siriusError: sirius.Error{
 				StatusCode: 500,
