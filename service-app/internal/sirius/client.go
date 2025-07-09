@@ -127,7 +127,7 @@ func (c *Client) do(req *http.Request, v any) error {
 		return fmt.Errorf("read response body: %w", err)
 	}
 
-	// Handle non-2xx responses
+	// Handle 4xx responses
 	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
 		errOut := Error{
 			StatusCode: resp.StatusCode,
@@ -146,6 +146,7 @@ func (c *Client) do(req *http.Request, v any) error {
 		return errOut
 	}
 
+	// Handle non-2xx responses
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("unexpected status code: %d - Response: %s", resp.StatusCode, string(body))
 	}

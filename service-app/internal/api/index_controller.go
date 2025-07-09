@@ -194,12 +194,8 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 
 	// Processing queue
 	if err := c.processQueue(reqCtx, scannedCaseResponse, parsedBaseXml); err != nil {
-		message := getPublicError(err, scannedCaseResponse.UID)
-		if message != "" {
-			c.respondWithError(reqCtx, w, http.StatusBadRequest, message, err)
-		} else {
-			c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Failed to persist document to Sirius", err)
-		}
+		statusCode, message := getPublicError(err, scannedCaseResponse.UID)
+		c.respondWithError(reqCtx, w, statusCode, message, err)
 
 		return
 	}
@@ -230,24 +226,28 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func getPublicError(err error, uid string) string {
+func getPublicError(err error, uid string) (int, string) {
 	var clientError sirius.Error
 	if !errors.As(err, &clientError) {
-		return ""
+		return 500, "Failed to persist document to Sirius"
 	}
 
 	if clientError.StatusCode == 404 {
-		return fmt.Sprintf("Case not found with UID %s", uid)
+		return 400, fmt.Sprintf("Case not found with UID %s", uid)
 	}
 
 	if clientError.StatusCode == 400 {
 		_, ok := clientError.ValidationErrors["caseReference"]
 		if ok {
-			return fmt.Sprintf("%s is not a valid case UID", uid)
+			return 400, fmt.Sprintf("%s is not a valid case UID", uid)
 		}
 	}
 
-	return ""
+	if clientError.StatusCode == 413 {
+		return 413, "Request content too large: the XML document exceeds the maximum allowed size"
+	}
+
+	return 500, "Failed to persist document to Sirius"
 }
 
 func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseWriter, statusCode int, message string, err error) {
