@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/ministryofjustice/opg-scanning/config"
+	"github.com/ministryofjustice/opg-scanning/internal/config"
 )
 
 // Refresh token after 10 minutes
@@ -34,7 +34,7 @@ func (tg *tokenHelper) Generate() (string, time.Time, error) {
 	}
 
 	now := time.Now()
-	expiry := now.Add(time.Duration(tg.config.Auth.JWTExpiration) * time.Second)
+	expiry := now.Add(tg.config.Auth.JWTExpiration)
 
 	jwtClaims := jwt.MapClaims{
 		"session-data": tg.config.Auth.ApiUsername,

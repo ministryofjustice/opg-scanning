@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/ministryofjustice/opg-scanning/config"
+	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -21,7 +21,7 @@ func TestGenerateToken(t *testing.T) {
 			Auth: config.Auth{
 				ApiUsername:   "user@host.example",
 				JWTSecretARN:  "aws::my-secret-arn",
-				JWTExpiration: 5,
+				JWTExpiration: 5 * time.Second,
 			},
 		},
 		awsClient: secretsClient,

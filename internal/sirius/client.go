@@ -7,9 +7,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 
-	"github.com/ministryofjustice/opg-scanning/config"
+	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
@@ -26,7 +25,7 @@ type Client struct {
 
 func NewClient(config *config.Config) *Client {
 	httpClient := &http.Client{
-		Timeout: time.Duration(config.HTTP.Timeout) * time.Second,
+		Timeout: config.HTTP.Timeout,
 	}
 	httpClient.Transport = otelhttp.NewTransport(httpClient.Transport)
 

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ministryofjustice/opg-scanning/config"
+	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

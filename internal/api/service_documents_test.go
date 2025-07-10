@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ministryofjustice/opg-scanning/config"
+	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
@@ -69,7 +69,7 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 		baseURL := fmt.Sprintf("http://%s:%d", pactConfig.Host, pactConfig.Port)
 
 		// Mock dependencies
-		mockConfig := config.NewConfig()
+		mockConfig, _ := config.Read()
 		mockConfig.App.SiriusBaseURL = baseURL
 
 		// Prepare service instance

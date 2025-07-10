@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ministryofjustice/opg-scanning/config"
+	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
@@ -114,7 +114,7 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 
 	t.Run(tt.name, func(t *testing.T) {
 		set := parseXMLPayload(t, tt.xmlPayload)
-		mockConfig := config.NewConfig()
+		mockConfig, _ := config.Read()
 
 		// Set up expected interactions
 		if tt.expectedReq != nil {

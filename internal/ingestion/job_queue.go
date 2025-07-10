@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"time"
 
-	"github.com/ministryofjustice/opg-scanning/config"
+	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/factory"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
@@ -23,7 +22,7 @@ type JobQueue struct {
 func NewJobQueue(config *config.Config) *JobQueue {
 	queue := &JobQueue{
 		wg:     &sync.WaitGroup{},
-		logger: logger.GetLogger(config),
+		logger: logger.GetLogger(config.App.Environment),
 		errors: make([]error, 0),
 	}
 	return queue
@@ -52,7 +51,7 @@ func (q *JobQueue) AddToQueueSequentially(ctx context.Context, cfg *config.Confi
 	}
 
 	// Use a per-job timeout context.
-	processCtx, cancel := context.WithTimeout(jobCtx, time.Duration(cfg.HTTP.Timeout)*time.Second)
+	processCtx, cancel := context.WithTimeout(jobCtx, cfg.HTTP.Timeout)
 	processCtx = context.WithValue(processCtx, constants.TokenContextKey, ctx.Value(constants.TokenContextKey))
 	defer cancel()
 

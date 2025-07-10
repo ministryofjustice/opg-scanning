@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/lestrrat-go/libxml2/xsd"
-	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/auth"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
+	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
@@ -61,7 +61,7 @@ type responseData struct {
 var uidReplacementRegex = regexp.MustCompile(`^7[0-9]{3}-[0-9]{4}-[0-9]{4}$`)
 
 func NewIndexController(awsClient aws.AwsClientInterface, appConfig *config.Config) *IndexController {
-	logger := logger.GetLogger(appConfig)
+	logger := logger.GetLogger(appConfig.App.Environment)
 
 	return &IndexController{
 		config:       appConfig,
@@ -176,7 +176,7 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	service := newService(c.siriusClient, parsedBaseXml)
-	ctx, cancel := context.WithTimeout(r.Context(), time.Duration(c.config.HTTP.Timeout)*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), c.config.HTTP.Timeout)
 	ctxWithToken := context.WithValue(ctx, constants.TokenContextKey, reqCtx.Value(constants.TokenContextKey))
 	defer cancel()
 	scannedCaseResponse, err := service.CreateCaseStub(ctxWithToken)
