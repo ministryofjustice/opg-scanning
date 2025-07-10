@@ -7,27 +7,24 @@ import (
 	"net/http"
 
 	"github.com/ministryofjustice/opg-go-common/telemetry"
-	"github.com/ministryofjustice/opg-scanning/config"
 	"go.opentelemetry.io/otel/attribute"
 	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
 type Logger struct {
-	cfg        *config.Config
 	SlogLogger *slog.Logger
 }
 
 type loggerContextKey struct{}
 
-func newLogger(cfg *config.Config) *Logger {
+func newLogger(environment string) *Logger {
 	// Create the base logger using telemetry.NewLogger.
 	baseLogger := telemetry.NewLogger("opg-scanning-service")
 
 	slogLogger := baseLogger.With(
-		slog.String("environment", cfg.App.Environment),
+		slog.String("environment", environment),
 	)
 	return &Logger{
-		cfg:        cfg,
 		SlogLogger: slogLogger,
 	}
 }

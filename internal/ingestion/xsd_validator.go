@@ -11,7 +11,7 @@ import (
 	"github.com/lestrrat-go/libxml2"
 	"github.com/lestrrat-go/libxml2/parser"
 	"github.com/lestrrat-go/libxml2/xsd"
-	"github.com/ministryofjustice/opg-scanning/config"
+	"github.com/ministryofjustice/opg-scanning/internal/config"
 )
 
 type XSDValidator struct {

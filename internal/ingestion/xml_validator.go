@@ -3,7 +3,7 @@ package ingestion
 import (
 	"fmt"
 
-	"github.com/ministryofjustice/opg-scanning/config"
+	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 )

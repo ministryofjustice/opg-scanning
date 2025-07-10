@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ministryofjustice/opg-scanning/config"
+	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/types/corresp_types"
@@ -109,8 +109,7 @@ func prepareDocument(t *testing.T, docType string, fileName string) interface{} 
 	registry, err := NewRegistry()
 	require.NoError(t, err, "Failed create Registry")
 
-	cfg := config.NewConfig()
-	logger := logger.GetLogger(cfg)
+	logger := logger.GetLogger(config.Environment())
 	processor, err := NewDocumentProcessor(doc, doc.Type, "XML", registry, logger)
 	require.NoError(t, err, "NewDocumentProcessor returned an error")
 

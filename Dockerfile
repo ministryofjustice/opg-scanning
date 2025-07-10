@@ -11,7 +11,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=1 go build -a -installsuffix cgo -o /go/bin/opg-scanning /app/cmd/service
+RUN CGO_ENABLED=1 go build -a -installsuffix cgo -o /go/bin/opg-scanning .
 
 FROM alpine:3
 

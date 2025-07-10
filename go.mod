@@ -6,7 +6,6 @@ toolchain go1.24.4
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.36.5
-	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/stretchr/testify v1.10.0
 )
 
