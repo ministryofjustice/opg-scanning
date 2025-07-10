@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
+	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"golang.org/x/crypto/bcrypt"

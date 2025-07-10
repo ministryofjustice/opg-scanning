@@ -14,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 
-	"github.com/ministryofjustice/opg-scanning/config"
+	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/stretchr/testify/assert"
 )
@@ -28,7 +28,7 @@ const fileName = "SET_DDC_20250106093401__LPA_677ba389ab101.xml"
 func TestPersistFormData_LocalStack(t *testing.T) {
 	ctx := context.Background()
 
-	appConfig := config.NewConfig()
+	appConfig := config.Read()
 
 	if appConfig.App.Environment != "local" {
 		t.Skip("Skipping test as it requires localstack")
@@ -74,7 +74,7 @@ func TestPersistFormData_LocalStack(t *testing.T) {
 func TestPersistSetData(t *testing.T) {
 	ctx := context.Background()
 
-	appConfig := config.NewConfig()
+	appConfig := config.Read()
 
 	cfg, err := awsConfig.LoadDefaultConfig(ctx,
 		awsConfig.WithRegion(appConfig.Aws.Region),
@@ -130,7 +130,7 @@ func TestAwsQueue_PHPSerialization(t *testing.T) {
 }
 
 func TestAwsQueue_QueueSetForProcessing(t *testing.T) {
-	appConfig := config.NewConfig()
+	appConfig := config.Read()
 	ctx := context.Background()
 
 	// Only run this test if we're in the "local" environment
