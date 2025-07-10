@@ -14,8 +14,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
+	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
@@ -40,8 +40,8 @@ var xmlPayload = `
 `
 
 func setupController(t *testing.T) *IndexController {
-	appConfig := config.NewConfig()
-	logger := logger.GetLogger(appConfig)
+	appConfig, _ := config.Read()
+	logger := logger.GetLogger(appConfig.App.Environment)
 	id := "123"
 
 	mockAuth := newMockAuth(t)
@@ -258,7 +258,7 @@ func TestIngestHandler_SiriusErrors(t *testing.T) {
 			expectedMessage:    "Failed to persist document to Sirius",
 		},
 		"other error": {
-			siriusError: errors.New("a generic error"),
+			siriusError:        errors.New("a generic error"),
 			expectedStatusCode: 500,
 			expectedMessage:    "Failed to persist document to Sirius",
 		},

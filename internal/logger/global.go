@@ -2,8 +2,6 @@ package logger
 
 import (
 	"sync"
-
-	"github.com/ministryofjustice/opg-scanning/config"
 )
 
 var (
@@ -13,9 +11,9 @@ var (
 
 // returns the singleton global logger.
 // It ensures that NewLogger is only called once.
-func GetLogger(appConfig *config.Config) *Logger {
+func GetLogger(environment string) *Logger {
 	once.Do(func() {
-		globalLogger = newLogger(appConfig)
+		globalLogger = newLogger(environment)
 	})
 	return globalLogger
 }

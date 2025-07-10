@@ -2,16 +2,15 @@ package main
 
 import (
 	"context"
-	"log"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
-	"github.com/ministryofjustice/opg-scanning/config"
 	"github.com/ministryofjustice/opg-scanning/internal/api"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
+	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws"
 )
@@ -21,12 +20,16 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Initialize configuration
-	appConfig := config.NewConfig()
-
 	// Set up logging
-	logWrapper := logger.GetLogger(appConfig)
+	logWrapper := logger.GetLogger(config.Environment())
 	slogLogger := logWrapper.SlogLogger
+
+	// Initialize configuration
+	appConfig, err := config.Read()
+	if err != nil {
+		slogLogger.Error("Failed to read config", slog.String("error", err.Error()))
+		return
+	}
 
 	shutdownTracer, err := logger.StartTracerProvider(ctx, slogLogger, true)
 	if err != nil {
@@ -49,7 +52,8 @@ func main() {
 	// Initialize AwsClient
 	awsClient, err := aws.NewAwsClient(ctx, cfg, appConfig)
 	if err != nil {
-		log.Fatalf("failed to initialize AWS clients: %v", err)
+		slogLogger.Error("Failed to initialize AWS clients", "error", err)
+		return
 	}
 
 	controller := api.NewIndexController(awsClient, appConfig)
