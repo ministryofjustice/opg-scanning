@@ -67,7 +67,7 @@ services:
     restart: unless-stopped
 
   sirius-mock:
-    image: outofcoffee/imposter:4.6.8
+    image: outofcoffee/imposter:4.7.0
     volumes:
       - ./docker/sirius:/opt/imposter/config
     healthcheck:
