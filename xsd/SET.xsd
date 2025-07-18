@@ -42,6 +42,7 @@
                                     <xs:attribute name="Type"/>
                                     <xs:attribute name="Encoding"/>
                                     <xs:attribute name="NoPages"/>
+                                    <xs:attribute name="ID" type="xs:string"/>
                                 </xs:complexType>
                             </xs:element>
                         </xs:sequence>
