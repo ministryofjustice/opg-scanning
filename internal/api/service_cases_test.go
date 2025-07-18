@@ -37,6 +37,13 @@ const (
 			<Document Type="%s" Encoding="UTF-8" NoPages="19"></Document>
 		</Body>
 	</Set>`
+	withCaseNoAndIDPayload = `<?xml version="1.0" encoding="UTF-8"?>
+	<Set xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SET.xsd">
+		<Header CaseNo="123" Scanner="9" ScanTime="2014-09-26 12:38:53" ScannerOperator="Administrator" Schedule="02-0001112-20160909185000" FeeNumber="1234"/>
+		<Body>
+			<Document ID="c5d833d3-0155-40d6-bc8f-433f8262a6bd" Type="LP1F" Encoding="UTF-8" NoPages="19"></Document>
+		</Body>
+	</Set>`
 )
 
 func buildTestCases() []requestCaseStub {
@@ -92,6 +99,15 @@ func buildTestCases() []requestCaseStub {
 			xmlPayload:  fmt.Sprintf(withoutCaseNoPayload, "INVALID"),
 			expectedReq: nil,
 			expectedErr: true,
+		},
+		{
+			name:        "LPA Case with ID attribute",
+			xmlPayload:  withCaseNoAndIDPayload,
+			expectedReq: &sirius.ScannedCaseRequest{
+				BatchID:  "02-0001112-20160909185000",
+				CaseType: "lpa",
+			},
+			expectedErr: false,
 		},
 	}
 }
