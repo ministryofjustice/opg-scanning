@@ -10,7 +10,8 @@ test:
 
 integration-test:
 	@${MAKE} start
-	bash ./scripts/test.sh
+	go test -run TestIntegration .
+	go test -run TestIntegration ./internal/ingestion
 	@${MAKE} clean
 
 build:
