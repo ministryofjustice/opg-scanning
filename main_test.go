@@ -48,7 +48,7 @@ func TestIntegrationMain(t *testing.T) {
 		sameAttachmentID := uuid.NewString()
 		assert.NoError(t, checkAttachment(token, "LPC", "LPC-valid", sameAttachmentID))
 		assert.ErrorContains(t, checkAttachment(token, "LPC", "LPC-valid", sameAttachmentID),
-			`file failed (208): {"data":{"success":false,"message":"Already processed with CaseNo=7000-1234-1234"}}`)
+			`file failed (208): {"data":{"success":false,"message":"Already processed with CaseNo=700012341234"}}`)
 	})
 }
 

@@ -238,7 +238,12 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 func getPublicError(err error, uid string) (int, string) {
 	var aperr ingestion.AlreadyProcessedError
 	if errors.As(err, &aperr) {
-		return 208, fmt.Sprintf("Already processed with CaseNo=%s", aperr.CaseNo)
+		uid := aperr.CaseNo
+		if uidReplacementRegex.MatchString(uid) {
+			uid = strings.ReplaceAll(uid, "-", "")
+		}
+
+		return 208, fmt.Sprintf("Already processed with CaseNo=%s", uid)
 	}
 
 	var clientError sirius.Error
