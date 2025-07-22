@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/lestrrat-go/libxml2/xsd"
 	"github.com/ministryofjustice/opg-scanning/internal/auth"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
@@ -37,14 +38,21 @@ type AwsClient interface {
 	QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (MessageID *string, err error)
 }
 
+type documentTracker interface {
+	SetProcessing(ctx context.Context, id, caseNo string) error
+	SetCompleted(ctx context.Context, id string) error
+	SetFailed(ctx context.Context, id string) error
+}
+
 type IndexController struct {
-	config       *config.Config
-	logger       *logger.Logger
-	validator    *ingestion.Validator
-	siriusClient SiriusClient
-	auth         Auth
-	Queue        *ingestion.JobQueue
-	AwsClient    AwsClient
+	config          *config.Config
+	logger          *logger.Logger
+	validator       *ingestion.Validator
+	siriusClient    SiriusClient
+	auth            Auth
+	Queue           *ingestion.JobQueue
+	AwsClient       AwsClient
+	documentTracker documentTracker
 }
 
 type response struct {
@@ -60,17 +68,18 @@ type responseData struct {
 
 var uidReplacementRegex = regexp.MustCompile(`^7[0-9]{3}-[0-9]{4}-[0-9]{4}$`)
 
-func NewIndexController(awsClient aws.AwsClientInterface, appConfig *config.Config) *IndexController {
+func NewIndexController(awsClient aws.AwsClientInterface, appConfig *config.Config, dynamoClient *dynamodb.Client) *IndexController {
 	logger := logger.GetLogger(appConfig.App.Environment)
 
 	return &IndexController{
-		config:       appConfig,
-		logger:       logger,
-		validator:    ingestion.NewValidator(),
-		siriusClient: sirius.NewClient(appConfig),
-		auth:         auth.New(appConfig, logger, awsClient),
-		Queue:        ingestion.NewJobQueue(appConfig),
-		AwsClient:    awsClient,
+		config:          appConfig,
+		logger:          logger,
+		validator:       ingestion.NewValidator(),
+		siriusClient:    sirius.NewClient(appConfig),
+		auth:            auth.New(appConfig, logger, awsClient),
+		Queue:           ingestion.NewJobQueue(appConfig),
+		documentTracker: ingestion.NewDocumentTracker(dynamoClient, appConfig.Aws.DocumentsTable),
+		AwsClient:       awsClient,
 	}
 }
 
@@ -227,24 +236,24 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func getPublicError(err error, uid string) (int, string) {
+	var aperr ingestion.AlreadyProcessedError
+	if errors.As(err, &aperr) {
+		return 208, fmt.Sprintf("Already processed with CaseNo=%s", aperr.CaseNo)
+	}
+
 	var clientError sirius.Error
-	if !errors.As(err, &clientError) {
-		return 500, "Failed to persist document to Sirius"
-	}
-
-	if clientError.StatusCode == 404 {
-		return 400, fmt.Sprintf("Case not found with UID %s", uid)
-	}
-
-	if clientError.StatusCode == 400 {
-		_, ok := clientError.ValidationErrors["caseReference"]
-		if ok {
-			return 400, fmt.Sprintf("%s is not a valid case UID", uid)
+	if errors.As(err, &clientError) {
+		switch clientError.StatusCode {
+		case 400:
+			_, ok := clientError.ValidationErrors["caseReference"]
+			if ok {
+				return 400, fmt.Sprintf("%s is not a valid case UID", uid)
+			}
+		case 404:
+			return 400, fmt.Sprintf("Case not found with UID %s", uid)
+		case 413:
+			return 413, "Request content too large: the XML document exceeds the maximum allowed size"
 		}
-	}
-
-	if clientError.StatusCode == 413 {
-		return 413, "Request content too large: the XML document exceeds the maximum allowed size"
 	}
 
 	return 500, "Failed to persist document to Sirius"
