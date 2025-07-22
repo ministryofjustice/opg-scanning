@@ -70,14 +70,29 @@ func setupController(t *testing.T) *IndexController {
 		Return(&sirius.ScannedDocumentResponse{}, nil).
 		Maybe()
 
+	documentTracker := newMockDocumentTracker(t)
+	documentTracker.EXPECT().
+		SetProcessing(mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).
+		Maybe()
+	documentTracker.EXPECT().
+		SetCompleted(mock.Anything, mock.Anything).
+		Return(nil).
+		Maybe()
+	documentTracker.EXPECT().
+		SetFailed(mock.Anything, mock.Anything).
+		Return(nil).
+		Maybe()
+
 	controller := &IndexController{
-		config:       appConfig,
-		logger:       logger,
-		validator:    ingestion.NewValidator(),
-		siriusClient: mockHttpClient,
-		auth:         mockAuth,
-		Queue:        ingestion.NewJobQueue(appConfig),
-		AwsClient:    awsClient,
+		config:          appConfig,
+		logger:          logger,
+		validator:       ingestion.NewValidator(),
+		siriusClient:    mockHttpClient,
+		auth:            mockAuth,
+		Queue:           ingestion.NewJobQueue(appConfig),
+		documentTracker: documentTracker,
+		AwsClient:       awsClient,
 	}
 
 	return controller
@@ -217,6 +232,11 @@ func TestIngestHandler_SiriusErrors(t *testing.T) {
 		expectedStatusCode int
 		expectedMessage    string
 	}{
+		"208": {
+			siriusError:        ingestion.AlreadyProcessedError{CaseNo: "xyz"},
+			expectedStatusCode: 208,
+			expectedMessage:    "Already processed with CaseNo=xyz",
+		},
 		"404": {
 			siriusError: sirius.Error{
 				StatusCode: 404,
