@@ -10,7 +10,7 @@ test:
 
 integration-test:
 	@${MAKE} start
-	bash ./scripts/test.sh
+	go test .
 	@${MAKE} clean
 
 build:

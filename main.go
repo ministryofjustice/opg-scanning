@@ -7,9 +7,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/ministryofjustice/opg-scanning/internal/api"
-	"github.com/ministryofjustice/opg-scanning/internal/aws"
+	appaws "github.com/ministryofjustice/opg-scanning/internal/aws"
 	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws"
@@ -39,8 +41,8 @@ func main() {
 	defer shutdownTracer()
 
 	// Load AWS configuration
-	cfg, err := awsConfig.LoadDefaultConfig(ctx,
-		awsConfig.WithRegion(appConfig.Aws.Region),
+	cfg, err := awsconfig.LoadDefaultConfig(ctx,
+		awsconfig.WithRegion(appConfig.Aws.Region),
 	)
 
 	otelaws.AppendMiddlewares(&cfg.APIOptions)
@@ -50,13 +52,21 @@ func main() {
 		return
 	}
 	// Initialize AwsClient
-	awsClient, err := aws.NewAwsClient(ctx, cfg, appConfig)
+	awsClient, err := appaws.NewAwsClient(ctx, cfg, appConfig)
 	if err != nil {
 		slogLogger.Error("Failed to initialize AWS clients", "error", err)
 		return
 	}
 
-	controller := api.NewIndexController(awsClient, appConfig)
+	if appConfig.Aws.Endpoint != "" {
+		cfg.BaseEndpoint = aws.String(appConfig.Aws.Endpoint)
+	}
+
+	slogLogger.Warn("table name", slog.String("name", appConfig.Aws.DocumentTable))
+
+	dynamoClient := dynamodb.NewFromConfig(cfg)
+
+	controller := api.NewIndexController(awsClient, appConfig, dynamoClient)
 	slogLogger.Info("Service started...")
 
 	go func() {
