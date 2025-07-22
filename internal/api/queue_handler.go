@@ -20,6 +20,11 @@ func (c *IndexController) processQueue(ctx context.Context, scannedCaseResponse 
 	// Iterate over each document in the parsed set.
 	for i := range parsedBaseXml.Body.Documents {
 		doc := &parsedBaseXml.Body.Documents[i]
+
+		if err := c.documentTracker.SetProcessing(ctx, doc.ID, scannedCaseResponse.UID); err != nil {
+			return fmt.Errorf("failed to set document to processing '%s': %w", doc.ID, err)
+		}
+
 		// Here we use AddToQueueSequentially to ensure that the documents are processed in order.
 		err := c.Queue.AddToQueueSequentially(ctx, c.config, doc, "xml", func(ctx context.Context, processedDoc any, originalDoc *types.BaseDocument) error {
 			// Create a new service instance for attaching documents.
@@ -75,7 +80,14 @@ func (c *IndexController) processQueue(ctx context.Context, scannedCaseResponse 
 		})
 
 		if err != nil {
-			if (!errors.As(err, &sirius.Error{})) {
+			if err := c.documentTracker.SetFailed(ctx, doc.ID); err != nil {
+				c.logger.ErrorWithContext(ctx, err.Error(), map[string]any{
+					"set_uid":       scannedCaseResponse.UID,
+					"document_type": doc.Type,
+				})
+			}
+
+			if !errors.As(err, &sirius.Error{}) {
 				c.logger.ErrorWithContext(ctx, err.Error(), map[string]any{
 					"set_uid":       scannedCaseResponse.UID,
 					"document_type": doc.Type,
@@ -83,6 +95,13 @@ func (c *IndexController) processQueue(ctx context.Context, scannedCaseResponse 
 			}
 
 			return err
+		}
+
+		if err := c.documentTracker.SetCompleted(ctx, doc.ID); err != nil {
+			c.logger.ErrorWithContext(ctx, err.Error(), map[string]any{
+				"set_uid":       scannedCaseResponse.UID,
+				"document_type": doc.Type,
+			})
 		}
 
 		c.logger.InfoWithContext(ctx, "Document added for processing", map[string]any{
