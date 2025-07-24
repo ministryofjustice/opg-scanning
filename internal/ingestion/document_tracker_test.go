@@ -90,19 +90,16 @@ func TestIntegrationDocumentTracker_ProvidesCaseNoWhenCompleted(t *testing.T) {
 	})
 }
 
-func TestIntegrationDocumentTracker_ProvidesCaseNoWhenFailed(t *testing.T) {
+func TestIntegrationDocumentTracker_RetriesIfFailed(t *testing.T) {
 	withDocumentTracker(t, func(tracker *DocumentTracker) {
-		err := tracker.SetProcessing(ctx, "my-id", "my-caseno")
+		err := tracker.SetProcessing(ctx, "my-id", "invalid-caseno")
 		assert.Nil(t, err)
 
 		err = tracker.SetFailed(ctx, "my-id")
 		assert.Nil(t, err)
 
-		err = tracker.SetProcessing(ctx, "my-id", "my-other-caseno")
-		var v AlreadyProcessedError
-		if assert.ErrorAs(t, err, &v) {
-			assert.Equal(t, "my-caseno", v.CaseNo)
-		}
+		err = tracker.SetProcessing(ctx, "my-id", "correct-caseno")
+		assert.Nil(t, err)
 	})
 }
 

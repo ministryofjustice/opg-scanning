@@ -49,6 +49,13 @@ func TestIntegrationMain(t *testing.T) {
 		assert.NoError(t, checkAttachment(token, "LPC", "LPC-valid", sameAttachmentID))
 		assert.NoError(t, checkAttachment(token, "LPC", "LPC-valid", sameAttachmentID))
 	})
+
+	t.Run("same file, but initially fails", func(t *testing.T) {
+		sameID := uuid.NewString()
+		assert.ErrorContains(t, checkFile(token, "LP1F", "LPC-valid", sameID), `"success":false`)
+		assert.NoError(t, checkFile(token, "LP1F", "LP1F-valid", sameID))
+		assert.Equal(t, ingestion.AlreadyProcessedError{}, checkFile(token, "LP1F", "LP1F-valid", sameID))
+	})
 }
 
 func getToken() (string, error) {

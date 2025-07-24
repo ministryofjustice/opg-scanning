@@ -47,7 +47,11 @@ func (s *DocumentTracker) SetProcessing(ctx context.Context, id, caseNo string) 
 			"Status": &types.AttributeValueMemberS{Value: statusProcessing},
 		},
 		ReturnValuesOnConditionCheckFailure: types.ReturnValuesOnConditionCheckFailureAllOld,
-		ConditionExpression:                 aws.String("attribute_not_exists(PK)"),
+		ConditionExpression:                 aws.String("attribute_not_exists(PK) OR #Status = :Failed"),
+		ExpressionAttributeNames: map[string]string{"#Status": "Status"},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":Failed": &types.AttributeValueMemberS{Value: statusFailed},
+		},
 	})
 
 	if err != nil {
