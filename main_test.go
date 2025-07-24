@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -40,15 +41,13 @@ func TestIntegrationMain(t *testing.T) {
 	t.Run("same file", func(t *testing.T) {
 		sameID := uuid.NewString()
 		assert.NoError(t, checkFile(token, "LP1F", "LP1F-valid", sameID))
-		assert.ErrorContains(t, checkFile(token, "LP1F", "LP1F-valid", sameID),
-			`file failed (208): {"data":{"success":false,"message":"Already processed with CaseNo=70000`)
+		assert.Equal(t, ingestion.AlreadyProcessedError{}, checkFile(token, "LP1F", "LP1F-valid", sameID))
 	})
 
 	t.Run("same attachment", func(t *testing.T) {
 		sameAttachmentID := uuid.NewString()
 		assert.NoError(t, checkAttachment(token, "LPC", "LPC-valid", sameAttachmentID))
-		assert.ErrorContains(t, checkAttachment(token, "LPC", "LPC-valid", sameAttachmentID),
-			`file failed (208): {"data":{"success":false,"message":"Already processed with CaseNo=700012341234"}}`)
+		assert.NoError(t, checkAttachment(token, "LPC", "LPC-valid", sameAttachmentID))
 	})
 }
 
@@ -103,6 +102,10 @@ func checkFile(token, fileType, fileName, id string) error {
 	}
 
 	uploadUID := uv.Data.UID
+
+	if uploadResponse.StatusCode == http.StatusAlreadyReported {
+		return ingestion.AlreadyProcessedError{}
+	}
 
 	cmdOut, err := exec.Command("docker", "compose", "exec", "localstack", "awslocal", "sqs", "receive-message", "--queue-url=ddc.fifo").Output()
 	if err != nil {

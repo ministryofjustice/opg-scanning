@@ -201,19 +201,24 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	uid := scannedCaseResponse.UID
+	statusCode := http.StatusAccepted
+
 	// Processing queue
 	if err := c.processQueue(reqCtx, scannedCaseResponse, parsedBaseXml); err != nil {
-		statusCode, message := getPublicError(err, scannedCaseResponse.UID)
-		c.respondWithError(reqCtx, w, statusCode, message, err)
+		var aperr ingestion.AlreadyProcessedError
+		if errors.As(err, &aperr) {
+			uid = aperr.CaseNo
+			statusCode = http.StatusAlreadyReported
+		} else {
+			statusCode, message := getPublicError(err, scannedCaseResponse.UID)
+			c.respondWithError(reqCtx, w, statusCode, message, err)
 
-		return
+			return
+		}
 	}
 
 	// Send the UID response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusAccepted)
-
-	uid := scannedCaseResponse.UID
 	if uidReplacementRegex.MatchString(uid) {
 		uid = strings.ReplaceAll(uid, "-", "")
 	}
@@ -226,6 +231,13 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 		},
 	}
 
+	if statusCode == http.StatusAlreadyReported {
+		resp.Data.Message = "Document has already been processed"
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Failed to encode response", err)
 	} else {
@@ -236,16 +248,6 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func getPublicError(err error, uid string) (int, string) {
-	var aperr ingestion.AlreadyProcessedError
-	if errors.As(err, &aperr) {
-		uid := aperr.CaseNo
-		if uidReplacementRegex.MatchString(uid) {
-			uid = strings.ReplaceAll(uid, "-", "")
-		}
-
-		return 208, fmt.Sprintf("Already processed with CaseNo=%s", uid)
-	}
-
 	var clientError sirius.Error
 	if errors.As(err, &clientError) {
 		switch clientError.StatusCode {

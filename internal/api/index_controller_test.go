@@ -232,11 +232,6 @@ func TestIngestHandler_SiriusErrors(t *testing.T) {
 		expectedStatusCode int
 		expectedMessage    string
 	}{
-		"208": {
-			siriusError:        ingestion.AlreadyProcessedError{CaseNo: "xyz"},
-			expectedStatusCode: 208,
-			expectedMessage:    "Already processed with CaseNo=xyz",
-		},
 		"404": {
 			siriusError: sirius.Error{
 				StatusCode: 404,
@@ -320,6 +315,53 @@ func TestIngestHandler_SiriusErrors(t *testing.T) {
 			assert.Equal(t, tc.expectedMessage, responseObj.Data.Message)
 		})
 	}
+}
+
+func TestIngestHandler_DuplicateRequest(t *testing.T) {
+	xmlPayloadCorrespondence := `<Set xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SET.xsd">
+		<Header CaseNo="700012341234" Scanner="9" ScanTime="2014-09-26T12:38:53" ScannerOperator="Administrator" Schedule="02-0001112-20160909185000" />
+		<Body>
+			<Document Type="Correspondence" Encoding="UTF-8" NoPages="19">
+				<XML>PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPENvcnJlc3BvbmRlbmNlIHhtbG5zOnhzaT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2UiCiAgeHNpOm5vTmFtZXNwYWNlU2NoZW1hTG9jYXRpb249IkNvcnJlc3BvbmRlbmNlLnhzZCI+CiAgPFN1YlR5cGU+TGVnYWw8L1N1YlR5cGU+CiAgPENhc2VOdW1iZXI+MTIzNDU8L0Nhc2VOdW1iZXI+CiAgPENhc2VOdW1iZXI+Njc4OTA8L0Nhc2VOdW1iZXI+CiAgPFBhZ2U+CiAgICA8QlVSTj4xMjNBQkM8L0JVUk4+CiAgICA8UGh5c2ljYWxQYWdlPjE8L1BoeXNpY2FsUGFnZT4KICA8L1BhZ2U+CiAgPFBhZ2U+CiAgICA8QlVSTj40NTZERUY8L0JVUk4+CiAgICA8UGh5c2ljYWxQYWdlPjI8L1BoeXNpY2FsUGFnZT4KICA8L1BhZ2U+CjwvQ29ycmVzcG9uZGVuY2U+Cg==</XML>
+				<PDF>SGVsbG8gd29ybGQ=</PDF>
+			</Document>
+		</Body>
+	</Set>`
+
+	controller := setupController(t)
+
+	errAlreadyProcessed := ingestion.AlreadyProcessedError{CaseNo: "xyz"}
+
+	siriusClient := newMockSiriusClient(t)
+	siriusClient.EXPECT().
+		CreateCaseStub(mock.Anything, mock.Anything).
+		Return(nil, errAlreadyProcessed).
+		Maybe()
+	siriusClient.EXPECT().
+		AttachDocument(mock.Anything, mock.Anything).
+		Return(nil, errAlreadyProcessed).
+		Maybe()
+	controller.siriusClient = siriusClient
+
+	req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayloadCorrespondence)))
+	req.Header.Set("Content-Type", "application/xml")
+	w := httptest.NewRecorder()
+
+	reqCtx := context.WithValue(context.Background(), constants.TokenContextKey, "my-token")
+	req = req.WithContext(reqCtx)
+
+	controller.ingestHandler(w, req)
+
+	resp := w.Result()
+	assert.Equal(t, http.StatusAlreadyReported, resp.StatusCode)
+
+	responseBody, _ := io.ReadAll(resp.Body)
+	var responseObj response
+
+	err := json.Unmarshal(responseBody, &responseObj)
+	assert.Nil(t, err)
+	assert.True(t, responseObj.Data.Success)
+	assert.Equal(t, "Document has already been processed", responseObj.Data.Message)
 }
 
 func TestProcessAndPersist_IncludesXMLDeclaration(t *testing.T) {
