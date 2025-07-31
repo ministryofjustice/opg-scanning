@@ -29,6 +29,7 @@ type (
 		JobsQueueBucketKmsKey string
 		Endpoint              string
 		Region                string
+		DocumentsTable        string
 	}
 
 	Auth struct {
@@ -82,6 +83,7 @@ func Read() (*Config, error) {
 			JobsQueueBucketKmsKey: cmp.Or(os.Getenv("JOBQUEUE_S3_ENCRYPTION_KEY"), "alias/aws/s3"),
 			Endpoint:              os.Getenv("AWS_ENDPOINT"),
 			Region:                cmp.Or(os.Getenv("AWS_REGION"), "eu-west-1"),
+			DocumentsTable:        os.Getenv("DOCUMENTS_TABLE"),
 		},
 		Auth: Auth{
 			ApiUsername:    cmp.Or(os.Getenv("API_USERNAME"), "opg_document_and_d@publicguardian.gsi.gov.uk"),

@@ -69,3 +69,11 @@ awslocal ssm put-parameter --name "/local/local-credentials" --type "SecureStrin
 # S3
 create_bucket "opg-backoffice-datastore-local"
 create_bucket "opg-backoffice-jobsqueue-local"
+
+# DynamoDB
+awslocal dynamodb create-table \
+ --region eu-west-1 \
+ --table-name Documents \
+ --attribute-definitions AttributeName=PK,AttributeType=S AttributeName=SK,AttributeType=S \
+ --key-schema AttributeName=PK,KeyType=HASH AttributeName=SK,KeyType=RANGE \
+ --provisioned-throughput ReadCapacityUnits=1000,WriteCapacityUnits=1000

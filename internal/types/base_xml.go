@@ -25,6 +25,7 @@ type BaseDocument struct {
 	Type        string `xml:"Type,attr"`
 	Encoding    string `xml:"Encoding,attr"`
 	NoPages     int    `xml:"NoPages,attr"`
+	ID          string `xml:"ID,attr"`
 	EmbeddedXML string `xml:"XML"`
 	EmbeddedPDF string `xml:"PDF"`
 }
