@@ -47,7 +47,7 @@ type documentTracker interface {
 
 type IndexController struct {
 	config          *config.Config
-	logger          *logger.Logger
+	logger          *slog.Logger
 	validator       *ingestion.Validator
 	siriusClient    SiriusClient
 	auth            Auth
@@ -69,7 +69,7 @@ type responseData struct {
 
 var uidReplacementRegex = regexp.MustCompile(`^7[0-9]{3}-[0-9]{4}-[0-9]{4}$`)
 
-func NewIndexController(logger *logger.Logger, awsClient aws.AwsClientInterface, appConfig *config.Config, dynamoClient *dynamodb.Client) *IndexController {
+func NewIndexController(logger *slog.Logger, awsClient aws.AwsClientInterface, appConfig *config.Config, dynamoClient *dynamodb.Client) *IndexController {
 	return &IndexController{
 		config:          appConfig,
 		logger:          logger,
@@ -97,7 +97,7 @@ func (c *IndexController) HandleRequests() {
 	}))
 
 	// Protect the route with JWT validation (using the authMiddleware)
-	http.Handle("/api/ddc", otelhttp.NewHandler(logger.LoggingMiddleware(c.logger.SlogLogger)(
+	http.Handle("/api/ddc", otelhttp.NewHandler(logger.UseTelemetry(
 		c.auth.Check(http.HandlerFunc(c.ingestHandler)),
 	), "scanning"))
 

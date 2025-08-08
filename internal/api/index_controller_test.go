@@ -482,7 +482,7 @@ func TestRespondWithErrorHandle5XX(t *testing.T) {
 	c := setupController(t)
 
 	outBuf := bytes.NewBuffer([]byte{})
-	c.logger.SlogLogger = slog.New(slog.NewJSONHandler(outBuf, nil))
+	c.logger = slog.New(slog.NewJSONHandler(outBuf, nil))
 
 	c.respondWithError(ctx, w, 500, "something went wrong", errors.New("what really went wrong"))
 
@@ -509,7 +509,7 @@ func TestRespondWithErrorHandle4XX(t *testing.T) {
 	c := setupController(t)
 
 	outBuf := bytes.NewBuffer([]byte{})
-	c.logger.SlogLogger = slog.New(slog.NewJSONHandler(outBuf, nil))
+	c.logger = slog.New(slog.NewJSONHandler(outBuf, nil))
 
 	c.respondWithError(ctx, w, 400, "you sent us something wrong", errors.New("what really went wrong"))
 

@@ -10,8 +10,8 @@ test:
 
 integration-test:
 	@${MAKE} start
-	go test -run TestIntegration .
-	go test -run TestIntegration ./internal/ingestion
+	go test -count 1 -run TestIntegration .
+	go test -count 1 -run TestIntegration ./internal/ingestion
 	@${MAKE} clean
 
 build:

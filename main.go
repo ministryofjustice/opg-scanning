@@ -32,7 +32,7 @@ func main() {
 		return
 	}
 
-	shutdownTracer, err := logger.StartTracerProvider(ctx, logWrapper.SlogLogger, true)
+	shutdownTracer, err := logger.StartTracerProvider(ctx, logWrapper, true)
 	if err != nil {
 		logWrapper.Error("Failed to start tracer provider", slog.String("error", err.Error()))
 		return
