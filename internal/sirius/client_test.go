@@ -22,7 +22,7 @@ func TestNewClient(t *testing.T) {
 	config.App.SiriusAttachDocURL = "attach"
 	config.App.SiriusCaseStubURL = "case"
 
-	client := NewClient(config)
+	client := newClient(config)
 
 	assert.Equal(t, "http://example.com/attach", client.attachDocumentURL)
 	assert.Equal(t, "http://example.com/case", client.caseStubURL)
@@ -46,12 +46,12 @@ func TestClientAttachDocument(t *testing.T) {
 			Body:       io.NopCloser(strings.NewReader(`{"uuid":"hello"}`)),
 		}, nil)
 
-	client := &Client{
+	client := &client{
 		httpClient:        doer,
 		attachDocumentURL: "http://example.com/attach",
 	}
 
-	resp, err := client.AttachDocument(ctx, &ScannedDocumentRequest{CaseReference: "5"})
+	resp, err := client.AttachDocument(ctx, &scannedDocumentRequest{CaseReference: "5"})
 	assert.Nil(t, err)
 	assert.Equal(t, &ScannedDocumentResponse{UUID: "hello"}, resp)
 }
@@ -74,12 +74,12 @@ func TestClientCreateCaseStub(t *testing.T) {
 			Body:       io.NopCloser(strings.NewReader(`{"uid":"hello"}`)),
 		}, nil)
 
-	client := &Client{
+	client := &client{
 		httpClient:  doer,
 		caseStubURL: "http://example.com/case",
 	}
 
-	resp, err := client.CreateCaseStub(ctx, &ScannedCaseRequest{BatchID: "1"})
+	resp, err := client.CreateCaseStub(ctx, &scannedCaseRequest{BatchID: "1"})
 	assert.Nil(t, err)
 	assert.Equal(t, &ScannedCaseResponse{UID: "hello"}, resp)
 }
@@ -120,7 +120,7 @@ func TestClientDo(t *testing.T) {
 		Do(req).
 		Return(resp, nil)
 
-	client := &Client{httpClient: doer}
+	client := &client{httpClient: doer}
 
 	var v string
 	err := client.do(req, &v)
@@ -141,7 +141,7 @@ func TestClientDo_404(t *testing.T) {
 		Do(req).
 		Return(resp, nil)
 
-	client := &Client{httpClient: doer}
+	client := &client{httpClient: doer}
 	err := client.do(req, nil)
 
 	assert.Equal(t, Error{StatusCode: 404}, err)
@@ -159,7 +159,7 @@ func TestClientDo_400(t *testing.T) {
 		Do(req).
 		Return(resp, nil)
 
-	client := &Client{httpClient: doer}
+	client := &client{httpClient: doer}
 	err := client.do(req, nil)
 
 	assert.Equal(t, Error{StatusCode: 400, ValidationErrors: map[string]map[string]string{"a": {"b": "c"}}}, err)
@@ -177,7 +177,7 @@ func TestClientDo_500(t *testing.T) {
 		Do(req).
 		Return(resp, nil)
 
-	client := &Client{httpClient: doer}
+	client := &client{httpClient: doer}
 	err := client.do(req, nil)
 
 	assert.ErrorContains(t, err, "unexpected status code")

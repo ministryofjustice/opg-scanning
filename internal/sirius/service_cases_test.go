@@ -1,4 +1,4 @@
-package api
+package sirius
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 
 	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
-	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/pact-foundation/pact-go/v2/consumer"
 	"github.com/pact-foundation/pact-go/v2/matchers"
@@ -18,7 +17,7 @@ import (
 type requestCaseStub struct {
 	name        string
 	xmlPayload  string
-	expectedReq *sirius.ScannedCaseRequest
+	expectedReq *scannedCaseRequest
 	expectedErr bool
 }
 
@@ -51,7 +50,7 @@ func buildTestCases() []requestCaseStub {
 		{
 			name:       "Order Case with CaseNo",
 			xmlPayload: fmt.Sprintf(withCaseNoPayload, "COPORD"),
-			expectedReq: &sirius.ScannedCaseRequest{
+			expectedReq: &scannedCaseRequest{
 				BatchID:        "02-0001112-20160909185000",
 				CaseType:       "order",
 				CourtReference: "123",
@@ -67,7 +66,7 @@ func buildTestCases() []requestCaseStub {
 		{
 			name:       "LPA Case without CaseNo",
 			xmlPayload: fmt.Sprintf(withoutCaseNoPayload, "LP1F"),
-			expectedReq: &sirius.ScannedCaseRequest{
+			expectedReq: &scannedCaseRequest{
 				BatchID:  "02-0001112-20160909185000",
 				CaseType: "lpa",
 			},
@@ -82,7 +81,7 @@ func buildTestCases() []requestCaseStub {
 		{
 			name:       "EPA Case without CaseNo",
 			xmlPayload: fmt.Sprintf(withoutCaseNoPayload, "EP2PG"),
-			expectedReq: &sirius.ScannedCaseRequest{
+			expectedReq: &scannedCaseRequest{
 				BatchID:  "02-0001112-20160909185000",
 				CaseType: "epa",
 			},
@@ -101,9 +100,9 @@ func buildTestCases() []requestCaseStub {
 			expectedErr: true,
 		},
 		{
-			name:        "LPA Case with ID attribute",
-			xmlPayload:  withCaseNoAndIDPayload,
-			expectedReq: &sirius.ScannedCaseRequest{
+			name:       "LPA Case with ID attribute",
+			xmlPayload: withCaseNoAndIDPayload,
+			expectedReq: &scannedCaseRequest{
 				BatchID:  "02-0001112-20160909185000",
 				CaseType: "lpa",
 			},
@@ -168,12 +167,11 @@ func runStubCaseTest(t *testing.T, tt requestCaseStub) {
 			mockConfig.App.SiriusBaseURL = baseURL
 
 			// Mock dependencies
-			client := sirius.NewClient(mockConfig)
-			service := newService(client, &set)
+			service := NewService(mockConfig)
 
 			ctx := context.WithValue(context.Background(), constants.TokenContextKey, "my-token")
 
-			response, err := service.CreateCaseStub(ctx)
+			response, err := service.CreateCaseStub(ctx, &set)
 
 			if tt.expectedErr {
 				assert.Equal(t, tt.expectedErr, err)

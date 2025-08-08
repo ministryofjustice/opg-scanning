@@ -17,26 +17,26 @@ type doer interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
-type Client struct {
+type client struct {
 	httpClient        doer
 	attachDocumentURL string
 	caseStubURL       string
 }
 
-func NewClient(config *config.Config) *Client {
+func newClient(config *config.Config) *client {
 	httpClient := &http.Client{
 		Timeout: config.HTTP.Timeout,
 	}
 	httpClient.Transport = otelhttp.NewTransport(httpClient.Transport)
 
-	return &Client{
+	return &client{
 		httpClient:        httpClient,
 		attachDocumentURL: fmt.Sprintf("%s/%s", config.App.SiriusBaseURL, config.App.SiriusAttachDocURL),
 		caseStubURL:       fmt.Sprintf("%s/%s", config.App.SiriusBaseURL, config.App.SiriusCaseStubURL),
 	}
 }
 
-type ScannedDocumentRequest struct {
+type scannedDocumentRequest struct {
 	CaseReference   string `json:"caseReference"`
 	Content         string `json:"content"`
 	DocumentType    string `json:"documentType"`
@@ -48,7 +48,7 @@ type ScannedDocumentResponse struct {
 	UUID string `json:"uuid"`
 }
 
-func (c *Client) AttachDocument(ctx context.Context, data *ScannedDocumentRequest) (*ScannedDocumentResponse, error) {
+func (c *client) AttachDocument(ctx context.Context, data *scannedDocumentRequest) (*ScannedDocumentResponse, error) {
 	req, err := newRequest(ctx, c.attachDocumentURL, data)
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (c *Client) AttachDocument(ctx context.Context, data *ScannedDocumentReques
 	return v, nil
 }
 
-type ScannedCaseRequest struct {
+type scannedCaseRequest struct {
 	BatchID        string `json:"batchId"`
 	CaseType       string `json:"caseType"`
 	CourtReference string `json:"courtReference,omitempty"`
@@ -74,7 +74,7 @@ type ScannedCaseResponse struct {
 	UID string `json:"uId"`
 }
 
-func (c *Client) CreateCaseStub(ctx context.Context, data *ScannedCaseRequest) (*ScannedCaseResponse, error) {
+func (c *client) CreateCaseStub(ctx context.Context, data *scannedCaseRequest) (*ScannedCaseResponse, error) {
 	req, err := newRequest(ctx, c.caseStubURL, data)
 	if err != nil {
 		return nil, err
@@ -114,7 +114,7 @@ func newRequest(ctx context.Context, url string, data any) (*http.Request, error
 	return req, nil
 }
 
-func (c *Client) do(req *http.Request, v any) error {
+func (c *client) do(req *http.Request, v any) error {
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("do request: %w", err)

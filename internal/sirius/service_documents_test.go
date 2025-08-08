@@ -1,4 +1,4 @@
-package api
+package sirius
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 
 	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
-	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/pact-foundation/pact-go/v2/consumer"
 	"github.com/pact-foundation/pact-go/v2/matchers"
@@ -73,27 +72,29 @@ func TestAttachDocument_Correspondence(t *testing.T) {
 		mockConfig.App.SiriusBaseURL = baseURL
 
 		// Prepare service instance
-		service := &service{
-			siriusClient: sirius.NewClient(mockConfig),
-			originalDoc: &types.BaseDocument{
-				EmbeddedXML: xmlBase64,
-				EmbeddedPDF: pdfBase64,
-				Type:        "Correspondence",
-			},
-			set: &types.BaseSet{
-				Header: &types.BaseHeader{
-					ScanTime: "2024-12-05 12:34:56Z",
-				},
+		service := &Service{
+			client: newClient(mockConfig),
+		}
+
+		set := &types.BaseSet{
+			Header: &types.BaseHeader{
+				ScanTime: "2024-12-05 12:34:56Z",
 			},
 		}
 
-		caseResponse := &sirius.ScannedCaseResponse{
+		originalDoc := &types.BaseDocument{
+			EmbeddedXML: xmlBase64,
+			EmbeddedPDF: pdfBase64,
+			Type:        "Correspondence",
+		}
+
+		caseResponse := &ScannedCaseResponse{
 			UID: "7000-3764-4871",
 		}
 
 		ctx := context.WithValue(context.Background(), constants.TokenContextKey, "my-token")
 
-		response, decodedXML, err := service.AttachDocuments(ctx, caseResponse)
+		response, decodedXML, err := service.AttachDocuments(ctx, set, originalDoc, caseResponse)
 		if err != nil {
 			t.Fatalf("AttachDocuments returned error: %v", err)
 		}
