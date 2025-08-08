@@ -23,19 +23,18 @@ func main() {
 	defer cancel()
 
 	// Set up logging
-	logWrapper := logger.GetLogger(config.Environment())
-	slogLogger := logWrapper.SlogLogger
+	logWrapper := logger.New(config.Environment())
 
 	// Initialize configuration
 	appConfig, err := config.Read()
 	if err != nil {
-		slogLogger.Error("Failed to read config", slog.String("error", err.Error()))
+		logWrapper.Error("Failed to read config", slog.String("error", err.Error()))
 		return
 	}
 
-	shutdownTracer, err := logger.StartTracerProvider(ctx, slogLogger, true)
+	shutdownTracer, err := logger.StartTracerProvider(ctx, logWrapper.SlogLogger, true)
 	if err != nil {
-		slogLogger.Error("Failed to start tracer provider", slog.String("error", err.Error()))
+		logWrapper.Error("Failed to start tracer provider", slog.String("error", err.Error()))
 		return
 	}
 	defer shutdownTracer()
@@ -48,13 +47,13 @@ func main() {
 	otelaws.AppendMiddlewares(&cfg.APIOptions)
 
 	if err != nil {
-		slogLogger.Error("Failed to load AWS config", "error", err)
+		logWrapper.Error("Failed to load AWS config", "error", err)
 		return
 	}
 	// Initialize AwsClient
 	awsClient, err := appaws.NewAwsClient(ctx, cfg, appConfig)
 	if err != nil {
-		slogLogger.Error("Failed to initialize AWS clients", "error", err)
+		logWrapper.Error("Failed to initialize AWS clients", "error", err)
 		return
 	}
 
@@ -64,8 +63,8 @@ func main() {
 
 	dynamoClient := dynamodb.NewFromConfig(cfg)
 
-	controller := api.NewIndexController(awsClient, appConfig, dynamoClient)
-	slogLogger.Info("Service started...")
+	controller := api.NewIndexController(logWrapper, awsClient, appConfig, dynamoClient)
+	logWrapper.Info("Service started...")
 
 	go func() {
 		controller.HandleRequests()
@@ -77,7 +76,7 @@ func main() {
 	<-stop
 
 	// Start shutdown sequence
-	slogLogger.Info("Shutting down gracefully...")
+	logWrapper.Info("Shutting down gracefully...")
 	cancel()
-	slogLogger.Info("All jobs processed. Exiting.")
+	logWrapper.Info("All jobs processed. Exiting.")
 }

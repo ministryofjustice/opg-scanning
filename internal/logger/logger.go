@@ -16,7 +16,7 @@ type Logger struct {
 
 type loggerContextKey struct{}
 
-func newLogger(environment string) *Logger {
+func New(environment string) *Logger {
 	// Create the base logger using telemetry.NewLogger.
 	baseLogger := telemetry.NewLogger("opg-scanning-service")
 

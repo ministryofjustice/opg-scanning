@@ -19,10 +19,10 @@ type JobQueue struct {
 	errors []error
 }
 
-func NewJobQueue(config *config.Config) *JobQueue {
+func NewJobQueue(logger *logger.Logger, config *config.Config) *JobQueue {
 	queue := &JobQueue{
 		wg:     &sync.WaitGroup{},
-		logger: logger.GetLogger(config.App.Environment),
+		logger: logger,
 		errors: make([]error, 0),
 	}
 	return queue

@@ -69,16 +69,14 @@ type responseData struct {
 
 var uidReplacementRegex = regexp.MustCompile(`^7[0-9]{3}-[0-9]{4}-[0-9]{4}$`)
 
-func NewIndexController(awsClient aws.AwsClientInterface, appConfig *config.Config, dynamoClient *dynamodb.Client) *IndexController {
-	logger := logger.GetLogger(appConfig.App.Environment)
-
+func NewIndexController(logger *logger.Logger, awsClient aws.AwsClientInterface, appConfig *config.Config, dynamoClient *dynamodb.Client) *IndexController {
 	return &IndexController{
 		config:          appConfig,
 		logger:          logger,
 		validator:       ingestion.NewValidator(),
 		siriusClient:    sirius.NewClient(appConfig),
 		auth:            auth.New(appConfig, logger, awsClient),
-		Queue:           ingestion.NewJobQueue(appConfig),
+		Queue:           ingestion.NewJobQueue(logger, appConfig),
 		documentTracker: ingestion.NewDocumentTracker(dynamoClient, appConfig.Aws.DocumentsTable),
 		AwsClient:       awsClient,
 	}

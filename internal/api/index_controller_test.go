@@ -41,7 +41,7 @@ var xmlPayload = `
 
 func setupController(t *testing.T) *IndexController {
 	appConfig, _ := config.Read()
-	logger := logger.GetLogger(appConfig.App.Environment)
+	logger := logger.New(appConfig.App.Environment)
 
 	mockAuth := newMockAuth(t)
 
@@ -89,7 +89,7 @@ func setupController(t *testing.T) *IndexController {
 		validator:       ingestion.NewValidator(),
 		siriusClient:    mockHttpClient,
 		auth:            mockAuth,
-		Queue:           ingestion.NewJobQueue(appConfig),
+		Queue:           ingestion.NewJobQueue(logger, appConfig),
 		documentTracker: documentTracker,
 		AwsClient:       awsClient,
 	}
