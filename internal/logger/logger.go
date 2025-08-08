@@ -2,7 +2,6 @@ package logger
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -70,55 +69,26 @@ func LoggerFromContext(ctx context.Context) *slog.Logger {
 	return nil
 }
 
-func (l *Logger) Info(message string, fields map[string]interface{}, args ...any) {
-	if fields != nil {
-		l.SlogLogger.Info(message, anyFromAttrs(attrsFromMap(fields))...)
-	} else {
-		l.SlogLogger.Info(fmt.Sprintf(message, args...))
-	}
+func (l *Logger) Info(message string, args ...any) {
+	l.SlogLogger.Info(message, args...)
 }
 
-func (l *Logger) InfoWithContext(ctx context.Context, message string, fields map[string]interface{}, args ...any) {
+func (l *Logger) InfoContext(ctx context.Context, message string, args ...any) {
 	if ctxLogger := LoggerFromContext(ctx); ctxLogger != nil {
-		ctxLogger.Info(message, anyFromAttrs(attrsFromMap(fields))...)
+		ctxLogger.InfoContext(ctx, message, args...)
 	} else {
-		l.Info(message, fields, args...)
+		l.SlogLogger.InfoContext(ctx, message, args...)
 	}
 }
 
-func (l *Logger) Error(message string, fields map[string]interface{}, args ...any) {
-	if fields != nil {
-		l.SlogLogger.Error(message, anyFromAttrs(attrsFromMap(fields))...)
-	} else {
-		l.SlogLogger.Error(fmt.Sprintf(message, args...))
-	}
+func (l *Logger) Error(message string, args ...any) {
+	l.SlogLogger.Error(message, args...)
 }
 
-func (l *Logger) ErrorWithContext(ctx context.Context, message string, fields map[string]interface{}, args ...any) {
+func (l *Logger) ErrorContext(ctx context.Context, message string, args ...any) {
 	if ctxLogger := LoggerFromContext(ctx); ctxLogger != nil {
-		ctxLogger.Error(message, anyFromAttrs(attrsFromMap(fields))...)
+		ctxLogger.ErrorContext(ctx, message, args...)
 	} else {
-		l.Error(message, fields, args...)
+		l.SlogLogger.ErrorContext(ctx, message, args...)
 	}
-}
-
-// converts a map[string]interface{} to a slice of slog.Attr.
-func attrsFromMap(fields map[string]interface{}) []slog.Attr {
-	if fields == nil {
-		return nil
-	}
-	attrs := make([]slog.Attr, 0, len(fields))
-	for key, value := range fields {
-		attrs = append(attrs, slog.Any(key, value))
-	}
-	return attrs
-}
-
-// converts a slice of slog.Attr to a slice of any.
-func anyFromAttrs(attrs []slog.Attr) []any {
-	anys := make([]any, len(attrs))
-	for i, a := range attrs {
-		anys[i] = a
-	}
-	return anys
 }

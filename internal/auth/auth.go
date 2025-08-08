@@ -80,14 +80,14 @@ func (a *Auth) Check(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(cookieName)
 		if err != nil {
-			a.respondWithError(w, http.StatusUnauthorized, "Unauthorized: Missing token", err)
+			a.respondWithError(r.Context(), w, http.StatusUnauthorized, "Unauthorized: Missing token", err)
 			return
 		}
 
 		token := cookie.Value
 
 		if err := a.tokens.Validate(token); err != nil {
-			a.respondWithError(w, http.StatusUnauthorized, "Unauthorized: Invalid token", err)
+			a.respondWithError(r.Context(), w, http.StatusUnauthorized, "Unauthorized: Invalid token", err)
 			return
 		}
 
@@ -118,7 +118,7 @@ func (a *Auth) validateCredentials(ctx context.Context, user loginUser) error {
 	return nil
 }
 
-func (a *Auth) respondWithError(w http.ResponseWriter, statusCode int, message string, err error) {
-	a.logger.Error("%s: %v", nil, message, err)
+func (a *Auth) respondWithError(ctx context.Context, w http.ResponseWriter, statusCode int, message string, err error) {
+	a.logger.ErrorContext(ctx, fmt.Sprintf("%s: %v", message, err))
 	http.Error(w, message, statusCode)
 }

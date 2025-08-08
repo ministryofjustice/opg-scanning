@@ -63,7 +63,7 @@ func (p *DocumentProcessor) Process(ctx context.Context) (any, error) {
 
 	// Return an error if any validations failed.
 	if messages := p.validator.Validate(); len(messages) > 0 {
-		p.logger.Info("Validation failed: %v", nil, messages)
+		p.logger.InfoContext(ctx, fmt.Sprintf("Validation failed: %v", messages))
 	}
 
 	return p.doc, nil

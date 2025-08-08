@@ -42,7 +42,6 @@ var xmlPayload = `
 func setupController(t *testing.T) *IndexController {
 	appConfig, _ := config.Read()
 	logger := logger.GetLogger(appConfig.App.Environment)
-	id := "123"
 
 	mockAuth := newMockAuth(t)
 
@@ -57,7 +56,7 @@ func setupController(t *testing.T) *IndexController {
 		Maybe()
 	awsClient.EXPECT().
 		QueueSetForProcessing(mock.Anything, mock.Anything, mock.Anything).
-		Return(&id, nil).
+		Return("123", nil).
 		Maybe()
 
 	mockHttpClient := newMockSiriusClient(t)

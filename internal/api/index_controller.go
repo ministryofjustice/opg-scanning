@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"regexp"
 	"slices"
@@ -35,7 +36,7 @@ type Auth interface {
 type AwsClient interface {
 	PersistFormData(ctx context.Context, body io.Reader, docType string) (string, error)
 	PersistSetData(ctx context.Context, body []byte) (string, error)
-	QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (MessageID *string, err error)
+	QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (string, error)
 }
 
 type documentTracker interface {
@@ -88,7 +89,7 @@ func (c *IndexController) HandleRequests() {
 		w.WriteHeader(http.StatusOK)
 
 		if _, err := w.Write([]byte("OK")); err != nil {
-			c.logger.Error(err.Error(), nil)
+			c.logger.ErrorContext(r.Context(), err.Error())
 		}
 	}))
 
@@ -102,7 +103,7 @@ func (c *IndexController) HandleRequests() {
 		c.auth.Check(http.HandlerFunc(c.ingestHandler)),
 	), "scanning"))
 
-	c.logger.Info("Starting server on :"+c.config.HTTP.Port, nil)
+	c.logger.Info("Starting server on :" + c.config.HTTP.Port)
 
 	server := &http.Server{
 		Addr:              ":" + c.config.HTTP.Port,
@@ -110,7 +111,7 @@ func (c *IndexController) HandleRequests() {
 	}
 
 	if err := server.ListenAndServe(); err != nil {
-		c.logger.Error(err.Error(), nil)
+		c.logger.Error(err.Error())
 	}
 }
 
@@ -124,7 +125,7 @@ func (c *IndexController) authHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := c.auth.Authenticate(w, r)
 	if err != nil {
 		errMsg := fmt.Sprintf("Authentication failed: %v", err)
-		c.logger.Error(errMsg, nil)
+		c.logger.ErrorContext(r.Context(), errMsg)
 		c.authResponse(r.Context(), w, ErrorResponse{Error: errMsg})
 		return
 	}
@@ -147,7 +148,7 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	c.logger.InfoWithContext(reqCtx, "Received ingestion request", nil)
+	c.logger.InfoContext(reqCtx, "Received ingestion request")
 
 	bodyStr, err := c.readRequestBody(r)
 	if err != nil {
@@ -168,9 +169,7 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	c.logger.InfoWithContext(reqCtx, "Stored Set data", map[string]any{
-		"set_filename": filename,
-	})
+	c.logger.InfoContext(reqCtx, "Stored Set data", slog.String("set_filename", filename))
 
 	parsedBaseXml, err := c.validateAndSanitizeXML(reqCtx, bodyStr)
 	if err != nil {
@@ -241,9 +240,7 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Failed to encode response", err)
 	} else {
-		c.logger.InfoWithContext(reqCtx, "Ingestion request processed successfully", map[string]any{
-			"uid": scannedCaseResponse.UID,
-		})
+		c.logger.InfoContext(reqCtx, "Ingestion request processed successfully", slog.String("uid", scannedCaseResponse.UID))
 	}
 }
 
@@ -268,13 +265,9 @@ func getPublicError(err error, uid string) (int, string) {
 
 func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseWriter, statusCode int, message string, err error) {
 	if statusCode >= 500 {
-		c.logger.ErrorWithContext(ctx, message, map[string]any{
-			"error": err,
-		})
+		c.logger.ErrorContext(ctx, message, slog.Any("error", err))
 	} else {
-		c.logger.InfoWithContext(ctx, message, map[string]any{
-			"error": err,
-		})
+		c.logger.InfoContext(ctx, message, slog.Any("error", err))
 	}
 
 	resp := response{
@@ -317,7 +310,7 @@ func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr st
 	}
 
 	// Validate against XSD
-	c.logger.InfoWithContext(ctx, "Validating against XSD", nil)
+	c.logger.InfoContext(ctx, "Validating against XSD")
 	xsdValidator, err := ingestion.NewXSDValidator(c.config, schemaLocation, bodyStr)
 	if err != nil {
 		return nil, err
@@ -337,7 +330,7 @@ func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr st
 	}
 
 	// Validate and sanitize the XML
-	c.logger.InfoWithContext(ctx, "Validating XML", nil)
+	c.logger.InfoContext(ctx, "Validating XML")
 	xmlValidator := ingestion.NewXmlValidator(*c.config)
 	parsedBaseXml, err := xmlValidator.XmlValidate(bodyStr)
 	if err != nil {
