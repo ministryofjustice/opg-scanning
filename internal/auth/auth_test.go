@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
-	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/crypto/bcrypt"
@@ -175,9 +174,7 @@ func TestAuthCheck_InvalidToken(t *testing.T) {
 		Return(expectedError)
 
 	var logBuffer bytes.Buffer
-	logger := &logger.Logger{
-		SlogLogger: slog.New(slog.NewTextHandler(&logBuffer, nil)),
-	}
+	logger := slog.New(slog.NewTextHandler(&logBuffer, nil))
 
 	auth := &Auth{
 		tokens: tokens,
@@ -203,9 +200,7 @@ func TestAuthCheck_MissingCookie(t *testing.T) {
 	r, _ := http.NewRequest(http.MethodGet, "", strings.NewReader(`{"user":{"email":"john.doe@example.com","password":"not-a-password"}}`))
 
 	var logBuffer bytes.Buffer
-	logger := &logger.Logger{
-		SlogLogger: slog.New(slog.NewTextHandler(&logBuffer, nil)),
-	}
+	logger := slog.New(slog.NewTextHandler(&logBuffer, nil))
 
 	auth := &Auth{
 		logger: logger,
