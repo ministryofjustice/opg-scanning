@@ -26,7 +26,7 @@ type AwsClientInterface interface {
 	FetchCredentials(ctx context.Context) (map[string]string, error)
 	PersistFormData(ctx context.Context, body io.Reader, docType string) (string, error)
 	PersistSetData(ctx context.Context, body []byte) (string, error)
-	QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (MessageID *string, err error)
+	QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (string, error)
 }
 
 type AwsClient struct {
@@ -196,11 +196,11 @@ func (a *AwsClient) FetchCredentials(ctx context.Context) (map[string]string, er
 	return credentials, nil
 }
 
-func (a *AwsClient) QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (MessageID *string, err error) {
+func (a *AwsClient) QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (string, error) {
 	message := createMessageBody(scannedCaseResponse, fileName)
 	messageJson, err := json.Marshal(message)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal message to JSON: %w", err)
+		return "", fmt.Errorf("failed to marshal message to JSON: %w", err)
 	}
 
 	// Send the message to the SQS queue
@@ -212,10 +212,14 @@ func (a *AwsClient) QueueSetForProcessing(ctx context.Context, scannedCaseRespon
 
 	output, err := a.SQS.SendMessage(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send message to SQS queue: %w", err)
+		return "", fmt.Errorf("failed to send message to SQS queue: %w", err)
 	}
 
-	return output.MessageId, nil
+	if output.MessageId == nil {
+		return "", nil
+	}
+
+	return *output.MessageId, nil
 }
 
 func createMessageBody(scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) map[string]any {

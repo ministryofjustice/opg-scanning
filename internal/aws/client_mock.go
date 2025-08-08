@@ -32,10 +32,10 @@ func (m *MockAwsClient) PersistSetData(ctx context.Context, body []byte) (string
 	return args.String(0), args.Error(1)
 }
 
-func (m *MockAwsClient) QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (MessageID *string, err error) {
+func (m *MockAwsClient) QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (string, error) {
 	args := m.Called(ctx, scannedCaseResponse, fileName)
 
 	messageId := args.String(0)
 
-	return &messageId, args.Error(1)
+	return messageId, args.Error(1)
 }

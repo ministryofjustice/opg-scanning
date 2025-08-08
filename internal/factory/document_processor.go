@@ -3,21 +3,21 @@ package factory
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
-	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/parser"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
 type DocumentProcessor struct {
-	logger    logger.Logger
+	logger    *slog.Logger
 	doc       any
 	validator parser.CommonValidator
 }
 
 // Initializes a new DocumentProcessor.
-func NewDocumentProcessor(data *types.BaseDocument, docType, format string, registry registryInterface, logger *logger.Logger) (*DocumentProcessor, error) {
+func NewDocumentProcessor(data *types.BaseDocument, docType, format string, registry registryInterface, logger *slog.Logger) (*DocumentProcessor, error) {
 	// Decode the embedded XML
 	embeddedXML, err := util.DecodeEmbeddedXML(data.EmbeddedXML)
 	if err != nil {
@@ -43,7 +43,7 @@ func NewDocumentProcessor(data *types.BaseDocument, docType, format string, regi
 	}
 
 	return &DocumentProcessor{
-		logger:    *logger,
+		logger:    logger,
 		doc:       parsedDoc,
 		validator: validator,
 	}, nil
@@ -63,7 +63,7 @@ func (p *DocumentProcessor) Process(ctx context.Context) (any, error) {
 
 	// Return an error if any validations failed.
 	if messages := p.validator.Validate(); len(messages) > 0 {
-		p.logger.Info("Validation failed: %v", nil, messages)
+		p.logger.InfoContext(ctx, fmt.Sprintf("Validation failed: %v", messages))
 	}
 
 	return p.doc, nil

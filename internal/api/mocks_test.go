@@ -326,24 +326,22 @@ func (_c *mockAwsClient_PersistSetData_Call) RunAndReturn(run func(ctx context.C
 }
 
 // QueueSetForProcessing provides a mock function for the type mockAwsClient
-func (_mock *mockAwsClient) QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (*string, error) {
+func (_mock *mockAwsClient) QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (string, error) {
 	ret := _mock.Called(ctx, scannedCaseResponse, fileName)
 
 	if len(ret) == 0 {
 		panic("no return value specified for QueueSetForProcessing")
 	}
 
-	var r0 *string
+	var r0 string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *sirius.ScannedCaseResponse, string) (*string, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *sirius.ScannedCaseResponse, string) (string, error)); ok {
 		return returnFunc(ctx, scannedCaseResponse, fileName)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *sirius.ScannedCaseResponse, string) *string); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *sirius.ScannedCaseResponse, string) string); ok {
 		r0 = returnFunc(ctx, scannedCaseResponse, fileName)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*string)
-		}
+		r0 = ret.Get(0).(string)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *sirius.ScannedCaseResponse, string) error); ok {
 		r1 = returnFunc(ctx, scannedCaseResponse, fileName)
@@ -389,12 +387,12 @@ func (_c *mockAwsClient_QueueSetForProcessing_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *mockAwsClient_QueueSetForProcessing_Call) Return(MessageID *string, err error) *mockAwsClient_QueueSetForProcessing_Call {
-	_c.Call.Return(MessageID, err)
+func (_c *mockAwsClient_QueueSetForProcessing_Call) Return(s string, err error) *mockAwsClient_QueueSetForProcessing_Call {
+	_c.Call.Return(s, err)
 	return _c
 }
 
-func (_c *mockAwsClient_QueueSetForProcessing_Call) RunAndReturn(run func(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (*string, error)) *mockAwsClient_QueueSetForProcessing_Call {
+func (_c *mockAwsClient_QueueSetForProcessing_Call) RunAndReturn(run func(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (string, error)) *mockAwsClient_QueueSetForProcessing_Call {
 	_c.Call.Return(run)
 	return _c
 }

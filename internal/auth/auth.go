@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
 	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
-	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -25,7 +25,7 @@ type credentialsClient interface {
 	FetchCredentials(ctx context.Context) (map[string]string, error)
 }
 
-func New(appConfig *config.Config, logger *logger.Logger, awsClient aws.AwsClientInterface) *Auth {
+func New(appConfig *config.Config, logger *slog.Logger, awsClient aws.AwsClientInterface) *Auth {
 	return &Auth{
 		tokens: &tokenHelper{
 			awsClient: awsClient,
@@ -40,7 +40,7 @@ func New(appConfig *config.Config, logger *logger.Logger, awsClient aws.AwsClien
 type Auth struct {
 	tokens       tokens
 	credentials  credentialsClient
-	logger       *logger.Logger
+	logger       *slog.Logger
 	secureCookie bool
 }
 
@@ -80,14 +80,14 @@ func (a *Auth) Check(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(cookieName)
 		if err != nil {
-			a.respondWithError(w, http.StatusUnauthorized, "Unauthorized: Missing token", err)
+			a.respondWithError(r.Context(), w, http.StatusUnauthorized, "Unauthorized: Missing token", err)
 			return
 		}
 
 		token := cookie.Value
 
 		if err := a.tokens.Validate(token); err != nil {
-			a.respondWithError(w, http.StatusUnauthorized, "Unauthorized: Invalid token", err)
+			a.respondWithError(r.Context(), w, http.StatusUnauthorized, "Unauthorized: Invalid token", err)
 			return
 		}
 
@@ -118,7 +118,7 @@ func (a *Auth) validateCredentials(ctx context.Context, user loginUser) error {
 	return nil
 }
 
-func (a *Auth) respondWithError(w http.ResponseWriter, statusCode int, message string, err error) {
-	a.logger.Error("%s: %v", nil, message, err)
+func (a *Auth) respondWithError(ctx context.Context, w http.ResponseWriter, statusCode int, message string, err error) {
+	a.logger.ErrorContext(ctx, fmt.Sprintf("%s: %v", message, err))
 	http.Error(w, message, statusCode)
 }

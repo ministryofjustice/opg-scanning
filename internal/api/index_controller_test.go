@@ -41,8 +41,7 @@ var xmlPayload = `
 
 func setupController(t *testing.T) *IndexController {
 	appConfig, _ := config.Read()
-	logger := logger.GetLogger(appConfig.App.Environment)
-	id := "123"
+	logger := logger.New(appConfig.App.Environment)
 
 	mockAuth := newMockAuth(t)
 
@@ -57,7 +56,7 @@ func setupController(t *testing.T) *IndexController {
 		Maybe()
 	awsClient.EXPECT().
 		QueueSetForProcessing(mock.Anything, mock.Anything, mock.Anything).
-		Return(&id, nil).
+		Return("123", nil).
 		Maybe()
 
 	mockHttpClient := newMockSiriusClient(t)
@@ -90,7 +89,7 @@ func setupController(t *testing.T) *IndexController {
 		validator:       ingestion.NewValidator(),
 		siriusClient:    mockHttpClient,
 		auth:            mockAuth,
-		Queue:           ingestion.NewJobQueue(appConfig),
+		Queue:           ingestion.NewJobQueue(logger, appConfig),
 		documentTracker: documentTracker,
 		AwsClient:       awsClient,
 	}
@@ -483,7 +482,7 @@ func TestRespondWithErrorHandle5XX(t *testing.T) {
 	c := setupController(t)
 
 	outBuf := bytes.NewBuffer([]byte{})
-	c.logger.SlogLogger = slog.New(slog.NewJSONHandler(outBuf, nil))
+	c.logger = slog.New(slog.NewJSONHandler(outBuf, nil))
 
 	c.respondWithError(ctx, w, 500, "something went wrong", errors.New("what really went wrong"))
 
@@ -510,7 +509,7 @@ func TestRespondWithErrorHandle4XX(t *testing.T) {
 	c := setupController(t)
 
 	outBuf := bytes.NewBuffer([]byte{})
-	c.logger.SlogLogger = slog.New(slog.NewJSONHandler(outBuf, nil))
+	c.logger = slog.New(slog.NewJSONHandler(outBuf, nil))
 
 	c.respondWithError(ctx, w, 400, "you sent us something wrong", errors.New("what really went wrong"))
 

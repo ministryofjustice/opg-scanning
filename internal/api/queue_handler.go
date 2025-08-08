@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"slices"
 
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
@@ -13,9 +14,7 @@ import (
 
 // Handles the queueing of documents for processing.
 func (c *IndexController) processQueue(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, parsedBaseXml *types.BaseSet) error {
-	c.logger.InfoWithContext(ctx, "Queueing documents for processing", map[string]any{
-		"Header": parsedBaseXml.Header,
-	})
+	c.logger.InfoContext(ctx, "Queueing documents for processing", slog.Any("Header", parsedBaseXml.Header))
 
 	// Iterate over each document in the parsed set.
 	for i := range parsedBaseXml.Body.Documents {
@@ -44,72 +43,70 @@ func (c *IndexController) processQueue(ctx context.Context, scannedCaseResponse 
 
 			// If not a Sirius extraction document, skip external job processing.
 			if !slices.Contains(constants.SiriusExtractionDocuments, originalDoc.Type) {
-				c.logger.InfoWithContext(ctx, "Skipping external job processing, checks completed for document", map[string]any{
-					"set_uid":       scannedCaseResponse.UID,
-					"pdf_uuid":      attchResp.UUID,
-					"filename":      fileName,
-					"document_type": originalDoc.Type,
-				})
+				c.logger.InfoContext(ctx, "Skipping external job processing, checks completed for document",
+					slog.String("set_uid", scannedCaseResponse.UID),
+					slog.String("pdf_uuid", attchResp.UUID),
+					slog.String("filename", fileName),
+					slog.String("document_type", originalDoc.Type),
+				)
 				return nil
 			}
 
-			c.logger.InfoWithContext(ctx, "Stored Form data", map[string]any{
-				"filename": fileName,
-			})
+			c.logger.InfoContext(ctx, "Stored Form data", slog.String("filename", fileName))
 
 			// Queue the document for external processing.
 			messageID, err := c.AwsClient.QueueSetForProcessing(ctx, scannedCaseResponse, fileName)
 			if err != nil {
-				c.logger.ErrorWithContext(ctx, "Failed to queue document for processing", map[string]any{
-					"set_uid":       scannedCaseResponse.UID,
-					"document_type": originalDoc.Type,
-					"error":         err.Error(),
-				})
+				c.logger.ErrorContext(ctx, "Failed to queue document for processing",
+					slog.String("set_uid", scannedCaseResponse.UID),
+					slog.String("document_type", originalDoc.Type),
+					slog.String("error", err.Error()),
+				)
 				return err
 			}
 
-			c.logger.InfoWithContext(ctx, "Job processing completed for document", map[string]any{
-				"set_uid":       scannedCaseResponse.UID,
-				"pdf_uuid":      attchResp.UUID,
-				"job_queue_id":  messageID,
-				"filename":      fileName,
-				"document_type": originalDoc.Type,
-			})
+			c.logger.InfoContext(ctx, "Job processing completed for document",
+				slog.String("set_uid", scannedCaseResponse.UID),
+				slog.String("pdf_uuid", attchResp.UUID),
+				slog.String("job_queue_id", messageID),
+				slog.String("filename", fileName),
+				slog.String("document_type", originalDoc.Type),
+			)
 
 			return nil
 		})
 
 		if err != nil {
 			if err := c.documentTracker.SetFailed(ctx, doc.ID); err != nil {
-				c.logger.ErrorWithContext(ctx, err.Error(), map[string]any{
-					"set_uid":       scannedCaseResponse.UID,
-					"document_type": doc.Type,
-				})
+				c.logger.ErrorContext(ctx, err.Error(),
+					slog.String("set_uid", scannedCaseResponse.UID),
+					slog.String("document_type", doc.Type),
+				)
 			}
 
 			if !errors.As(err, &sirius.Error{}) {
-				c.logger.ErrorWithContext(ctx, err.Error(), map[string]any{
-					"set_uid":       scannedCaseResponse.UID,
-					"document_type": doc.Type,
-				})
+				c.logger.ErrorContext(ctx, err.Error(),
+					slog.String("set_uid", scannedCaseResponse.UID),
+					slog.String("document_type", doc.Type),
+				)
 			}
 
 			return err
 		}
 
 		if err := c.documentTracker.SetCompleted(ctx, doc.ID); err != nil {
-			c.logger.ErrorWithContext(ctx, err.Error(), map[string]any{
-				"set_uid":       scannedCaseResponse.UID,
-				"document_type": doc.Type,
-			})
+			c.logger.ErrorContext(ctx, err.Error(),
+				slog.String("set_uid", scannedCaseResponse.UID),
+				slog.String("document_type", doc.Type),
+			)
 		}
 
-		c.logger.InfoWithContext(ctx, "Document added for processing", map[string]any{
-			"set_uid":       scannedCaseResponse.UID,
-			"document_type": doc.Type,
-		})
+		c.logger.InfoContext(ctx, "Document added for processing",
+			slog.String("set_uid", scannedCaseResponse.UID),
+			slog.String("document_type", doc.Type),
+		)
 	}
 
-	c.logger.InfoWithContext(ctx, "No errors found!", nil)
+	c.logger.InfoContext(ctx, "No errors found!")
 	return nil
 }
