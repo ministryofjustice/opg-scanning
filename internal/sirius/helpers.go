@@ -1,34 +1,33 @@
-package api
+package sirius
 
 import (
 	"slices"
 	"time"
 
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
-	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 )
 
-func determineCaseRequest(set *types.BaseSet) (*sirius.ScannedCaseRequest, error) {
+func determineCaseRequest(set *types.BaseSet) (*ScannedCaseRequest, error) {
 	now := time.Now().Format(time.RFC3339)
 
 	for _, doc := range set.Body.Documents {
 		if slices.Contains(constants.CreateLPADocuments, doc.Type) {
-			return &sirius.ScannedCaseRequest{
+			return &ScannedCaseRequest{
 				BatchID:     set.Header.Schedule,
 				CaseType:    "lpa",
 				ReceiptDate: formatScannedDate(set.Header.ScanTime),
 				CreatedDate: now,
 			}, nil
 		} else if slices.Contains(constants.CreateEPADocuments, doc.Type) {
-			return &sirius.ScannedCaseRequest{
+			return &ScannedCaseRequest{
 				BatchID:     set.Header.Schedule,
 				CaseType:    "epa",
 				ReceiptDate: formatScannedDate(set.Header.ScanTime),
 				CreatedDate: now,
 			}, nil
 		} else if doc.Type == constants.DocumentTypeCOPORD && set.Header.CaseNo != "" {
-			return &sirius.ScannedCaseRequest{
+			return &ScannedCaseRequest{
 				CourtReference: set.Header.CaseNo,
 				BatchID:        set.Header.Schedule,
 				CaseType:       "order",

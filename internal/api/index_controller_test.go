@@ -18,7 +18,6 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
-	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
@@ -41,7 +40,8 @@ var xmlPayload = `
 
 func setupController(t *testing.T) *IndexController {
 	appConfig, _ := config.Read()
-	logger := logger.New(appConfig.App.Environment)
+
+	logger := slog.New(slog.DiscardHandler)
 
 	mockAuth := newMockAuth(t)
 
@@ -59,14 +59,14 @@ func setupController(t *testing.T) *IndexController {
 		Return("123", nil).
 		Maybe()
 
-	mockHttpClient := newMockSiriusClient(t)
-	mockHttpClient.EXPECT().
+	mockSiriusService := newMockSiriusService(t)
+	mockSiriusService.EXPECT().
 		CreateCaseStub(mock.Anything, mock.Anything).
 		Return(&sirius.ScannedCaseResponse{UID: "7000-1234-1234"}, nil).
 		Maybe()
-	mockHttpClient.EXPECT().
-		AttachDocument(mock.Anything, mock.Anything).
-		Return(&sirius.ScannedDocumentResponse{}, nil).
+	mockSiriusService.EXPECT().
+		AttachDocuments(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(&sirius.ScannedDocumentResponse{}, nil, nil).
 		Maybe()
 
 	documentTracker := newMockDocumentTracker(t)
@@ -87,7 +87,7 @@ func setupController(t *testing.T) *IndexController {
 		config:          appConfig,
 		logger:          logger,
 		validator:       ingestion.NewValidator(),
-		siriusClient:    mockHttpClient,
+		siriusService:   mockSiriusService,
 		auth:            mockAuth,
 		Queue:           ingestion.NewJobQueue(logger, appConfig),
 		documentTracker: documentTracker,
@@ -282,16 +282,16 @@ func TestIngestHandler_SiriusErrors(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			controller := setupController(t)
 
-			siriusClient := newMockSiriusClient(t)
-			siriusClient.EXPECT().
+			siriusService := newMockSiriusService(t)
+			siriusService.EXPECT().
 				CreateCaseStub(mock.Anything, mock.Anything).
-				Return(nil, tc.siriusError).
+				Return(&sirius.ScannedCaseResponse{UID: "700012341234"}, nil).
 				Maybe()
-			siriusClient.EXPECT().
-				AttachDocument(mock.Anything, mock.Anything).
-				Return(nil, tc.siriusError).
+			siriusService.EXPECT().
+				AttachDocuments(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				Return(nil, nil, tc.siriusError).
 				Maybe()
-			controller.siriusClient = siriusClient
+			controller.siriusService = siriusService
 
 			req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayloadCorrespondence)))
 			req.Header.Set("Content-Type", "application/xml")
@@ -331,16 +331,16 @@ func TestIngestHandler_DuplicateRequest(t *testing.T) {
 
 	errAlreadyProcessed := ingestion.AlreadyProcessedError{CaseNo: "xyz"}
 
-	siriusClient := newMockSiriusClient(t)
-	siriusClient.EXPECT().
+	siriusService := newMockSiriusService(t)
+	siriusService.EXPECT().
 		CreateCaseStub(mock.Anything, mock.Anything).
-		Return(nil, errAlreadyProcessed).
+		Return(&sirius.ScannedCaseResponse{UID: "7"}, nil).
 		Maybe()
-	siriusClient.EXPECT().
-		AttachDocument(mock.Anything, mock.Anything).
-		Return(nil, errAlreadyProcessed).
+	siriusService.EXPECT().
+		AttachDocuments(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, nil, errAlreadyProcessed).
 		Maybe()
-	controller.siriusClient = siriusClient
+	controller.siriusService = siriusService
 
 	req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayloadCorrespondence)))
 	req.Header.Set("Content-Type", "application/xml")

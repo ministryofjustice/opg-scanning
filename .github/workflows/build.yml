@@ -97,7 +97,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Publish pacts
         run: |
-          docker run --rm -v $(pwd)/internal/api/pacts:/tmp/pacts pactfoundation/pact-cli:latest \
+          docker run --rm -v $(pwd)/internal/sirius/pacts:/tmp/pacts pactfoundation/pact-cli:latest \
             pact-broker publish /tmp/pacts \
             --consumer-app-version ${{ steps.get_commit.outputs.COMMIT }} \
             --branch ${{ needs.branch_name.outputs.branch_name }} \

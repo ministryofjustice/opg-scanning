@@ -26,11 +26,7 @@ func (c *IndexController) processQueue(ctx context.Context, scannedCaseResponse 
 
 		// Here we use AddToQueueSequentially to ensure that the documents are processed in order.
 		err := c.Queue.AddToQueueSequentially(ctx, c.config, doc, "xml", func(ctx context.Context, processedDoc any, originalDoc *types.BaseDocument) error {
-			// Create a new service instance for attaching documents.
-			service := newService(c.siriusClient, parsedBaseXml)
-			service.originalDoc = originalDoc
-
-			attchResp, decodedXML, docErr := service.AttachDocuments(ctx, scannedCaseResponse)
+			attchResp, decodedXML, docErr := c.siriusService.AttachDocuments(ctx, parsedBaseXml, originalDoc, scannedCaseResponse)
 			if docErr != nil {
 				return fmt.Errorf("failed to attach document: %w", docErr)
 			}
