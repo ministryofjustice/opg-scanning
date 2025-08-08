@@ -18,4 +18,4 @@ env/
 .cache
 .trivy-cache
 test-results
-internal/api/pacts
+internal/sirius/pacts

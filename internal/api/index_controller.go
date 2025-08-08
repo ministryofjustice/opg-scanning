@@ -45,11 +45,16 @@ type documentTracker interface {
 	SetFailed(ctx context.Context, id string) error
 }
 
+type siriusService interface {
+	AttachDocuments(ctx context.Context, set *types.BaseSet, originalDoc *types.BaseDocument, caseResponse *sirius.ScannedCaseResponse) (*sirius.ScannedDocumentResponse, []byte, error)
+	CreateCaseStub(ctx context.Context, set *types.BaseSet) (*sirius.ScannedCaseResponse, error)
+}
+
 type IndexController struct {
 	config          *config.Config
 	logger          *slog.Logger
 	validator       *ingestion.Validator
-	siriusClient    SiriusClient
+	siriusService   siriusService
 	auth            Auth
 	Queue           *ingestion.JobQueue
 	AwsClient       AwsClient
@@ -74,7 +79,7 @@ func NewIndexController(logger *slog.Logger, awsClient aws.AwsClientInterface, a
 		config:          appConfig,
 		logger:          logger,
 		validator:       ingestion.NewValidator(),
-		siriusClient:    sirius.NewClient(appConfig),
+		siriusService:   sirius.NewService(appConfig),
 		auth:            auth.New(appConfig, logger, awsClient),
 		Queue:           ingestion.NewJobQueue(logger, appConfig),
 		documentTracker: ingestion.NewDocumentTracker(dynamoClient, appConfig.Aws.DocumentsTable),
@@ -181,11 +186,10 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	service := newService(c.siriusClient, parsedBaseXml)
 	ctx, cancel := context.WithTimeout(r.Context(), c.config.HTTP.Timeout)
 	ctxWithToken := context.WithValue(ctx, constants.TokenContextKey, reqCtx.Value(constants.TokenContextKey))
 	defer cancel()
-	scannedCaseResponse, err := service.CreateCaseStub(ctxWithToken)
+	scannedCaseResponse, err := c.siriusService.CreateCaseStub(ctxWithToken, parsedBaseXml)
 	if err != nil {
 		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Failed to create case stub in Sirius", err)
 		return
