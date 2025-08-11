@@ -4,18 +4,27 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"slices"
 )
 
-type requestCtx struct{}
+type logAttrKey struct{}
+
+func ContextWithAttrs(ctx context.Context, attrs ...slog.Attr) context.Context {
+	if v := attrsFromContext(ctx); len(attrs) > 0 {
+		return context.WithValue(ctx, logAttrKey{}, slices.Concat(v, attrs))
+	}
+
+	return context.WithValue(ctx, logAttrKey{}, attrs)
+}
 
 func contextWithRequest(ctx context.Context, r *http.Request) context.Context {
-	return context.WithValue(ctx, requestCtx{}, slog.Group("request",
+	return ContextWithAttrs(ctx, slog.Group("request",
 		slog.String("method", r.Method),
 		slog.String("path", r.URL.String()),
 	))
 }
 
-func requestFromContext(ctx context.Context) slog.Attr {
-	val, _ := ctx.Value(requestCtx{}).(slog.Attr)
-	return val
+func attrsFromContext(ctx context.Context) []slog.Attr {
+	v, _ := ctx.Value(logAttrKey{}).([]slog.Attr)
+	return v
 }

@@ -25,8 +25,8 @@ func (h *slogHandler) Handle(ctx context.Context, record slog.Record) error {
 		record.AddAttrs(slog.String("trace_id", spanCtx.TraceID().String()))
 	}
 
-	if group := requestFromContext(ctx); group.Key != "" {
-		record.AddAttrs(group)
+	if attrs := attrsFromContext(ctx); len(attrs) > 0 {
+		record.AddAttrs(attrs...)
 	}
 
 	return h.handler.Handle(ctx, record)

@@ -13,6 +13,7 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/factory"
+	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 )
@@ -59,39 +60,33 @@ func (q *Worker) Process(ctx context.Context, scannedCaseResponse *sirius.Scanne
 	for i := range set.Body.Documents {
 		doc := &set.Body.Documents[i]
 
+		ctx := logger.ContextWithAttrs(ctx,
+			slog.String("set_uid", scannedCaseResponse.UID),
+			slog.String("document_id", doc.ID),
+			slog.String("document_type", doc.Type),
+		)
+
 		if err := q.documentTracker.SetProcessing(ctx, doc.ID, scannedCaseResponse.UID); err != nil {
 			return fmt.Errorf("failed to set document to processing '%s': %w", doc.ID, err)
 		}
 
 		if err := q.processDocument(ctx, set, doc, scannedCaseResponse); err != nil {
 			if err := q.documentTracker.SetFailed(ctx, doc.ID); err != nil {
-				q.logger.ErrorContext(ctx, err.Error(),
-					slog.String("set_uid", scannedCaseResponse.UID),
-					slog.String("document_type", doc.Type),
-				)
+				q.logger.ErrorContext(ctx, err.Error())
 			}
 
 			if !errors.As(err, &sirius.Error{}) {
-				q.logger.ErrorContext(ctx, err.Error(),
-					slog.String("set_uid", scannedCaseResponse.UID),
-					slog.String("document_type", doc.Type),
-				)
+				q.logger.ErrorContext(ctx, err.Error())
 			}
 
 			return err
 		}
 
 		if err := q.documentTracker.SetCompleted(ctx, doc.ID); err != nil {
-			q.logger.ErrorContext(ctx, err.Error(),
-				slog.String("set_uid", scannedCaseResponse.UID),
-				slog.String("document_type", doc.Type),
-			)
+			q.logger.ErrorContext(ctx, err.Error())
 		}
 
-		q.logger.InfoContext(ctx, "Document added for processing",
-			slog.String("set_uid", scannedCaseResponse.UID),
-			slog.String("document_type", doc.Type),
-		)
+		q.logger.InfoContext(ctx, "Document added for processing")
 	}
 
 	q.logger.InfoContext(ctx, "No errors found!")
@@ -132,10 +127,8 @@ func (q *Worker) processDocument(ctx context.Context, set *types.BaseSet, docume
 	// If not a Sirius extraction document, skip external job processing.
 	if !slices.Contains(constants.SiriusExtractionDocuments, document.Type) {
 		q.logger.InfoContext(ctx, "Skipping external job processing, checks completed for document",
-			slog.String("set_uid", scannedCaseResponse.UID),
 			slog.String("pdf_uuid", attchResp.UUID),
 			slog.String("filename", fileName),
-			slog.String("document_type", document.Type),
 		)
 		return nil
 	}
@@ -146,19 +139,15 @@ func (q *Worker) processDocument(ctx context.Context, set *types.BaseSet, docume
 	messageID, err := q.awsClient.QueueSetForProcessing(ctx, scannedCaseResponse, fileName)
 	if err != nil {
 		q.logger.ErrorContext(ctx, "Failed to queue document for processing",
-			slog.String("set_uid", scannedCaseResponse.UID),
-			slog.String("document_type", document.Type),
 			slog.String("error", err.Error()),
 		)
 		return err
 	}
 
 	q.logger.InfoContext(ctx, "Job processing completed for document",
-		slog.String("set_uid", scannedCaseResponse.UID),
 		slog.String("pdf_uuid", attchResp.UUID),
 		slog.String("job_queue_id", messageID),
 		slog.String("filename", fileName),
-		slog.String("document_type", document.Type),
 	)
 
 	return nil
