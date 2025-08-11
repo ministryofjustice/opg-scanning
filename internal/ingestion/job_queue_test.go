@@ -51,7 +51,7 @@ func TestJobQueuePersist_IncludesXMLDeclaration(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-	jobQueue := &JobQueue{
+	jobQueue := &Worker{
 		awsClient: mockAws,
 	}
 

@@ -38,30 +38,23 @@ type AwsClient interface {
 	QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (string, error)
 }
 
-type documentTracker interface {
-	SetProcessing(ctx context.Context, id, caseNo string) error
-	SetCompleted(ctx context.Context, id string) error
-	SetFailed(ctx context.Context, id string) error
-}
-
 type siriusService interface {
 	AttachDocuments(ctx context.Context, set *types.BaseSet, originalDoc *types.BaseDocument, caseResponse *sirius.ScannedCaseResponse) (*sirius.ScannedDocumentResponse, []byte, error)
 	CreateCaseStub(ctx context.Context, set *types.BaseSet) (*sirius.ScannedCaseResponse, error)
 }
 
 type jobQueue interface {
-	AddToQueueSequentially(ctx context.Context, cfg *config.Config, data *types.BaseDocument, parsedBaseXml *types.BaseSet, scannedCaseResponse *sirius.ScannedCaseResponse) error
+	Process(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, parsedBaseXml *types.BaseSet) error
 }
 
 type IndexController struct {
-	config          *config.Config
-	logger          *slog.Logger
-	validator       *ingestion.Validator
-	siriusService   siriusService
-	auth            Auth
-	Queue           jobQueue
-	AwsClient       AwsClient
-	documentTracker documentTracker
+	config        *config.Config
+	logger        *slog.Logger
+	validator     *ingestion.Validator
+	siriusService siriusService
+	auth          Auth
+	Queue         jobQueue
+	AwsClient     AwsClient
 }
 
 type response struct {
@@ -81,14 +74,13 @@ func NewIndexController(logger *slog.Logger, awsClient aws.AwsClientInterface, a
 	siriusService := sirius.NewService(appConfig)
 
 	return &IndexController{
-		config:          appConfig,
-		logger:          logger,
-		validator:       ingestion.NewValidator(),
-		siriusService:   siriusService,
-		auth:            auth.New(appConfig, logger, awsClient),
-		Queue:           ingestion.NewJobQueue(logger, siriusService, awsClient),
-		documentTracker: ingestion.NewDocumentTracker(dynamoClient, appConfig.Aws.DocumentsTable),
-		AwsClient:       awsClient,
+		config:        appConfig,
+		logger:        logger,
+		validator:     ingestion.NewValidator(),
+		siriusService: siriusService,
+		auth:          auth.New(appConfig, logger, awsClient),
+		Queue:         ingestion.NewWorker(logger, appConfig, siriusService, awsClient, dynamoClient),
+		AwsClient:     awsClient,
 	}
 }
 
@@ -210,8 +202,7 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 	uid := scannedCaseResponse.UID
 	statusCode := http.StatusAccepted
 
-	// Processing queue
-	if err := c.processQueue(reqCtx, scannedCaseResponse, parsedBaseXml); err != nil {
+	if err := c.Queue.Process(context.WithoutCancel(reqCtx), scannedCaseResponse, parsedBaseXml); err != nil {
 		var aperr ingestion.AlreadyProcessedError
 		if errors.As(err, &aperr) {
 			uid = aperr.CaseNo

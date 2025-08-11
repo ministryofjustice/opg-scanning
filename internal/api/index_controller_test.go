@@ -64,32 +64,21 @@ func setupController(t *testing.T) *IndexController {
 		Return(&sirius.ScannedDocumentResponse{}, nil, nil).
 		Maybe()
 
-	documentTracker := newMockDocumentTracker(t)
-	documentTracker.EXPECT().
-		SetProcessing(mock.Anything, mock.Anything, mock.Anything).
-		Return(nil).
-		Maybe()
-	documentTracker.EXPECT().
-		SetCompleted(mock.Anything, mock.Anything).
-		Return(nil).
-		Maybe()
-	documentTracker.EXPECT().
-		SetFailed(mock.Anything, mock.Anything).
+	jobQueue := newMockJobQueue(t)
+	jobQueue.EXPECT().
+		Process(mock.Anything, mock.Anything, mock.Anything).
 		Return(nil).
 		Maybe()
 
-	controller := &IndexController{
-		config:          appConfig,
-		logger:          logger,
-		validator:       ingestion.NewValidator(),
-		siriusService:   mockSiriusService,
-		auth:            mockAuth,
-		Queue:           ingestion.NewJobQueue(logger, mockSiriusService, awsClient),
-		documentTracker: documentTracker,
-		AwsClient:       awsClient,
+	return &IndexController{
+		config:        appConfig,
+		logger:        logger,
+		validator:     ingestion.NewValidator(),
+		siriusService: mockSiriusService,
+		auth:          mockAuth,
+		Queue:         jobQueue,
+		AwsClient:     awsClient,
 	}
-
-	return controller
 }
 
 func TestIngestHandler_SetValid(t *testing.T) {
@@ -279,7 +268,7 @@ func TestIngestHandler_SiriusErrors(t *testing.T) {
 
 			jobQueue := newMockJobQueue(t)
 			jobQueue.EXPECT().
-				AddToQueueSequentially(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				Process(mock.Anything, mock.Anything, mock.Anything).
 				Return(tc.siriusError)
 			controller.Queue = jobQueue
 
@@ -323,7 +312,7 @@ func TestIngestHandler_DuplicateRequest(t *testing.T) {
 
 	jobQueue := newMockJobQueue(t)
 	jobQueue.EXPECT().
-		AddToQueueSequentially(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Process(mock.Anything, mock.Anything, mock.Anything).
 		Return(errAlreadyProcessed)
 	controller.Queue = jobQueue
 
