@@ -26,7 +26,7 @@ var xmlPayload = `
 </Set>
 `
 
-func TestJobQueuePersist_IncludesXMLDeclaration(t *testing.T) {
+func TestWorkerPersist_IncludesXMLDeclaration(t *testing.T) {
 	var setPayload types.BaseSet
 	err := xml.Unmarshal([]byte(xmlPayload), &setPayload)
 	require.NoError(t, err, "failed to unmarshal xmlPayload")
@@ -51,11 +51,11 @@ func TestJobQueuePersist_IncludesXMLDeclaration(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-	jobQueue := &Worker{
+	worker := &Worker{
 		awsClient: mockAws,
 	}
 
-	fileName, err := jobQueue.persist(context.Background(), decodedXML, originalDoc)
+	fileName, err := worker.persist(context.Background(), decodedXML, originalDoc)
 	require.NoError(t, err)
 	require.Equal(t, "testFileName", fileName)
 

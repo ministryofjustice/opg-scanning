@@ -43,7 +43,7 @@ type siriusService interface {
 	CreateCaseStub(ctx context.Context, set *types.BaseSet) (*sirius.ScannedCaseResponse, error)
 }
 
-type jobQueue interface {
+type worker interface {
 	Process(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, parsedBaseXml *types.BaseSet) error
 }
 
@@ -53,8 +53,8 @@ type IndexController struct {
 	validator     *ingestion.Validator
 	siriusService siriusService
 	auth          Auth
-	Queue         jobQueue
-	AwsClient     AwsClient
+	worker        worker
+	awsClient     AwsClient
 }
 
 type response struct {
@@ -79,8 +79,8 @@ func NewIndexController(logger *slog.Logger, awsClient aws.AwsClientInterface, a
 		validator:     ingestion.NewValidator(),
 		siriusService: siriusService,
 		auth:          auth.New(appConfig, logger, awsClient),
-		Queue:         ingestion.NewWorker(logger, appConfig, siriusService, awsClient, dynamoClient),
-		AwsClient:     awsClient,
+		worker:        ingestion.NewWorker(logger, appConfig, siriusService, awsClient, dynamoClient),
+		awsClient:     awsClient,
 	}
 }
 
@@ -163,7 +163,7 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Save Set to S3
-	filename, err := c.AwsClient.PersistSetData(reqCtx, []byte(bodyStr))
+	filename, err := c.awsClient.PersistSetData(reqCtx, []byte(bodyStr))
 	if err != nil {
 		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Could not persist set to S3", err)
 		return
@@ -202,7 +202,7 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 	uid := scannedCaseResponse.UID
 	statusCode := http.StatusAccepted
 
-	if err := c.Queue.Process(context.WithoutCancel(reqCtx), scannedCaseResponse, parsedBaseXml); err != nil {
+	if err := c.worker.Process(context.WithoutCancel(reqCtx), scannedCaseResponse, parsedBaseXml); err != nil {
 		var aperr ingestion.AlreadyProcessedError
 		if errors.As(err, &aperr) {
 			uid = aperr.CaseNo

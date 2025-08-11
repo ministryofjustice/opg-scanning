@@ -76,8 +76,8 @@ func setupController(t *testing.T) *IndexController {
 		validator:     ingestion.NewValidator(),
 		siriusService: mockSiriusService,
 		auth:          mockAuth,
-		Queue:         jobQueue,
-		AwsClient:     awsClient,
+		worker:        jobQueue,
+		awsClient:     awsClient,
 	}
 }
 
@@ -270,7 +270,7 @@ func TestIngestHandler_SiriusErrors(t *testing.T) {
 			jobQueue.EXPECT().
 				Process(mock.Anything, mock.Anything, mock.Anything).
 				Return(tc.siriusError)
-			controller.Queue = jobQueue
+			controller.worker = jobQueue
 
 			req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayloadCorrespondence)))
 			req.Header.Set("Content-Type", "application/xml")
@@ -314,7 +314,7 @@ func TestIngestHandler_DuplicateRequest(t *testing.T) {
 	jobQueue.EXPECT().
 		Process(mock.Anything, mock.Anything, mock.Anything).
 		Return(errAlreadyProcessed)
-	controller.Queue = jobQueue
+	controller.worker = jobQueue
 
 	req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayloadCorrespondence)))
 	req.Header.Set("Content-Type", "application/xml")
