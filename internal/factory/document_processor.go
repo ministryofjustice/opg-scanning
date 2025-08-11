@@ -17,7 +17,7 @@ type DocumentProcessor struct {
 }
 
 // Initializes a new DocumentProcessor.
-func NewDocumentProcessor(data *types.BaseDocument, docType, format string, registry registryInterface, logger *slog.Logger) (*DocumentProcessor, error) {
+func NewDocumentProcessor(data *types.BaseDocument, docType string, registry registryInterface, logger *slog.Logger) (*DocumentProcessor, error) {
 	// Decode the embedded XML
 	embeddedXML, err := util.DecodeEmbeddedXML(data.EmbeddedXML)
 	if err != nil {

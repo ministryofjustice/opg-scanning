@@ -162,7 +162,7 @@ type mockSiriusClient_AttachDocument_Call struct {
 
 // AttachDocument is a helper method to define mock.On call
 //   - ctx context.Context
-//   - data *ScannedDocumentRequest
+//   - data *scannedDocumentRequest
 func (_e *mockSiriusClient_Expecter) AttachDocument(ctx interface{}, data interface{}) *mockSiriusClient_AttachDocument_Call {
 	return &mockSiriusClient_AttachDocument_Call{Call: _e.mock.On("AttachDocument", ctx, data)}
 }
@@ -230,7 +230,7 @@ type mockSiriusClient_CreateCaseStub_Call struct {
 
 // CreateCaseStub is a helper method to define mock.On call
 //   - ctx context.Context
-//   - data *ScannedCaseRequest
+//   - data *scannedCaseRequest
 func (_e *mockSiriusClient_Expecter) CreateCaseStub(ctx interface{}, data interface{}) *mockSiriusClient_CreateCaseStub_Call {
 	return &mockSiriusClient_CreateCaseStub_Call{Call: _e.mock.On("CreateCaseStub", ctx, data)}
 }

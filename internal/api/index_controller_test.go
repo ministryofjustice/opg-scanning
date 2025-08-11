@@ -5,25 +5,20 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"encoding/xml"
 	"errors"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"testing"
 
-	"github.com/ministryofjustice/opg-scanning/internal/aws"
 	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
 	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 var xmlPayload = `
@@ -62,7 +57,7 @@ func setupController(t *testing.T) *IndexController {
 	mockSiriusService := newMockSiriusService(t)
 	mockSiriusService.EXPECT().
 		CreateCaseStub(mock.Anything, mock.Anything).
-		Return(&sirius.ScannedCaseResponse{UID: "7000-1234-1234"}, nil).
+		Return(&sirius.ScannedCaseResponse{UID: "700012341234"}, nil).
 		Maybe()
 	mockSiriusService.EXPECT().
 		AttachDocuments(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
@@ -89,7 +84,7 @@ func setupController(t *testing.T) *IndexController {
 		validator:       ingestion.NewValidator(),
 		siriusService:   mockSiriusService,
 		auth:            mockAuth,
-		Queue:           ingestion.NewJobQueue(logger, appConfig),
+		Queue:           ingestion.NewJobQueue(logger, mockSiriusService, awsClient),
 		documentTracker: documentTracker,
 		AwsClient:       awsClient,
 	}
@@ -282,16 +277,11 @@ func TestIngestHandler_SiriusErrors(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			controller := setupController(t)
 
-			siriusService := newMockSiriusService(t)
-			siriusService.EXPECT().
-				CreateCaseStub(mock.Anything, mock.Anything).
-				Return(&sirius.ScannedCaseResponse{UID: "700012341234"}, nil).
-				Maybe()
-			siriusService.EXPECT().
-				AttachDocuments(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-				Return(nil, nil, tc.siriusError).
-				Maybe()
-			controller.siriusService = siriusService
+			jobQueue := newMockJobQueue(t)
+			jobQueue.EXPECT().
+				AddToQueueSequentially(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				Return(tc.siriusError)
+			controller.Queue = jobQueue
 
 			req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayloadCorrespondence)))
 			req.Header.Set("Content-Type", "application/xml")
@@ -331,16 +321,11 @@ func TestIngestHandler_DuplicateRequest(t *testing.T) {
 
 	errAlreadyProcessed := ingestion.AlreadyProcessedError{CaseNo: "xyz"}
 
-	siriusService := newMockSiriusService(t)
-	siriusService.EXPECT().
-		CreateCaseStub(mock.Anything, mock.Anything).
-		Return(&sirius.ScannedCaseResponse{UID: "7"}, nil).
-		Maybe()
-	siriusService.EXPECT().
-		AttachDocuments(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(nil, nil, errAlreadyProcessed).
-		Maybe()
-	controller.siriusService = siriusService
+	jobQueue := newMockJobQueue(t)
+	jobQueue.EXPECT().
+		AddToQueueSequentially(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(errAlreadyProcessed)
+	controller.Queue = jobQueue
 
 	req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayloadCorrespondence)))
 	req.Header.Set("Content-Type", "application/xml")
@@ -363,48 +348,7 @@ func TestIngestHandler_DuplicateRequest(t *testing.T) {
 	assert.Equal(t, "Document has already been processed", responseObj.Data.Message)
 }
 
-func TestProcessAndPersist_IncludesXMLDeclaration(t *testing.T) {
-	controller := setupController(t)
-
-	var setPayload types.BaseSet
-	err := xml.Unmarshal([]byte(xmlPayload), &setPayload)
-	require.NoError(t, err, "failed to unmarshal xmlPayload")
-	// Decode the embedded XML
-	decodedXML, err := util.DecodeEmbeddedXML(setPayload.Body.Documents[0].EmbeddedXML)
-	require.NoError(t, err, "failed to decode embedded XML")
-
-	originalDoc := &types.BaseDocument{
-		Type: "LP1F",
-	}
-
-	var capturedXML []byte
-
-	mockAws := new(aws.MockAwsClient)
-	controller.AwsClient = mockAws
-
-	// Set expectation on PersistFormData.
-	mockAws.
-		On("PersistFormData", mock.Anything, mock.AnythingOfType("*bytes.Reader"), mock.Anything).
-		Return("testFileName", nil).
-		Run(func(args mock.Arguments) {
-			bodyReader := args.Get(1).(io.Reader)
-			var err error
-			capturedXML, err = io.ReadAll(bodyReader)
-			require.NoError(t, err)
-		})
-	fileName, err := controller.processAndPersist(context.Background(), decodedXML, originalDoc)
-	require.NoError(t, err)
-	require.Equal(t, "testFileName", fileName)
-
-	// Verify that the captured XML starts with the XML declaration.
-	expectedHeader := regexp.MustCompile(`^<\?xml\s+version="1\.0"(?:\s+encoding="UTF-8")?.*\?>\n?`)
-	if !expectedHeader.Match(capturedXML) {
-		t.Errorf("expected XML header to match regex %q, got: %s", expectedHeader.String(), string(capturedXML))
-	}
-}
-
 func TestValidateDocumentWarnsOnUnsupportedDocumentType(t *testing.T) {
-
 	c := setupController(t)
 
 	document := types.BaseDocument{

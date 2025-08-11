@@ -1,7 +1,6 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -50,13 +49,17 @@ type siriusService interface {
 	CreateCaseStub(ctx context.Context, set *types.BaseSet) (*sirius.ScannedCaseResponse, error)
 }
 
+type jobQueue interface {
+	AddToQueueSequentially(ctx context.Context, cfg *config.Config, data *types.BaseDocument, parsedBaseXml *types.BaseSet, scannedCaseResponse *sirius.ScannedCaseResponse) error
+}
+
 type IndexController struct {
 	config          *config.Config
 	logger          *slog.Logger
 	validator       *ingestion.Validator
 	siriusService   siriusService
 	auth            Auth
-	Queue           *ingestion.JobQueue
+	Queue           jobQueue
 	AwsClient       AwsClient
 	documentTracker documentTracker
 }
@@ -75,13 +78,15 @@ type responseData struct {
 var uidReplacementRegex = regexp.MustCompile(`^7[0-9]{3}-[0-9]{4}-[0-9]{4}$`)
 
 func NewIndexController(logger *slog.Logger, awsClient aws.AwsClientInterface, appConfig *config.Config, dynamoClient *dynamodb.Client) *IndexController {
+	siriusService := sirius.NewService(appConfig)
+
 	return &IndexController{
 		config:          appConfig,
 		logger:          logger,
 		validator:       ingestion.NewValidator(),
-		siriusService:   sirius.NewService(appConfig),
+		siriusService:   siriusService,
 		auth:            auth.New(appConfig, logger, awsClient),
-		Queue:           ingestion.NewJobQueue(logger, appConfig),
+		Queue:           ingestion.NewJobQueue(logger, siriusService, awsClient),
 		documentTracker: ingestion.NewDocumentTracker(dynamoClient, appConfig.Aws.DocumentsTable),
 		AwsClient:       awsClient,
 	}
@@ -386,13 +391,4 @@ func (c *IndexController) validateDocument(document types.BaseDocument) error {
 	}
 
 	return nil
-}
-
-func (c *IndexController) processAndPersist(ctx context.Context, decodedXML []byte, originalDoc *types.BaseDocument) (string, error) {
-	xmlReader := bytes.NewReader(decodedXML)
-	fileName, awsErr := c.AwsClient.PersistFormData(ctx, xmlReader, originalDoc.Type)
-	if awsErr != nil {
-		return "", awsErr
-	}
-	return fileName, nil
 }
