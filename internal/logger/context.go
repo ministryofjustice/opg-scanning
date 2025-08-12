@@ -4,33 +4,27 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
-
-	"go.opentelemetry.io/otel/trace"
+	"slices"
 )
 
-type requestCtx struct{}
+type logAttrKey struct{}
 
-// NewContextFromOld creates a new context.Background with the trace span and
-// request values to be logged from oldCtx.
-func NewContextFromOld(oldCtx context.Context) context.Context {
-	newCtx := context.Background()
-
-	if group := requestFromContext(oldCtx); group.Key != "" {
-		newCtx = context.WithValue(newCtx, requestCtx{}, group)
+func ContextWithAttrs(ctx context.Context, attrs ...slog.Attr) context.Context {
+	if v := attrsFromContext(ctx); len(attrs) > 0 {
+		return context.WithValue(ctx, logAttrKey{}, slices.Concat(v, attrs))
 	}
 
-	span := trace.SpanFromContext(oldCtx)
-	return trace.ContextWithSpan(newCtx, span)
+	return context.WithValue(ctx, logAttrKey{}, attrs)
 }
 
 func contextWithRequest(ctx context.Context, r *http.Request) context.Context {
-	return context.WithValue(ctx, requestCtx{}, slog.Group("request",
+	return ContextWithAttrs(ctx, slog.Group("request",
 		slog.String("method", r.Method),
 		slog.String("path", r.URL.String()),
 	))
 }
 
-func requestFromContext(ctx context.Context) slog.Attr {
-	val, _ := ctx.Value(requestCtx{}).(slog.Attr)
-	return val
+func attrsFromContext(ctx context.Context) []slog.Attr {
+	v, _ := ctx.Value(logAttrKey{}).([]slog.Attr)
+	return v
 }

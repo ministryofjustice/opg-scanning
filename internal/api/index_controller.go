@@ -1,7 +1,6 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -39,26 +38,23 @@ type AwsClient interface {
 	QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (string, error)
 }
 
-type documentTracker interface {
-	SetProcessing(ctx context.Context, id, caseNo string) error
-	SetCompleted(ctx context.Context, id string) error
-	SetFailed(ctx context.Context, id string) error
-}
-
 type siriusService interface {
 	AttachDocuments(ctx context.Context, set *types.BaseSet, originalDoc *types.BaseDocument, caseResponse *sirius.ScannedCaseResponse) (*sirius.ScannedDocumentResponse, []byte, error)
 	CreateCaseStub(ctx context.Context, set *types.BaseSet) (*sirius.ScannedCaseResponse, error)
 }
 
+type worker interface {
+	Process(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, parsedBaseXml *types.BaseSet) error
+}
+
 type IndexController struct {
-	config          *config.Config
-	logger          *slog.Logger
-	validator       *ingestion.Validator
-	siriusService   siriusService
-	auth            Auth
-	Queue           *ingestion.JobQueue
-	AwsClient       AwsClient
-	documentTracker documentTracker
+	config        *config.Config
+	logger        *slog.Logger
+	validator     *ingestion.Validator
+	siriusService siriusService
+	auth          Auth
+	worker        worker
+	awsClient     AwsClient
 }
 
 type response struct {
@@ -75,15 +71,16 @@ type responseData struct {
 var uidReplacementRegex = regexp.MustCompile(`^7[0-9]{3}-[0-9]{4}-[0-9]{4}$`)
 
 func NewIndexController(logger *slog.Logger, awsClient aws.AwsClientInterface, appConfig *config.Config, dynamoClient *dynamodb.Client) *IndexController {
+	siriusService := sirius.NewService(appConfig)
+
 	return &IndexController{
-		config:          appConfig,
-		logger:          logger,
-		validator:       ingestion.NewValidator(),
-		siriusService:   sirius.NewService(appConfig),
-		auth:            auth.New(appConfig, logger, awsClient),
-		Queue:           ingestion.NewJobQueue(logger, appConfig),
-		documentTracker: ingestion.NewDocumentTracker(dynamoClient, appConfig.Aws.DocumentsTable),
-		AwsClient:       awsClient,
+		config:        appConfig,
+		logger:        logger,
+		validator:     ingestion.NewValidator(),
+		siriusService: siriusService,
+		auth:          auth.New(appConfig, logger, awsClient),
+		worker:        ingestion.NewWorker(logger, appConfig, siriusService, awsClient, dynamoClient),
+		awsClient:     awsClient,
 	}
 }
 
@@ -166,7 +163,7 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Save Set to S3
-	filename, err := c.AwsClient.PersistSetData(reqCtx, []byte(bodyStr))
+	filename, err := c.awsClient.PersistSetData(reqCtx, []byte(bodyStr))
 	if err != nil {
 		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Could not persist set to S3", err)
 		return
@@ -205,8 +202,7 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 	uid := scannedCaseResponse.UID
 	statusCode := http.StatusAccepted
 
-	// Processing queue
-	if err := c.processQueue(reqCtx, scannedCaseResponse, parsedBaseXml); err != nil {
+	if err := c.worker.Process(context.WithoutCancel(reqCtx), scannedCaseResponse, parsedBaseXml); err != nil {
 		var aperr ingestion.AlreadyProcessedError
 		if errors.As(err, &aperr) {
 			uid = aperr.CaseNo
@@ -386,13 +382,4 @@ func (c *IndexController) validateDocument(document types.BaseDocument) error {
 	}
 
 	return nil
-}
-
-func (c *IndexController) processAndPersist(ctx context.Context, decodedXML []byte, originalDoc *types.BaseDocument) (string, error) {
-	xmlReader := bytes.NewReader(decodedXML)
-	fileName, awsErr := c.AwsClient.PersistFormData(ctx, xmlReader, originalDoc.Type)
-	if awsErr != nil {
-		return "", awsErr
-	}
-	return fileName, nil
 }
