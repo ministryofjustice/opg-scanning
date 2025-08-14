@@ -54,30 +54,19 @@ func setupController(t *testing.T) *IndexController {
 		Return("123", nil).
 		Maybe()
 
-	mockSiriusService := newMockSiriusService(t)
-	mockSiriusService.EXPECT().
-		CreateCaseStub(mock.Anything, mock.Anything).
+	worker := newMockWorker(t)
+	worker.EXPECT().
+		Process(mock.Anything, mock.Anything).
 		Return(&sirius.ScannedCaseResponse{UID: "700012341234"}, nil).
-		Maybe()
-	mockSiriusService.EXPECT().
-		AttachDocuments(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(&sirius.ScannedDocumentResponse{}, nil, nil).
-		Maybe()
-
-	jobQueue := newMockJobQueue(t)
-	jobQueue.EXPECT().
-		Process(mock.Anything, mock.Anything, mock.Anything).
-		Return(nil).
 		Maybe()
 
 	return &IndexController{
-		config:        appConfig,
-		logger:        logger,
-		validator:     ingestion.NewValidator(),
-		siriusService: mockSiriusService,
-		auth:          mockAuth,
-		worker:        jobQueue,
-		awsClient:     awsClient,
+		config:    appConfig,
+		logger:    logger,
+		validator: ingestion.NewValidator(),
+		auth:      mockAuth,
+		worker:    worker,
+		awsClient: awsClient,
 	}
 }
 
@@ -266,11 +255,11 @@ func TestIngestHandler_SiriusErrors(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			controller := setupController(t)
 
-			jobQueue := newMockJobQueue(t)
-			jobQueue.EXPECT().
-				Process(mock.Anything, mock.Anything, mock.Anything).
-				Return(tc.siriusError)
-			controller.worker = jobQueue
+			worker := newMockWorker(t)
+			worker.EXPECT().
+				Process(mock.Anything, mock.Anything).
+				Return(&sirius.ScannedCaseResponse{UID: "700012341234"}, tc.siriusError)
+			controller.worker = worker
 
 			req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayloadCorrespondence)))
 			req.Header.Set("Content-Type", "application/xml")
@@ -310,11 +299,11 @@ func TestIngestHandler_DuplicateRequest(t *testing.T) {
 
 	errAlreadyProcessed := ingestion.AlreadyProcessedError{CaseNo: "xyz"}
 
-	jobQueue := newMockJobQueue(t)
-	jobQueue.EXPECT().
-		Process(mock.Anything, mock.Anything, mock.Anything).
-		Return(errAlreadyProcessed)
-	controller.worker = jobQueue
+	worker := newMockWorker(t)
+	worker.EXPECT().
+		Process(mock.Anything, mock.Anything).
+		Return(nil, errAlreadyProcessed)
+	controller.worker = worker
 
 	req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayloadCorrespondence)))
 	req.Header.Set("Content-Type", "application/xml")

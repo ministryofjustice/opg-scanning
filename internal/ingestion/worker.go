@@ -18,6 +18,14 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 )
 
+type FailedToCreateCaseStubError struct {
+	Err error
+}
+
+func (e FailedToCreateCaseStubError) Error() string { return e.Err.Error() }
+
+var ErrScannedCaseResponseUIDMissing = errors.New("scannedCaseResponse UID missing")
+
 type documentTracker interface {
 	SetProcessing(ctx context.Context, id, caseNo string) error
 	SetCompleted(ctx context.Context, id string) error
@@ -53,7 +61,12 @@ func NewWorker(logger *slog.Logger, config *config.Config, siriusService SiriusS
 	}
 }
 
-func (q *Worker) Process(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, set *types.BaseSet) error {
+func (q *Worker) Process(ctx context.Context, set *types.BaseSet) (*sirius.ScannedCaseResponse, error) {
+	scannedCaseResponse, err := q.createCaseStub(ctx, set)
+	if err != nil {
+		return scannedCaseResponse, err
+	}
+
 	q.logger.InfoContext(ctx, "Queueing documents for processing", slog.Any("Header", set.Header))
 
 	// Iterate over each document in the parsed set.
@@ -67,7 +80,7 @@ func (q *Worker) Process(ctx context.Context, scannedCaseResponse *sirius.Scanne
 		)
 
 		if err := q.documentTracker.SetProcessing(ctx, doc.ID, scannedCaseResponse.UID); err != nil {
-			return fmt.Errorf("failed to set document to processing '%s': %w", doc.ID, err)
+			return scannedCaseResponse, fmt.Errorf("failed to set document to processing '%s': %w", doc.ID, err)
 		}
 
 		if err := q.processDocument(ctx, set, doc, scannedCaseResponse); err != nil {
@@ -79,7 +92,7 @@ func (q *Worker) Process(ctx context.Context, scannedCaseResponse *sirius.Scanne
 				q.logger.ErrorContext(ctx, err.Error())
 			}
 
-			return err
+			return scannedCaseResponse, err
 		}
 
 		if err := q.documentTracker.SetCompleted(ctx, doc.ID); err != nil {
@@ -90,7 +103,23 @@ func (q *Worker) Process(ctx context.Context, scannedCaseResponse *sirius.Scanne
 	}
 
 	q.logger.InfoContext(ctx, "No errors found!")
-	return nil
+	return scannedCaseResponse, nil
+}
+
+func (q *Worker) createCaseStub(ctx context.Context, set *types.BaseSet) (*sirius.ScannedCaseResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, q.config.HTTP.Timeout)
+	defer cancel()
+
+	scannedCaseResponse, err := q.siriusService.CreateCaseStub(ctx, set)
+	if err != nil {
+		return nil, FailedToCreateCaseStubError{Err: err}
+	}
+
+	if scannedCaseResponse == nil || scannedCaseResponse.UID == "" {
+		return nil, ErrScannedCaseResponseUIDMissing
+	}
+
+	return scannedCaseResponse, nil
 }
 
 func (q *Worker) processDocument(ctx context.Context, set *types.BaseSet, document *types.BaseDocument, scannedCaseResponse *sirius.ScannedCaseResponse) error {

@@ -38,23 +38,17 @@ type AwsClient interface {
 	QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (string, error)
 }
 
-type siriusService interface {
-	AttachDocuments(ctx context.Context, set *types.BaseSet, originalDoc *types.BaseDocument, caseResponse *sirius.ScannedCaseResponse) (*sirius.ScannedDocumentResponse, []byte, error)
-	CreateCaseStub(ctx context.Context, set *types.BaseSet) (*sirius.ScannedCaseResponse, error)
-}
-
 type worker interface {
-	Process(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, parsedBaseXml *types.BaseSet) error
+	Process(ctx context.Context, parsedBaseXml *types.BaseSet) (*sirius.ScannedCaseResponse, error)
 }
 
 type IndexController struct {
-	config        *config.Config
-	logger        *slog.Logger
-	validator     *ingestion.Validator
-	siriusService siriusService
-	auth          Auth
-	worker        worker
-	awsClient     AwsClient
+	config    *config.Config
+	logger    *slog.Logger
+	validator *ingestion.Validator
+	auth      Auth
+	worker    worker
+	awsClient AwsClient
 }
 
 type response struct {
@@ -74,29 +68,26 @@ func NewIndexController(logger *slog.Logger, awsClient aws.AwsClientInterface, a
 	siriusService := sirius.NewService(appConfig)
 
 	return &IndexController{
-		config:        appConfig,
-		logger:        logger,
-		validator:     ingestion.NewValidator(),
-		siriusService: siriusService,
-		auth:          auth.New(appConfig, logger, awsClient),
-		worker:        ingestion.NewWorker(logger, appConfig, siriusService, awsClient, dynamoClient),
-		awsClient:     awsClient,
+		config:    appConfig,
+		logger:    logger,
+		validator: ingestion.NewValidator(),
+		auth:      auth.New(appConfig, logger, awsClient),
+		worker:    ingestion.NewWorker(logger, appConfig, siriusService, awsClient, dynamoClient),
+		awsClient: awsClient,
 	}
 }
 
 func (c *IndexController) HandleRequests() {
-	http.Handle("/health-check", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/health-check", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 
 		if _, err := w.Write([]byte("OK")); err != nil {
 			c.logger.ErrorContext(r.Context(), err.Error())
 		}
-	}))
+	})
 
 	// Create the route to handle user authentication and issue JWT token
-	http.Handle("/auth/sessions", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c.authHandler(w, r)
-	}))
+	http.HandleFunc("/auth/sessions", c.authHandler)
 
 	// Protect the route with JWT validation (using the authMiddleware)
 	http.Handle("/api/ddc", otelhttp.NewHandler(logger.UseTelemetry(
@@ -183,26 +174,15 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(r.Context(), c.config.HTTP.Timeout)
-	ctxWithToken := context.WithValue(ctx, constants.TokenContextKey, reqCtx.Value(constants.TokenContextKey))
-	defer cancel()
-	scannedCaseResponse, err := c.siriusService.CreateCaseStub(ctxWithToken, parsedBaseXml)
-	if err != nil {
-		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Failed to create case stub in Sirius", err)
-		return
-	}
-
-	if scannedCaseResponse == nil || scannedCaseResponse.UID == "" {
-		c.respondWithError(reqCtx, w, http.StatusInternalServerError,
-			"Invalid response from Sirius when creating case stub, scannedCaseResponse is nil or missing UID",
-			errors.New("scannedCaseResponse UID missing"))
-		return
+	scannedCaseResponse, err := c.worker.Process(context.WithoutCancel(reqCtx), parsedBaseXml)
+	if scannedCaseResponse == nil {
+		scannedCaseResponse = &sirius.ScannedCaseResponse{}
 	}
 
 	uid := scannedCaseResponse.UID
 	statusCode := http.StatusAccepted
 
-	if err := c.worker.Process(context.WithoutCancel(reqCtx), scannedCaseResponse, parsedBaseXml); err != nil {
+	if err != nil {
 		var aperr ingestion.AlreadyProcessedError
 		if errors.As(err, &aperr) {
 			uid = aperr.CaseNo
@@ -243,22 +223,31 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func getPublicError(err error, uid string) (int, string) {
+	if errors.Is(err, ingestion.ErrScannedCaseResponseUIDMissing) {
+		return http.StatusInternalServerError, "Invalid response from Sirius when creating case stub, scannedCaseResponse is nil or missing UID"
+	}
+
+	var stubError ingestion.FailedToCreateCaseStubError
+	if errors.As(err, &stubError) {
+		return http.StatusInternalServerError, "Failed to create case stub in Sirius"
+	}
+
 	var clientError sirius.Error
 	if errors.As(err, &clientError) {
 		switch clientError.StatusCode {
-		case 400:
+		case http.StatusBadRequest:
 			_, ok := clientError.ValidationErrors["caseReference"]
 			if ok {
-				return 400, fmt.Sprintf("%s is not a valid case UID", uid)
+				return http.StatusBadRequest, fmt.Sprintf("%s is not a valid case UID", uid)
 			}
-		case 404:
-			return 400, fmt.Sprintf("Case not found with UID %s", uid)
-		case 413:
-			return 413, "Request content too large: the XML document exceeds the maximum allowed size"
+		case http.StatusNotFound:
+			return http.StatusBadRequest, fmt.Sprintf("Case not found with UID %s", uid)
+		case http.StatusRequestEntityTooLarge:
+			return http.StatusRequestEntityTooLarge, "Request content too large: the XML document exceeds the maximum allowed size"
 		}
 	}
 
-	return 500, "Failed to persist document to Sirius"
+	return http.StatusInternalServerError, "Failed to persist document to Sirius"
 }
 
 func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseWriter, statusCode int, message string, err error) {
