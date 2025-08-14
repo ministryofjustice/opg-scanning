@@ -9,21 +9,16 @@ import (
 	"log/slog"
 	"net/http"
 	"regexp"
-	"slices"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/lestrrat-go/libxml2/xsd"
 	"github.com/ministryofjustice/opg-scanning/internal/auth"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
 	"github.com/ministryofjustice/opg-scanning/internal/config"
-	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/sirius"
-	"github.com/ministryofjustice/opg-scanning/internal/types"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
@@ -39,13 +34,12 @@ type AwsClient interface {
 }
 
 type worker interface {
-	Process(ctx context.Context, parsedBaseXml *types.BaseSet) (*sirius.ScannedCaseResponse, error)
+	Process(ctx context.Context, bodyStr string) (*sirius.ScannedCaseResponse, error)
 }
 
 type IndexController struct {
 	config    *config.Config
 	logger    *slog.Logger
-	validator *ingestion.Validator
 	auth      Auth
 	worker    worker
 	awsClient AwsClient
@@ -70,7 +64,6 @@ func NewIndexController(logger *slog.Logger, awsClient aws.AwsClientInterface, a
 	return &IndexController{
 		config:    appConfig,
 		logger:    logger,
-		validator: ingestion.NewValidator(),
 		auth:      auth.New(appConfig, logger, awsClient),
 		worker:    ingestion.NewWorker(logger, appConfig, siriusService, awsClient, dynamoClient),
 		awsClient: awsClient,
@@ -162,19 +155,7 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 
 	c.logger.InfoContext(reqCtx, "Stored Set data", slog.String("set_filename", filename))
 
-	parsedBaseXml, err := c.validateAndSanitizeXML(reqCtx, bodyStr)
-	if err != nil {
-		c.respondWithError(reqCtx, w, http.StatusBadRequest, "Validate and sanitize XML failed", err)
-		return
-	}
-
-	// Validate the parsed set
-	if err := c.validator.ValidateSet(parsedBaseXml); err != nil {
-		c.respondWithError(reqCtx, w, http.StatusBadRequest, "Validate set failed", err)
-		return
-	}
-
-	scannedCaseResponse, err := c.worker.Process(context.WithoutCancel(reqCtx), parsedBaseXml)
+	scannedCaseResponse, err := c.worker.Process(context.WithoutCancel(reqCtx), bodyStr)
 	if scannedCaseResponse == nil {
 		scannedCaseResponse = &sirius.ScannedCaseResponse{}
 	}
@@ -232,6 +213,16 @@ func getPublicError(err error, uid string) (int, string) {
 		return http.StatusInternalServerError, "Failed to create case stub in Sirius"
 	}
 
+	var setError ingestion.ValidateSetError
+	if errors.As(err, &setError) {
+		return http.StatusBadRequest, "Validate set failed"
+	}
+
+	var sanitizeError ingestion.ValidateAndSanitizeError
+	if errors.As(err, &sanitizeError) {
+		return http.StatusBadRequest, "Validate and sanitize XML failed"
+	}
+
 	var clientError sirius.Error
 	if errors.As(err, &clientError) {
 		switch clientError.StatusCode {
@@ -264,7 +255,8 @@ func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseW
 		},
 	}
 
-	if problem, ok := err.(problem); ok {
+	var problem ingestion.Problem
+	if errors.As(err, &problem) {
 		resp.Data.Message = problem.Title
 		resp.Data.ValidationErrors = problem.ValidationErrors
 	}
@@ -288,87 +280,4 @@ func (c *IndexController) readRequestBody(r *http.Request) (string, error) {
 	}
 	defer r.Body.Close() //nolint:errcheck // no need to check error when closing body
 	return string(body), nil
-}
-
-func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr string) (*types.BaseSet, error) {
-	schemaLocation, err := ingestion.ExtractSchemaLocation(bodyStr)
-	if err != nil {
-		return nil, err
-	}
-
-	// Validate against XSD
-	c.logger.InfoContext(ctx, "Validating against XSD")
-	xsdValidator, err := ingestion.NewXSDValidator(c.config, schemaLocation, bodyStr)
-	if err != nil {
-		return nil, err
-	}
-	if err := xsdValidator.ValidateXsd(); err != nil {
-		if schemaValidationError, ok := err.(xsd.SchemaValidationError); ok {
-			var validationErrors []string
-			for _, error := range schemaValidationError.Errors() {
-				validationErrors = append(validationErrors, error.Error())
-			}
-			return nil, problem{
-				Title:            "Validate and sanitize XML failed",
-				ValidationErrors: validationErrors,
-			}
-		}
-		return nil, fmt.Errorf("set failed XSD validation: %w", err)
-	}
-
-	// Validate and sanitize the XML
-	c.logger.InfoContext(ctx, "Validating XML")
-	xmlValidator := ingestion.NewXmlValidator(*c.config)
-	parsedBaseXml, err := xmlValidator.XmlValidate(bodyStr)
-	if err != nil {
-		return nil, err
-	}
-
-	// Validate embedded documents
-	for _, document := range parsedBaseXml.Body.Documents {
-		if err := c.validateDocument(document); err != nil {
-			return nil, err
-		}
-	}
-
-	return parsedBaseXml, nil
-}
-
-func (c *IndexController) validateDocument(document types.BaseDocument) error {
-	if !slices.Contains(constants.SupportedDocumentTypes, document.Type) {
-		return problem{
-			Title: fmt.Sprintf("Document type %s is not supported", document.Type),
-		}
-	}
-
-	decodedXML, err := util.DecodeEmbeddedXML(document.EmbeddedXML)
-	if err != nil {
-		return fmt.Errorf("failed to decode XML data from %s: %w", document.Type, err)
-	}
-
-	schemaLocation, err := ingestion.ExtractSchemaLocation(string(decodedXML))
-	if err != nil {
-		return fmt.Errorf("failed to extract schema from %s: %w", document.Type, err)
-	}
-
-	xsdValidator, err := ingestion.NewXSDValidator(c.config, schemaLocation, string(decodedXML))
-	if err != nil {
-		return fmt.Errorf("failed to load schema %s: %w", schemaLocation, err)
-	}
-
-	if err := xsdValidator.ValidateXsd(); err != nil {
-		if schemaValidationError, ok := err.(xsd.SchemaValidationError); ok {
-			var validationErrors []string
-			for _, error := range schemaValidationError.Errors() {
-				validationErrors = append(validationErrors, error.Error())
-			}
-			return problem{
-				Title:            fmt.Sprintf("XML for %s failed XSD validation", document.Type),
-				ValidationErrors: validationErrors,
-			}
-		}
-		return fmt.Errorf("failed XSD validation: %w", err)
-	}
-
-	return nil
 }

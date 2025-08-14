@@ -2,14 +2,18 @@ package ingestion
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/xml"
 	"io"
+	"log/slog"
 	"regexp"
 	"testing"
 
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
+	"github.com/ministryofjustice/opg-scanning/internal/config"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/ministryofjustice/opg-scanning/internal/util"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -63,5 +67,142 @@ func TestWorkerPersist_IncludesXMLDeclaration(t *testing.T) {
 	expectedHeader := regexp.MustCompile(`^<\?xml\s+version="1\.0"(?:\s+encoding="UTF-8")?.*\?>\n?`)
 	if !expectedHeader.Match(capturedXML) {
 		t.Errorf("expected XML header to match regex %q, got: %s", expectedHeader.String(), string(capturedXML))
+	}
+}
+
+func TestWorkerProcess_InvalidXML(t *testing.T) {
+	xmlPayloadMalformed := `<Set>
+		<Header CaseNo="1234"><Body></Body>`
+
+	worker := &Worker{}
+	_, err := worker.Process(context.Background(), xmlPayloadMalformed)
+
+	var verr ValidateAndSanitizeError
+	assert.ErrorAs(t, err, &verr)
+}
+
+func TestWorkerProcess_InvalidXMLExplainsXSDErrors(t *testing.T) {
+	xmlPayloadMalformed := `<Set xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SET.xsd">
+		<Header CaseNo="1234"></Header>
+	</Set>`
+
+	config, _ := config.Read()
+
+	worker := &Worker{
+		logger: slog.New(slog.DiscardHandler),
+		config: config,
+	}
+	_, err := worker.Process(context.Background(), xmlPayloadMalformed)
+
+	var verr ValidateAndSanitizeError
+	assert.ErrorAs(t, err, &verr)
+
+	var perr Problem
+	if assert.ErrorAs(t, verr, &perr) {
+		assert.Equal(t, []string{"Element 'Set': Missing child element(s). Expected is ( Body )."}, perr.ValidationErrors)
+	}
+}
+
+func TestWorkerProcess_InvalidEmbeddedXMLProvidesDetails(t *testing.T) {
+	xmlPayloadMalformed := `<Set xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SET.xsd">
+		<Header CaseNo="" Scanner="9" ScanTime="2014-09-26T12:38:53" ScannerOperator="Administrator" Schedule="02-0001112-20160909185000" />
+		<Body>
+			<Document Type="LP1F" Encoding="UTF-8" NoPages="19">
+				<XML>PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxMUDIgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSIgeHNpOm5vTmFtZXNwYWNlU2NoZW1hTG9jYXRpb249IkxQMi54c2QiPjwvTFAyPg==</XML>
+				<PDF>SGVsbG8gd29ybGQ=</PDF>
+			</Document>
+		</Body>
+	</Set>`
+
+	config, _ := config.Read()
+
+	worker := &Worker{
+		logger: slog.New(slog.DiscardHandler),
+		config: config,
+	}
+	_, err := worker.Process(context.Background(), xmlPayloadMalformed)
+
+	var verr ValidateAndSanitizeError
+	assert.ErrorAs(t, err, &verr)
+
+	var perr Problem
+	if assert.ErrorAs(t, verr, &perr) {
+		assert.Equal(t, []string{"Element 'LP2': Missing child element(s). Expected is ( Page1 )."}, perr.ValidationErrors)
+	}
+}
+
+func TestValidateDocumentWarnsOnUnsupportedDocumentType(t *testing.T) {
+	document := types.BaseDocument{
+		Type:        "BadDocumentType",
+		EmbeddedXML: "",
+	}
+
+	worker := &Worker{}
+
+	err := worker.validateDocument(document)
+
+	problem, ok := err.(Problem)
+	assert.True(t, ok)
+
+	assert.Equal(t, "Document type BadDocumentType is not supported", problem.Title)
+}
+
+func TestValidateDocumentHandlesErrorCases(t *testing.T) {
+	testCases := []struct {
+		name string
+		XML  string
+		err  string
+	}{
+		{
+			name: "not XML",
+			XML:  "not XML",
+			err:  "failed to extract schema from EPA",
+		},
+		{
+			name: "no schema",
+			XML:  "<my-doc></my-doc>",
+			err:  "failed to extract schema from EPA",
+		},
+		{
+			name: "invalid schema",
+			XML:  `<my-doc xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="MY-DOC.xsd"></my-doc>`,
+			err:  "failed to load schema MY-DOC.xsd",
+		},
+		{
+			name: "does not match schema",
+			XML:  `<my-doc xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="LP2.xsd"></my-doc>`,
+			err:  "XML for EPA failed XSD validation",
+		},
+		{
+			name: "ok",
+			XML:  `<EPA xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="EPA.xsd"><Page><BURN/><PhysicalPage>1</PhysicalPage></Page></EPA>`,
+			err:  "",
+		},
+	}
+
+	config, _ := config.Read()
+
+	worker := &Worker{
+		config:    config,
+		validator: NewValidator(),
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			encodedXML := base64.StdEncoding.EncodeToString([]byte(tc.XML))
+
+			document := types.BaseDocument{
+				Type:        "EPA",
+				EmbeddedXML: encodedXML,
+			}
+
+			err := worker.validateDocument(document)
+
+			if tc.err == "" {
+				assert.Nil(t, err)
+			} else {
+				assert.Contains(t, err.Error(), tc.err)
+			}
+		})
 	}
 }
