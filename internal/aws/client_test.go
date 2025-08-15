@@ -1,7 +1,6 @@
 package aws
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -44,14 +43,14 @@ func TestPersistFormData_LocalStack(t *testing.T) {
 
 	// Test PersistFormData valid
 	docType := "TestDoc"
-	body := bytes.NewReader([]byte("<?xml version=\"1.0\" encoding=\"UTF-8\"?><test>test</test>"))
+	body := []byte("<?xml version=\"1.0\" encoding=\"UTF-8\"?><test>test</test>")
 	fileName, err := awsClient.PersistFormData(ctx, body, docType)
 	assert.NoError(t, err, "PersistFormData should not return an error")
 	assert.Regexp(t, regexp.MustCompile(`^FORM_DDC_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}_TestDoc.xml$`), fileName)
 
 	// Test PersistFormData invalid
 	docType = "TestDoc"
-	body = bytes.NewReader([]byte("invalid xml"))
+	body = []byte("invalid xml")
 	_, err = awsClient.PersistFormData(ctx, body, docType)
 	assert.Error(t, err, "PersistFormData should return an error for invalid XML")
 

@@ -6,7 +6,6 @@ package ingestion
 
 import (
 	"context"
-	"io"
 
 	"github.com/ministryofjustice/opg-scanning/internal/sirius"
 	"github.com/ministryofjustice/opg-scanning/internal/types"
@@ -245,7 +244,7 @@ func (_m *mockAwsClient) EXPECT() *mockAwsClient_Expecter {
 }
 
 // PersistFormData provides a mock function for the type mockAwsClient
-func (_mock *mockAwsClient) PersistFormData(ctx context.Context, body io.Reader, docType string) (string, error) {
+func (_mock *mockAwsClient) PersistFormData(ctx context.Context, body []byte, docType string) (string, error) {
 	ret := _mock.Called(ctx, body, docType)
 
 	if len(ret) == 0 {
@@ -254,15 +253,15 @@ func (_mock *mockAwsClient) PersistFormData(ctx context.Context, body io.Reader,
 
 	var r0 string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, io.Reader, string) (string, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []byte, string) (string, error)); ok {
 		return returnFunc(ctx, body, docType)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, io.Reader, string) string); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []byte, string) string); ok {
 		r0 = returnFunc(ctx, body, docType)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, io.Reader, string) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []byte, string) error); ok {
 		r1 = returnFunc(ctx, body, docType)
 	} else {
 		r1 = ret.Error(1)
@@ -277,21 +276,21 @@ type mockAwsClient_PersistFormData_Call struct {
 
 // PersistFormData is a helper method to define mock.On call
 //   - ctx context.Context
-//   - body io.Reader
+//   - body []byte
 //   - docType string
 func (_e *mockAwsClient_Expecter) PersistFormData(ctx interface{}, body interface{}, docType interface{}) *mockAwsClient_PersistFormData_Call {
 	return &mockAwsClient_PersistFormData_Call{Call: _e.mock.On("PersistFormData", ctx, body, docType)}
 }
 
-func (_c *mockAwsClient_PersistFormData_Call) Run(run func(ctx context.Context, body io.Reader, docType string)) *mockAwsClient_PersistFormData_Call {
+func (_c *mockAwsClient_PersistFormData_Call) Run(run func(ctx context.Context, body []byte, docType string)) *mockAwsClient_PersistFormData_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 io.Reader
+		var arg1 []byte
 		if args[1] != nil {
-			arg1 = args[1].(io.Reader)
+			arg1 = args[1].([]byte)
 		}
 		var arg2 string
 		if args[2] != nil {
@@ -311,7 +310,7 @@ func (_c *mockAwsClient_PersistFormData_Call) Return(s string, err error) *mockA
 	return _c
 }
 
-func (_c *mockAwsClient_PersistFormData_Call) RunAndReturn(run func(ctx context.Context, body io.Reader, docType string) (string, error)) *mockAwsClient_PersistFormData_Call {
+func (_c *mockAwsClient_PersistFormData_Call) RunAndReturn(run func(ctx context.Context, body []byte, docType string) (string, error)) *mockAwsClient_PersistFormData_Call {
 	_c.Call.Return(run)
 	return _c
 }

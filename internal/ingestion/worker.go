@@ -1,11 +1,9 @@
 package ingestion
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"log/slog"
 	"slices"
 
@@ -20,45 +18,6 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
-var ErrScannedCaseResponseUIDMissing = errors.New("scannedCaseResponse UID missing")
-
-type Problem struct {
-	Title            string
-	ValidationErrors []string
-}
-
-func (p Problem) Error() string {
-	return p.Title
-}
-
-type FailedToCreateCaseStubError struct {
-	Err error
-}
-
-func (e FailedToCreateCaseStubError) Error() string { return e.Err.Error() }
-func (e FailedToCreateCaseStubError) Unwrap() error { return e.Err }
-
-type ValidateSetError struct {
-	Err error
-}
-
-func (e ValidateSetError) Error() string { return e.Err.Error() }
-func (e ValidateSetError) Unwrap() error { return e.Err }
-
-type ValidateAndSanitizeError struct {
-	Err error
-}
-
-func (e ValidateAndSanitizeError) Error() string { return e.Err.Error() }
-func (e ValidateAndSanitizeError) Unwrap() error { return e.Err }
-
-type PersistSetError struct {
-	Err error
-}
-
-func (e PersistSetError) Error() string { return e.Err.Error() }
-func (e PersistSetError) Unwrap() error { return e.Err }
-
 type documentTracker interface {
 	SetProcessing(ctx context.Context, id, caseNo string) error
 	SetCompleted(ctx context.Context, id string) error
@@ -66,7 +25,7 @@ type documentTracker interface {
 }
 
 type AwsClient interface {
-	PersistFormData(ctx context.Context, body io.Reader, docType string) (string, error)
+	PersistFormData(ctx context.Context, body []byte, docType string) (string, error)
 	PersistSetData(ctx context.Context, body []byte) (string, error)
 	QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (string, error)
 }
@@ -96,15 +55,15 @@ func NewWorker(logger *slog.Logger, config *config.Config, awsClient AwsClient, 
 	}
 }
 
-func (w *Worker) Process(ctx context.Context, bodyStr string) (*sirius.ScannedCaseResponse, error) {
-	filename, err := w.awsClient.PersistSetData(ctx, []byte(bodyStr))
+func (w *Worker) Process(ctx context.Context, body []byte) (*sirius.ScannedCaseResponse, error) {
+	filename, err := w.awsClient.PersistSetData(ctx, body)
 	if err != nil {
 		return nil, PersistSetError{Err: err}
 	}
 
 	w.logger.InfoContext(ctx, "Stored Set data", slog.String("set_filename", filename))
 
-	set, err := w.validateAndSanitizeXML(ctx, bodyStr)
+	set, err := w.validateAndSanitizeXML(ctx, body)
 	if err != nil {
 		return nil, ValidateAndSanitizeError{Err: err}
 	}
@@ -234,9 +193,7 @@ func (w *Worker) processDocument(ctx context.Context, set *types.BaseSet, docume
 }
 
 func (w *Worker) persist(ctx context.Context, decodedXML []byte, originalDoc *types.BaseDocument) (string, error) {
-	xmlReader := bytes.NewReader(decodedXML)
-
-	fileName, err := w.awsClient.PersistFormData(ctx, xmlReader, originalDoc.Type)
+	fileName, err := w.awsClient.PersistFormData(ctx, decodedXML, originalDoc.Type)
 	if err != nil {
 		return "", err
 	}
@@ -244,15 +201,15 @@ func (w *Worker) persist(ctx context.Context, decodedXML []byte, originalDoc *ty
 	return fileName, nil
 }
 
-func (w *Worker) validateAndSanitizeXML(ctx context.Context, bodyStr string) (*types.BaseSet, error) {
-	schemaLocation, err := ExtractSchemaLocation(bodyStr)
+func (w *Worker) validateAndSanitizeXML(ctx context.Context, body []byte) (*types.BaseSet, error) {
+	schemaLocation, err := ExtractSchemaLocation(body)
 	if err != nil {
 		return nil, err
 	}
 
 	// Validate against XSD
 	w.logger.InfoContext(ctx, "Validating against XSD")
-	xsdValidator, err := NewXSDValidator(w.config, schemaLocation, bodyStr)
+	xsdValidator, err := NewXSDValidator(w.config, schemaLocation, body)
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +230,7 @@ func (w *Worker) validateAndSanitizeXML(ctx context.Context, bodyStr string) (*t
 	// Validate and sanitize the XML
 	w.logger.InfoContext(ctx, "Validating XML")
 	xmlValidator := NewXmlValidator(*w.config)
-	parsedBaseXml, err := xmlValidator.XmlValidate(bodyStr)
+	parsedBaseXml, err := xmlValidator.XmlValidate(body)
 	if err != nil {
 		return nil, err
 	}
@@ -300,12 +257,12 @@ func (w *Worker) validateDocument(document types.BaseDocument) error {
 		return fmt.Errorf("failed to decode XML data from %s: %w", document.Type, err)
 	}
 
-	schemaLocation, err := ExtractSchemaLocation(string(decodedXML))
+	schemaLocation, err := ExtractSchemaLocation(decodedXML)
 	if err != nil {
 		return fmt.Errorf("failed to extract schema from %s: %w", document.Type, err)
 	}
 
-	xsdValidator, err := NewXSDValidator(w.config, schemaLocation, string(decodedXML))
+	xsdValidator, err := NewXSDValidator(w.config, schemaLocation, decodedXML)
 	if err != nil {
 		return fmt.Errorf("failed to load schema %s: %w", schemaLocation, err)
 	}

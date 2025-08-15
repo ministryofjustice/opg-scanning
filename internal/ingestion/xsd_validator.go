@@ -1,6 +1,7 @@
 package ingestion
 
 import (
+	"bytes"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -16,14 +17,14 @@ import (
 
 type XSDValidator struct {
 	schema     *xsd.Schema
-	xmlContent string
+	xmlContent []byte
 }
 
 type Root struct {
 	SchemaLocation string `xml:"http://www.w3.org/2001/XMLSchema-instance noNamespaceSchemaLocation,attr"`
 }
 
-func NewXSDValidator(config *config.Config, schemaLocation string, xmlContent string) (*XSDValidator, error) {
+func NewXSDValidator(config *config.Config, schemaLocation string, xmlContent []byte) (*XSDValidator, error) {
 	if !filepath.IsLocal(schemaLocation) {
 		return nil, errors.New("schema location not local path")
 	}
@@ -42,7 +43,7 @@ func NewXSDValidator(config *config.Config, schemaLocation string, xmlContent st
 }
 
 func (v *XSDValidator) ValidateXsd() error {
-	doc, err := libxml2.ParseString(v.xmlContent, parser.XMLParseNoNet+parser.XMLParseHuge)
+	doc, err := libxml2.Parse(v.xmlContent, parser.XMLParseNoNet+parser.XMLParseHuge)
 	if err != nil {
 		return err
 	}
@@ -50,8 +51,8 @@ func (v *XSDValidator) ValidateXsd() error {
 	return v.schema.Validate(doc)
 }
 
-func ExtractSchemaLocation(xmlContent string) (string, error) {
-	decoder := xml.NewDecoder(strings.NewReader(xmlContent))
+func ExtractSchemaLocation(xmlContent []byte) (string, error) {
+	decoder := xml.NewDecoder(bytes.NewReader(xmlContent))
 
 	// Search for the root element with the specified attribute
 	var root Root
