@@ -96,29 +96,29 @@ func NewWorker(logger *slog.Logger, config *config.Config, awsClient AwsClient, 
 	}
 }
 
-func (q *Worker) Process(ctx context.Context, bodyStr string) (*sirius.ScannedCaseResponse, error) {
-	filename, err := q.awsClient.PersistSetData(ctx, []byte(bodyStr))
+func (w *Worker) Process(ctx context.Context, bodyStr string) (*sirius.ScannedCaseResponse, error) {
+	filename, err := w.awsClient.PersistSetData(ctx, []byte(bodyStr))
 	if err != nil {
 		return nil, PersistSetError{Err: err}
 	}
 
-	q.logger.InfoContext(ctx, "Stored Set data", slog.String("set_filename", filename))
+	w.logger.InfoContext(ctx, "Stored Set data", slog.String("set_filename", filename))
 
-	set, err := q.validateAndSanitizeXML(ctx, bodyStr)
+	set, err := w.validateAndSanitizeXML(ctx, bodyStr)
 	if err != nil {
 		return nil, ValidateAndSanitizeError{Err: err}
 	}
 
-	if err := q.validator.ValidateSet(set); err != nil {
+	if err := w.validator.ValidateSet(set); err != nil {
 		return nil, ValidateSetError{Err: err}
 	}
 
-	scannedCaseResponse, err := q.createCaseStub(ctx, set)
+	scannedCaseResponse, err := w.createCaseStub(ctx, set)
 	if err != nil {
 		return scannedCaseResponse, err
 	}
 
-	q.logger.InfoContext(ctx, "Queueing documents for processing", slog.Any("Header", set.Header))
+	w.logger.InfoContext(ctx, "Queueing documents for processing", slog.Any("Header", set.Header))
 
 	// Iterate over each document in the parsed set.
 	for i := range set.Body.Documents {
@@ -130,38 +130,38 @@ func (q *Worker) Process(ctx context.Context, bodyStr string) (*sirius.ScannedCa
 			slog.String("document_type", doc.Type),
 		)
 
-		if err := q.documentTracker.SetProcessing(ctx, doc.ID, scannedCaseResponse.UID); err != nil {
+		if err := w.documentTracker.SetProcessing(ctx, doc.ID, scannedCaseResponse.UID); err != nil {
 			return scannedCaseResponse, fmt.Errorf("failed to set document to processing '%s': %w", doc.ID, err)
 		}
 
-		if err := q.processDocument(ctx, set, doc, scannedCaseResponse); err != nil {
-			if err := q.documentTracker.SetFailed(ctx, doc.ID); err != nil {
-				q.logger.ErrorContext(ctx, err.Error())
+		if err := w.processDocument(ctx, set, doc, scannedCaseResponse); err != nil {
+			if err := w.documentTracker.SetFailed(ctx, doc.ID); err != nil {
+				w.logger.ErrorContext(ctx, err.Error())
 			}
 
 			if !errors.As(err, &sirius.Error{}) {
-				q.logger.ErrorContext(ctx, err.Error())
+				w.logger.ErrorContext(ctx, err.Error())
 			}
 
 			return scannedCaseResponse, err
 		}
 
-		if err := q.documentTracker.SetCompleted(ctx, doc.ID); err != nil {
-			q.logger.ErrorContext(ctx, err.Error())
+		if err := w.documentTracker.SetCompleted(ctx, doc.ID); err != nil {
+			w.logger.ErrorContext(ctx, err.Error())
 		}
 
-		q.logger.InfoContext(ctx, "Document added for processing")
+		w.logger.InfoContext(ctx, "Document added for processing")
 	}
 
-	q.logger.InfoContext(ctx, "No errors found!")
+	w.logger.InfoContext(ctx, "No errors found!")
 	return scannedCaseResponse, nil
 }
 
-func (q *Worker) createCaseStub(ctx context.Context, set *types.BaseSet) (*sirius.ScannedCaseResponse, error) {
-	ctx, cancel := context.WithTimeout(ctx, q.config.HTTP.Timeout)
+func (w *Worker) createCaseStub(ctx context.Context, set *types.BaseSet) (*sirius.ScannedCaseResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, w.config.HTTP.Timeout)
 	defer cancel()
 
-	scannedCaseResponse, err := q.siriusService.CreateCaseStub(ctx, set)
+	scannedCaseResponse, err := w.siriusService.CreateCaseStub(ctx, set)
 	if err != nil {
 		return nil, FailedToCreateCaseStubError{Err: err}
 	}
@@ -173,8 +173,8 @@ func (q *Worker) createCaseStub(ctx context.Context, set *types.BaseSet) (*siriu
 	return scannedCaseResponse, nil
 }
 
-func (q *Worker) processDocument(ctx context.Context, set *types.BaseSet, document *types.BaseDocument, scannedCaseResponse *sirius.ScannedCaseResponse) error {
-	ctx, cancel := context.WithTimeout(ctx, q.config.HTTP.Timeout)
+func (w *Worker) processDocument(ctx context.Context, set *types.BaseSet, document *types.BaseDocument, scannedCaseResponse *sirius.ScannedCaseResponse) error {
+	ctx, cancel := context.WithTimeout(ctx, w.config.HTTP.Timeout)
 	defer cancel()
 
 	ctx = context.WithValue(ctx, constants.TokenContextKey, ctx.Value(constants.TokenContextKey))
@@ -184,7 +184,7 @@ func (q *Worker) processDocument(ctx context.Context, set *types.BaseSet, docume
 		return fmt.Errorf("failed to create registry: %v", err)
 	}
 
-	processor, err := factory.NewDocumentProcessor(document, document.Type, registry, q.logger)
+	processor, err := factory.NewDocumentProcessor(document, document.Type, registry, w.logger)
 	if err != nil {
 		return fmt.Errorf("failed to initialize processor: %v", err)
 	}
@@ -193,38 +193,38 @@ func (q *Worker) processDocument(ctx context.Context, set *types.BaseSet, docume
 		return fmt.Errorf("failed to process job: %v", err)
 	}
 
-	attchResp, decodedXML, docErr := q.siriusService.AttachDocuments(ctx, set, document, scannedCaseResponse)
+	attchResp, decodedXML, docErr := w.siriusService.AttachDocuments(ctx, set, document, scannedCaseResponse)
 	if docErr != nil {
 		return fmt.Errorf("failed to attach document: %w", docErr)
 	}
 
 	// Persist the processed document.
-	fileName, persistErr := q.persist(ctx, decodedXML, document)
+	fileName, persistErr := w.persist(ctx, decodedXML, document)
 	if persistErr != nil {
 		return fmt.Errorf("failed to persist document: %w", persistErr)
 	}
 
 	// If not a Sirius extraction document, skip external job processing.
 	if !slices.Contains(constants.SiriusExtractionDocuments, document.Type) {
-		q.logger.InfoContext(ctx, "Skipping external job processing, checks completed for document",
+		w.logger.InfoContext(ctx, "Skipping external job processing, checks completed for document",
 			slog.String("pdf_uuid", attchResp.UUID),
 			slog.String("filename", fileName),
 		)
 		return nil
 	}
 
-	q.logger.InfoContext(ctx, "Stored Form data", slog.String("filename", fileName))
+	w.logger.InfoContext(ctx, "Stored Form data", slog.String("filename", fileName))
 
 	// Queue the document for external processing.
-	messageID, err := q.awsClient.QueueSetForProcessing(ctx, scannedCaseResponse, fileName)
+	messageID, err := w.awsClient.QueueSetForProcessing(ctx, scannedCaseResponse, fileName)
 	if err != nil {
-		q.logger.ErrorContext(ctx, "Failed to queue document for processing",
+		w.logger.ErrorContext(ctx, "Failed to queue document for processing",
 			slog.String("error", err.Error()),
 		)
 		return err
 	}
 
-	q.logger.InfoContext(ctx, "Job processing completed for document",
+	w.logger.InfoContext(ctx, "Job processing completed for document",
 		slog.String("pdf_uuid", attchResp.UUID),
 		slog.String("job_queue_id", messageID),
 		slog.String("filename", fileName),
@@ -233,10 +233,10 @@ func (q *Worker) processDocument(ctx context.Context, set *types.BaseSet, docume
 	return nil
 }
 
-func (q *Worker) persist(ctx context.Context, decodedXML []byte, originalDoc *types.BaseDocument) (string, error) {
+func (w *Worker) persist(ctx context.Context, decodedXML []byte, originalDoc *types.BaseDocument) (string, error) {
 	xmlReader := bytes.NewReader(decodedXML)
 
-	fileName, err := q.awsClient.PersistFormData(ctx, xmlReader, originalDoc.Type)
+	fileName, err := w.awsClient.PersistFormData(ctx, xmlReader, originalDoc.Type)
 	if err != nil {
 		return "", err
 	}
@@ -244,15 +244,15 @@ func (q *Worker) persist(ctx context.Context, decodedXML []byte, originalDoc *ty
 	return fileName, nil
 }
 
-func (c *Worker) validateAndSanitizeXML(ctx context.Context, bodyStr string) (*types.BaseSet, error) {
+func (w *Worker) validateAndSanitizeXML(ctx context.Context, bodyStr string) (*types.BaseSet, error) {
 	schemaLocation, err := ExtractSchemaLocation(bodyStr)
 	if err != nil {
 		return nil, err
 	}
 
 	// Validate against XSD
-	c.logger.InfoContext(ctx, "Validating against XSD")
-	xsdValidator, err := NewXSDValidator(c.config, schemaLocation, bodyStr)
+	w.logger.InfoContext(ctx, "Validating against XSD")
+	xsdValidator, err := NewXSDValidator(w.config, schemaLocation, bodyStr)
 	if err != nil {
 		return nil, err
 	}
@@ -271,8 +271,8 @@ func (c *Worker) validateAndSanitizeXML(ctx context.Context, bodyStr string) (*t
 	}
 
 	// Validate and sanitize the XML
-	c.logger.InfoContext(ctx, "Validating XML")
-	xmlValidator := NewXmlValidator(*c.config)
+	w.logger.InfoContext(ctx, "Validating XML")
+	xmlValidator := NewXmlValidator(*w.config)
 	parsedBaseXml, err := xmlValidator.XmlValidate(bodyStr)
 	if err != nil {
 		return nil, err
@@ -280,7 +280,7 @@ func (c *Worker) validateAndSanitizeXML(ctx context.Context, bodyStr string) (*t
 
 	// Validate embedded documents
 	for _, document := range parsedBaseXml.Body.Documents {
-		if err := c.validateDocument(document); err != nil {
+		if err := w.validateDocument(document); err != nil {
 			return nil, err
 		}
 	}
@@ -288,7 +288,7 @@ func (c *Worker) validateAndSanitizeXML(ctx context.Context, bodyStr string) (*t
 	return parsedBaseXml, nil
 }
 
-func (c *Worker) validateDocument(document types.BaseDocument) error {
+func (w *Worker) validateDocument(document types.BaseDocument) error {
 	if !slices.Contains(constants.SupportedDocumentTypes, document.Type) {
 		return Problem{
 			Title: fmt.Sprintf("Document type %s is not supported", document.Type),
@@ -305,7 +305,7 @@ func (c *Worker) validateDocument(document types.BaseDocument) error {
 		return fmt.Errorf("failed to extract schema from %s: %w", document.Type, err)
 	}
 
-	xsdValidator, err := NewXSDValidator(c.config, schemaLocation, string(decodedXML))
+	xsdValidator, err := NewXSDValidator(w.config, schemaLocation, string(decodedXML))
 	if err != nil {
 		return fmt.Errorf("failed to load schema %s: %w", schemaLocation, err)
 	}
