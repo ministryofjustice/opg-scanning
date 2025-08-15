@@ -9,21 +9,16 @@ import (
 	"log/slog"
 	"net/http"
 	"regexp"
-	"slices"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/lestrrat-go/libxml2/xsd"
 	"github.com/ministryofjustice/opg-scanning/internal/auth"
 	"github.com/ministryofjustice/opg-scanning/internal/aws"
 	"github.com/ministryofjustice/opg-scanning/internal/config"
-	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
 	"github.com/ministryofjustice/opg-scanning/internal/logger"
 	"github.com/ministryofjustice/opg-scanning/internal/sirius"
-	"github.com/ministryofjustice/opg-scanning/internal/types"
-	"github.com/ministryofjustice/opg-scanning/internal/util"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
@@ -32,29 +27,15 @@ type Auth interface {
 	Check(next http.Handler) http.HandlerFunc
 }
 
-type AwsClient interface {
-	PersistFormData(ctx context.Context, body io.Reader, docType string) (string, error)
-	PersistSetData(ctx context.Context, body []byte) (string, error)
-	QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (string, error)
-}
-
-type siriusService interface {
-	AttachDocuments(ctx context.Context, set *types.BaseSet, originalDoc *types.BaseDocument, caseResponse *sirius.ScannedCaseResponse) (*sirius.ScannedDocumentResponse, []byte, error)
-	CreateCaseStub(ctx context.Context, set *types.BaseSet) (*sirius.ScannedCaseResponse, error)
-}
-
 type worker interface {
-	Process(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, parsedBaseXml *types.BaseSet) error
+	Process(ctx context.Context, body []byte) (*sirius.ScannedCaseResponse, error)
 }
 
 type IndexController struct {
-	config        *config.Config
-	logger        *slog.Logger
-	validator     *ingestion.Validator
-	siriusService siriusService
-	auth          Auth
-	worker        worker
-	awsClient     AwsClient
+	config *config.Config
+	logger *slog.Logger
+	auth   Auth
+	worker worker
 }
 
 type response struct {
@@ -71,32 +52,25 @@ type responseData struct {
 var uidReplacementRegex = regexp.MustCompile(`^7[0-9]{3}-[0-9]{4}-[0-9]{4}$`)
 
 func NewIndexController(logger *slog.Logger, awsClient aws.AwsClientInterface, appConfig *config.Config, dynamoClient *dynamodb.Client) *IndexController {
-	siriusService := sirius.NewService(appConfig)
-
 	return &IndexController{
-		config:        appConfig,
-		logger:        logger,
-		validator:     ingestion.NewValidator(),
-		siriusService: siriusService,
-		auth:          auth.New(appConfig, logger, awsClient),
-		worker:        ingestion.NewWorker(logger, appConfig, siriusService, awsClient, dynamoClient),
-		awsClient:     awsClient,
+		config: appConfig,
+		logger: logger,
+		auth:   auth.New(appConfig, logger, awsClient),
+		worker: ingestion.NewWorker(logger, appConfig, awsClient, dynamoClient),
 	}
 }
 
 func (c *IndexController) HandleRequests() {
-	http.Handle("/health-check", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/health-check", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 
 		if _, err := w.Write([]byte("OK")); err != nil {
 			c.logger.ErrorContext(r.Context(), err.Error())
 		}
-	}))
+	})
 
 	// Create the route to handle user authentication and issue JWT token
-	http.Handle("/auth/sessions", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c.authHandler(w, r)
-	}))
+	http.HandleFunc("/auth/sessions", c.authHandler)
 
 	// Protect the route with JWT validation (using the authMiddleware)
 	http.Handle("/api/ddc", otelhttp.NewHandler(logger.UseTelemetry(
@@ -150,7 +124,7 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 
 	c.logger.InfoContext(reqCtx, "Received ingestion request")
 
-	bodyStr, err := c.readRequestBody(r)
+	body, err := c.readRequestBody(r)
 	if err != nil {
 		c.respondWithError(reqCtx, w, http.StatusBadRequest, "Invalid request body", err)
 		return
@@ -162,47 +136,15 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Save Set to S3
-	filename, err := c.awsClient.PersistSetData(reqCtx, []byte(bodyStr))
-	if err != nil {
-		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Could not persist set to S3", err)
-		return
-	}
-
-	c.logger.InfoContext(reqCtx, "Stored Set data", slog.String("set_filename", filename))
-
-	parsedBaseXml, err := c.validateAndSanitizeXML(reqCtx, bodyStr)
-	if err != nil {
-		c.respondWithError(reqCtx, w, http.StatusBadRequest, "Validate and sanitize XML failed", err)
-		return
-	}
-
-	// Validate the parsed set
-	if err := c.validator.ValidateSet(parsedBaseXml); err != nil {
-		c.respondWithError(reqCtx, w, http.StatusBadRequest, "Validate set failed", err)
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(r.Context(), c.config.HTTP.Timeout)
-	ctxWithToken := context.WithValue(ctx, constants.TokenContextKey, reqCtx.Value(constants.TokenContextKey))
-	defer cancel()
-	scannedCaseResponse, err := c.siriusService.CreateCaseStub(ctxWithToken, parsedBaseXml)
-	if err != nil {
-		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Failed to create case stub in Sirius", err)
-		return
-	}
-
-	if scannedCaseResponse == nil || scannedCaseResponse.UID == "" {
-		c.respondWithError(reqCtx, w, http.StatusInternalServerError,
-			"Invalid response from Sirius when creating case stub, scannedCaseResponse is nil or missing UID",
-			errors.New("scannedCaseResponse UID missing"))
-		return
+	scannedCaseResponse, err := c.worker.Process(context.WithoutCancel(reqCtx), body)
+	if scannedCaseResponse == nil {
+		scannedCaseResponse = &sirius.ScannedCaseResponse{}
 	}
 
 	uid := scannedCaseResponse.UID
 	statusCode := http.StatusAccepted
 
-	if err := c.worker.Process(context.WithoutCancel(reqCtx), scannedCaseResponse, parsedBaseXml); err != nil {
+	if err != nil {
 		var aperr ingestion.AlreadyProcessedError
 		if errors.As(err, &aperr) {
 			uid = aperr.CaseNo
@@ -243,22 +185,46 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func getPublicError(err error, uid string) (int, string) {
+	if errors.Is(err, ingestion.ErrScannedCaseResponseUIDMissing) {
+		return http.StatusInternalServerError, "Invalid response from Sirius when creating case stub, scannedCaseResponse is nil or missing UID"
+	}
+
+	var stubError ingestion.FailedToCreateCaseStubError
+	if errors.As(err, &stubError) {
+		return http.StatusInternalServerError, "Failed to create case stub in Sirius"
+	}
+
+	var setError ingestion.ValidateSetError
+	if errors.As(err, &setError) {
+		return http.StatusBadRequest, "Validate set failed"
+	}
+
+	var sanitizeError ingestion.ValidateAndSanitizeError
+	if errors.As(err, &sanitizeError) {
+		return http.StatusBadRequest, "Validate and sanitize XML failed"
+	}
+
+	var persistError ingestion.PersistSetError
+	if errors.As(err, &persistError) {
+		return http.StatusInternalServerError, "Could not persist set to S3"
+	}
+
 	var clientError sirius.Error
 	if errors.As(err, &clientError) {
 		switch clientError.StatusCode {
-		case 400:
+		case http.StatusBadRequest:
 			_, ok := clientError.ValidationErrors["caseReference"]
 			if ok {
-				return 400, fmt.Sprintf("%s is not a valid case UID", uid)
+				return http.StatusBadRequest, fmt.Sprintf("%s is not a valid case UID", uid)
 			}
-		case 404:
-			return 400, fmt.Sprintf("Case not found with UID %s", uid)
-		case 413:
-			return 413, "Request content too large: the XML document exceeds the maximum allowed size"
+		case http.StatusNotFound:
+			return http.StatusBadRequest, fmt.Sprintf("Case not found with UID %s", uid)
+		case http.StatusRequestEntityTooLarge:
+			return http.StatusRequestEntityTooLarge, "Request content too large: the XML document exceeds the maximum allowed size"
 		}
 	}
 
-	return 500, "Failed to persist document to Sirius"
+	return http.StatusInternalServerError, "Failed to persist document to Sirius"
 }
 
 func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseWriter, statusCode int, message string, err error) {
@@ -275,7 +241,8 @@ func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseW
 		},
 	}
 
-	if problem, ok := err.(problem); ok {
+	var problem ingestion.Problem
+	if errors.As(err, &problem) {
 		resp.Data.Message = problem.Title
 		resp.Data.ValidationErrors = problem.ValidationErrors
 	}
@@ -288,98 +255,16 @@ func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseW
 	}
 }
 
-// Helper Method: Validate and Sanitize XML
-func (c *IndexController) readRequestBody(r *http.Request) (string, error) {
+func (c *IndexController) readRequestBody(r *http.Request) ([]byte, error) {
 	if r.Body == nil {
-		return "", errors.New("request body is empty")
+		return nil, errors.New("request body is empty")
 	}
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer r.Body.Close() //nolint:errcheck // no need to check error when closing body
-	return string(body), nil
-}
 
-func (c *IndexController) validateAndSanitizeXML(ctx context.Context, bodyStr string) (*types.BaseSet, error) {
-	schemaLocation, err := ingestion.ExtractSchemaLocation(bodyStr)
-	if err != nil {
-		return nil, err
-	}
-
-	// Validate against XSD
-	c.logger.InfoContext(ctx, "Validating against XSD")
-	xsdValidator, err := ingestion.NewXSDValidator(c.config, schemaLocation, bodyStr)
-	if err != nil {
-		return nil, err
-	}
-	if err := xsdValidator.ValidateXsd(); err != nil {
-		if schemaValidationError, ok := err.(xsd.SchemaValidationError); ok {
-			var validationErrors []string
-			for _, error := range schemaValidationError.Errors() {
-				validationErrors = append(validationErrors, error.Error())
-			}
-			return nil, problem{
-				Title:            "Validate and sanitize XML failed",
-				ValidationErrors: validationErrors,
-			}
-		}
-		return nil, fmt.Errorf("set failed XSD validation: %w", err)
-	}
-
-	// Validate and sanitize the XML
-	c.logger.InfoContext(ctx, "Validating XML")
-	xmlValidator := ingestion.NewXmlValidator(*c.config)
-	parsedBaseXml, err := xmlValidator.XmlValidate(bodyStr)
-	if err != nil {
-		return nil, err
-	}
-
-	// Validate embedded documents
-	for _, document := range parsedBaseXml.Body.Documents {
-		if err := c.validateDocument(document); err != nil {
-			return nil, err
-		}
-	}
-
-	return parsedBaseXml, nil
-}
-
-func (c *IndexController) validateDocument(document types.BaseDocument) error {
-	if !slices.Contains(constants.SupportedDocumentTypes, document.Type) {
-		return problem{
-			Title: fmt.Sprintf("Document type %s is not supported", document.Type),
-		}
-	}
-
-	decodedXML, err := util.DecodeEmbeddedXML(document.EmbeddedXML)
-	if err != nil {
-		return fmt.Errorf("failed to decode XML data from %s: %w", document.Type, err)
-	}
-
-	schemaLocation, err := ingestion.ExtractSchemaLocation(string(decodedXML))
-	if err != nil {
-		return fmt.Errorf("failed to extract schema from %s: %w", document.Type, err)
-	}
-
-	xsdValidator, err := ingestion.NewXSDValidator(c.config, schemaLocation, string(decodedXML))
-	if err != nil {
-		return fmt.Errorf("failed to load schema %s: %w", schemaLocation, err)
-	}
-
-	if err := xsdValidator.ValidateXsd(); err != nil {
-		if schemaValidationError, ok := err.(xsd.SchemaValidationError); ok {
-			var validationErrors []string
-			for _, error := range schemaValidationError.Errors() {
-				validationErrors = append(validationErrors, error.Error())
-			}
-			return problem{
-				Title:            fmt.Sprintf("XML for %s failed XSD validation", document.Type),
-				ValidationErrors: validationErrors,
-			}
-		}
-		return fmt.Errorf("failed XSD validation: %w", err)
-	}
-
-	return nil
+	return body, nil
 }

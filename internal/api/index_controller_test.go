@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"io"
@@ -16,7 +15,6 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/constants"
 	"github.com/ministryofjustice/opg-scanning/internal/ingestion"
 	"github.com/ministryofjustice/opg-scanning/internal/sirius"
-	"github.com/ministryofjustice/opg-scanning/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -40,44 +38,17 @@ func setupController(t *testing.T) *IndexController {
 
 	mockAuth := newMockAuth(t)
 
-	awsClient := newMockAwsClient(t)
-	awsClient.EXPECT().
-		PersistSetData(mock.Anything, mock.Anything).
-		Return("path/my-set.xml", nil).
-		Maybe()
-	awsClient.EXPECT().
-		PersistFormData(mock.Anything, mock.Anything, mock.Anything).
-		Return("testFileName", nil).
-		Maybe()
-	awsClient.EXPECT().
-		QueueSetForProcessing(mock.Anything, mock.Anything, mock.Anything).
-		Return("123", nil).
-		Maybe()
-
-	mockSiriusService := newMockSiriusService(t)
-	mockSiriusService.EXPECT().
-		CreateCaseStub(mock.Anything, mock.Anything).
+	worker := newMockWorker(t)
+	worker.EXPECT().
+		Process(mock.Anything, mock.Anything).
 		Return(&sirius.ScannedCaseResponse{UID: "700012341234"}, nil).
-		Maybe()
-	mockSiriusService.EXPECT().
-		AttachDocuments(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(&sirius.ScannedDocumentResponse{}, nil, nil).
-		Maybe()
-
-	jobQueue := newMockJobQueue(t)
-	jobQueue.EXPECT().
-		Process(mock.Anything, mock.Anything, mock.Anything).
-		Return(nil).
 		Maybe()
 
 	return &IndexController{
-		config:        appConfig,
-		logger:        logger,
-		validator:     ingestion.NewValidator(),
-		siriusService: mockSiriusService,
-		auth:          mockAuth,
-		worker:        jobQueue,
-		awsClient:     awsClient,
+		config: appConfig,
+		logger: logger,
+		auth:   mockAuth,
+		worker: worker,
 	}
 }
 
@@ -124,14 +95,21 @@ func TestIngestHandler_InvalidContentType(t *testing.T) {
 }
 
 func TestIngestHandler_InvalidXML(t *testing.T) {
-	controller := setupController(t)
-
 	xmlPayloadMalformed := `<Set>
 		<Header CaseNo="1234"><Body></Body>`
 
 	req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayloadMalformed)))
 	req.Header.Set("Content-Type", "application/xml")
 	w := httptest.NewRecorder()
+
+	controller := setupController(t)
+
+	worker := newMockWorker(t)
+	worker.EXPECT().
+		Process(mock.Anything, mock.Anything).
+		Return(nil, ingestion.ValidateAndSanitizeError{})
+
+	controller.worker = worker
 
 	controller.ingestHandler(w, req)
 
@@ -142,8 +120,6 @@ func TestIngestHandler_InvalidXML(t *testing.T) {
 }
 
 func TestIngestHandler_InvalidXMLExplainsXSDErrors(t *testing.T) {
-	controller := setupController(t)
-
 	xmlPayloadMalformed := `<Set xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SET.xsd">
 		<Header CaseNo="1234"></Header>
 	</Set>`
@@ -151,6 +127,17 @@ func TestIngestHandler_InvalidXMLExplainsXSDErrors(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayloadMalformed)))
 	req.Header.Set("Content-Type", "application/xml")
 	w := httptest.NewRecorder()
+
+	controller := setupController(t)
+
+	worker := newMockWorker(t)
+	worker.EXPECT().
+		Process(mock.Anything, mock.Anything).
+		Return(nil, ingestion.ValidateAndSanitizeError{
+			Err: ingestion.Problem{ValidationErrors: []string{"Element 'Set': Missing child element(s). Expected is ( Body )."}},
+		})
+
+	controller.worker = worker
 
 	controller.ingestHandler(w, req)
 
@@ -164,39 +151,6 @@ func TestIngestHandler_InvalidXMLExplainsXSDErrors(t *testing.T) {
 	assert.Nil(t, err)
 	assert.False(t, responseObj.Data.Success)
 	assert.Contains(t, responseObj.Data.ValidationErrors, "Element 'Set': Missing child element(s). Expected is ( Body ).")
-}
-
-func TestIngestHandler_InvalidEmbeddedXMLProvidesDetails(t *testing.T) {
-	controller := setupController(t)
-
-	xmlPayloadMalformed := `<Set xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SET.xsd">
-		<Header CaseNo="" Scanner="9" ScanTime="2014-09-26T12:38:53" ScannerOperator="Administrator" Schedule="02-0001112-20160909185000" />
-		<Body>
-			<Document Type="LP1F" Encoding="UTF-8" NoPages="19">
-				<XML>PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxMUDIgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSIgeHNpOm5vTmFtZXNwYWNlU2NoZW1hTG9jYXRpb249IkxQMi54c2QiPjwvTFAyPg==</XML>
-				<PDF>SGVsbG8gd29ybGQ=</PDF>
-			</Document>
-		</Body>
-	</Set>`
-
-	req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayloadMalformed)))
-	req.Header.Set("Content-Type", "application/xml")
-	w := httptest.NewRecorder()
-
-	controller.ingestHandler(w, req)
-
-	resp := w.Result()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Errorf("expected status %d; got %d", http.StatusBadRequest, resp.StatusCode)
-	}
-
-	responseBody, _ := io.ReadAll(resp.Body)
-	var responseObj response
-
-	err := json.Unmarshal(responseBody, &responseObj)
-	assert.Nil(t, err)
-	assert.False(t, responseObj.Data.Success)
-	assert.Contains(t, responseObj.Data.ValidationErrors, "Element 'LP2': Missing child element(s). Expected is ( Page1 ).")
 }
 
 func TestIngestHandler_SiriusErrors(t *testing.T) {
@@ -266,11 +220,11 @@ func TestIngestHandler_SiriusErrors(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			controller := setupController(t)
 
-			jobQueue := newMockJobQueue(t)
-			jobQueue.EXPECT().
-				Process(mock.Anything, mock.Anything, mock.Anything).
-				Return(tc.siriusError)
-			controller.worker = jobQueue
+			worker := newMockWorker(t)
+			worker.EXPECT().
+				Process(mock.Anything, mock.Anything).
+				Return(&sirius.ScannedCaseResponse{UID: "700012341234"}, tc.siriusError)
+			controller.worker = worker
 
 			req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayloadCorrespondence)))
 			req.Header.Set("Content-Type", "application/xml")
@@ -310,11 +264,11 @@ func TestIngestHandler_DuplicateRequest(t *testing.T) {
 
 	errAlreadyProcessed := ingestion.AlreadyProcessedError{CaseNo: "xyz"}
 
-	jobQueue := newMockJobQueue(t)
-	jobQueue.EXPECT().
-		Process(mock.Anything, mock.Anything, mock.Anything).
-		Return(errAlreadyProcessed)
-	controller.worker = jobQueue
+	worker := newMockWorker(t)
+	worker.EXPECT().
+		Process(mock.Anything, mock.Anything).
+		Return(nil, errAlreadyProcessed)
+	controller.worker = worker
 
 	req := httptest.NewRequest(http.MethodPost, "/ingest", bytes.NewBuffer([]byte(xmlPayloadCorrespondence)))
 	req.Header.Set("Content-Type", "application/xml")
@@ -335,77 +289,6 @@ func TestIngestHandler_DuplicateRequest(t *testing.T) {
 	assert.Nil(t, err)
 	assert.True(t, responseObj.Data.Success)
 	assert.Equal(t, "Document has already been processed", responseObj.Data.Message)
-}
-
-func TestValidateDocumentWarnsOnUnsupportedDocumentType(t *testing.T) {
-	c := setupController(t)
-
-	document := types.BaseDocument{
-		Type:        "BadDocumentType",
-		EmbeddedXML: "",
-	}
-
-	err := c.validateDocument(document)
-
-	problem, ok := err.(problem)
-	assert.True(t, ok)
-
-	assert.Equal(t, "Document type BadDocumentType is not supported", problem.Title)
-}
-
-func TestValidateDocumentHandlesErrorCases(t *testing.T) {
-	testCases := []struct {
-		name string
-		XML  string
-		err  string
-	}{
-		{
-			name: "not XML",
-			XML:  "not XML",
-			err:  "failed to extract schema from EPA",
-		},
-		{
-			name: "no schema",
-			XML:  "<my-doc></my-doc>",
-			err:  "failed to extract schema from EPA",
-		},
-		{
-			name: "invalid schema",
-			XML:  `<my-doc xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="MY-DOC.xsd"></my-doc>`,
-			err:  "failed to load schema MY-DOC.xsd",
-		},
-		{
-			name: "does not match schema",
-			XML:  `<my-doc xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="LP2.xsd"></my-doc>`,
-			err:  "XML for EPA failed XSD validation",
-		},
-		{
-			name: "ok",
-			XML:  `<EPA xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="EPA.xsd"><Page><BURN/><PhysicalPage>1</PhysicalPage></Page></EPA>`,
-			err:  "",
-		},
-	}
-
-	c := setupController(t)
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			encodedXML := base64.StdEncoding.EncodeToString([]byte(tc.XML))
-
-			document := types.BaseDocument{
-				Type:        "EPA",
-				EmbeddedXML: encodedXML,
-			}
-
-			err := c.validateDocument(document)
-
-			if tc.err == "" {
-				assert.Nil(t, err)
-			} else {
-				assert.Contains(t, err.Error(), tc.err)
-			}
-		})
-	}
 }
 
 func TestRespondWithErrorHandle5XX(t *testing.T) {

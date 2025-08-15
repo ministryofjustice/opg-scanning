@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"io"
 	"strconv"
 	"strings"
 
@@ -24,7 +23,7 @@ import (
 type AwsClientInterface interface {
 	GetSecretValue(ctx context.Context, secretName string) (string, error)
 	FetchCredentials(ctx context.Context) (map[string]string, error)
-	PersistFormData(ctx context.Context, body io.Reader, docType string) (string, error)
+	PersistFormData(ctx context.Context, body []byte, docType string) (string, error)
 	PersistSetData(ctx context.Context, body []byte) (string, error)
 	QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (string, error)
 }
@@ -100,7 +99,7 @@ func (a *AwsClient) GetSsmValue(ctx context.Context, secretName string) (string,
 	return *output.Parameter.Value, nil
 }
 
-func (a *AwsClient) PersistFormData(ctx context.Context, body io.Reader, docType string) (string, error) {
+func (a *AwsClient) PersistFormData(ctx context.Context, body []byte, docType string) (string, error) {
 	bucketName := a.config.Aws.JobsQueueBucket
 	if bucketName == "" {
 		return "", fmt.Errorf("JOBSQUEUE_BUCKET is not set")
@@ -111,22 +110,15 @@ func (a *AwsClient) PersistFormData(ctx context.Context, body io.Reader, docType
 	fileName := fmt.Sprintf("FORM_DDC_%s_%s.xml", uuid, docType)
 
 	// Check body is valid XML before S3 input
-	bodyBytes, bodyErr := io.ReadAll(body)
-	if bodyErr != nil {
-		return "", fmt.Errorf("failed to read body: %w", bodyErr)
-	}
-	if bodyErr = isValidXML(bodyBytes); bodyErr != nil {
+	if bodyErr := isValidXML(body); bodyErr != nil {
 		return "", fmt.Errorf("invalid XML: %w", bodyErr)
 	}
-
-	// Since we consume the reader for validation, create a new reader from the buffered data
-	readerForS3 := bytes.NewReader(bodyBytes)
 
 	// Create the S3 input
 	input := &s3.PutObjectInput{
 		Bucket:               &bucketName,
 		Key:                  &fileName,
-		Body:                 readerForS3,
+		Body:                 bytes.NewReader(body),
 		ServerSideEncryption: types.ServerSideEncryptionAwsKms,
 		SSEKMSKeyId:          &a.config.Aws.JobsQueueBucketKmsKey,
 		IfNoneMatch:          aws.String("*"),
@@ -153,13 +145,10 @@ func (a *AwsClient) PersistSetData(ctx context.Context, body []byte) (string, er
 	uuid := uuid.Must(uuid.NewV7()).String()
 	fileName := fmt.Sprintf("SET_%s.xml", uuid)
 
-	// Create a new reader from the buffered data
-	readerForS3 := bytes.NewReader(body)
-
 	input := &s3.PutObjectInput{
 		Bucket:               &bucketName,
 		Key:                  &fileName,
-		Body:                 readerForS3,
+		Body:                 bytes.NewReader(body),
 		ServerSideEncryption: types.ServerSideEncryptionAwsKms,
 		SSEKMSKeyId:          &a.config.Aws.JobsQueueBucketKmsKey,
 		IfNoneMatch:          aws.String("*"),

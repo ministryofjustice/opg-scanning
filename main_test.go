@@ -163,6 +163,27 @@ func TestIntegrationMain(t *testing.T) {
 		assertLogsContain(t, "Failed to create case stub in Sirius", "failed to send request to Sirius: client create case stub: received 400 response from Sirius")
 	})
 
+	t.Run("with validation errors", func(t *testing.T) {
+		xml, err := os.ReadFile("./testdata/xml/LP1F-invalid-dates.xml")
+		assert.NoError(t, err)
+
+		set := xmlToSet("LP1F", xml, "", "", "")
+
+		req, err := http.NewRequest(http.MethodPost, host+"/api/ddc", strings.NewReader(set))
+		assert.NoError(t, err)
+
+		req.Header.Add("Content-Type", "text/xml")
+		req.Header.Add("Cookie", "membrane="+token)
+
+		resp, err := http.DefaultClient.Do(req)
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		assert.JSONEq(t, `{"data":{"success":false,"message":"XML for LP1F failed XSD validation","validationErrors":["Element 'Page10': This element is not expected. Expected is ( Page1 )."]}}`, readString(resp.Body))
+
+		assertLogsContain(t, "Validate and sanitize XML failed", "XML for LP1F failed XSD validation")
+	})
+
 	for _, fileType := range []string{"EP2PG", "LP1F", "LP1H", "LP2"} {
 		t.Run(fileType, func(t *testing.T) {
 			assert.NoError(t, checkFile(token, fileType, fileType+"-valid", uuid.NewString()))

@@ -147,7 +147,7 @@ func (c *client) do(req *http.Request, v any) error {
 
 	// Handle non-2xx responses
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("unexpected status code: %d - Response: %s", resp.StatusCode, string(body))
+		return fmt.Errorf("unexpected status code: %d - Response: %s", resp.StatusCode, body)
 	}
 
 	if err := json.Unmarshal(body, &v); err != nil {
