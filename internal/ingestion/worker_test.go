@@ -74,7 +74,15 @@ func TestWorkerProcess_InvalidXML(t *testing.T) {
 	xmlPayloadMalformed := `<Set>
 		<Header CaseNo="1234"><Body></Body>`
 
-	worker := &Worker{}
+	awsClient := newMockAwsClient(t)
+	awsClient.EXPECT().
+		PersistSetData(mock.Anything, mock.Anything).
+		Return("filename", nil)
+
+	worker := &Worker{
+		logger:    slog.New(slog.DiscardHandler),
+		awsClient: awsClient,
+	}
 	_, err := worker.Process(context.Background(), xmlPayloadMalformed)
 
 	var verr ValidateAndSanitizeError
@@ -86,11 +94,17 @@ func TestWorkerProcess_InvalidXMLExplainsXSDErrors(t *testing.T) {
 		<Header CaseNo="1234"></Header>
 	</Set>`
 
+	awsClient := newMockAwsClient(t)
+	awsClient.EXPECT().
+		PersistSetData(mock.Anything, mock.Anything).
+		Return("filename", nil)
+
 	config, _ := config.Read()
 
 	worker := &Worker{
-		logger: slog.New(slog.DiscardHandler),
-		config: config,
+		logger:    slog.New(slog.DiscardHandler),
+		config:    config,
+		awsClient: awsClient,
 	}
 	_, err := worker.Process(context.Background(), xmlPayloadMalformed)
 
@@ -114,11 +128,17 @@ func TestWorkerProcess_InvalidEmbeddedXMLProvidesDetails(t *testing.T) {
 		</Body>
 	</Set>`
 
+	awsClient := newMockAwsClient(t)
+	awsClient.EXPECT().
+		PersistSetData(mock.Anything, mock.Anything).
+		Return("filename", nil)
+
 	config, _ := config.Read()
 
 	worker := &Worker{
-		logger: slog.New(slog.DiscardHandler),
-		config: config,
+		logger:    slog.New(slog.DiscardHandler),
+		config:    config,
+		awsClient: awsClient,
 	}
 	_, err := worker.Process(context.Background(), xmlPayloadMalformed)
 

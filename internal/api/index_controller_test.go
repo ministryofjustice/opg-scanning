@@ -38,20 +38,6 @@ func setupController(t *testing.T) *IndexController {
 
 	mockAuth := newMockAuth(t)
 
-	awsClient := newMockAwsClient(t)
-	awsClient.EXPECT().
-		PersistSetData(mock.Anything, mock.Anything).
-		Return("path/my-set.xml", nil).
-		Maybe()
-	awsClient.EXPECT().
-		PersistFormData(mock.Anything, mock.Anything, mock.Anything).
-		Return("testFileName", nil).
-		Maybe()
-	awsClient.EXPECT().
-		QueueSetForProcessing(mock.Anything, mock.Anything, mock.Anything).
-		Return("123", nil).
-		Maybe()
-
 	worker := newMockWorker(t)
 	worker.EXPECT().
 		Process(mock.Anything, mock.Anything).
@@ -59,11 +45,10 @@ func setupController(t *testing.T) *IndexController {
 		Maybe()
 
 	return &IndexController{
-		config:    appConfig,
-		logger:    logger,
-		auth:      mockAuth,
-		worker:    worker,
-		awsClient: awsClient,
+		config: appConfig,
+		logger: logger,
+		auth:   mockAuth,
+		worker: worker,
 	}
 }
 

@@ -20,6 +20,8 @@ import (
 	"github.com/ministryofjustice/opg-scanning/internal/util"
 )
 
+var ErrScannedCaseResponseUIDMissing = errors.New("scannedCaseResponse UID missing")
+
 type Problem struct {
 	Title            string
 	ValidationErrors []string
@@ -50,7 +52,12 @@ type ValidateAndSanitizeError struct {
 func (e ValidateAndSanitizeError) Error() string { return e.Err.Error() }
 func (e ValidateAndSanitizeError) Unwrap() error { return e.Err }
 
-var ErrScannedCaseResponseUIDMissing = errors.New("scannedCaseResponse UID missing")
+type PersistSetError struct {
+	Err error
+}
+
+func (e PersistSetError) Error() string { return e.Err.Error() }
+func (e PersistSetError) Unwrap() error { return e.Err }
 
 type documentTracker interface {
 	SetProcessing(ctx context.Context, id, caseNo string) error
@@ -78,11 +85,11 @@ type Worker struct {
 	validator       *Validator
 }
 
-func NewWorker(logger *slog.Logger, config *config.Config, siriusService SiriusService, awsClient AwsClient, dynamoClient *dynamodb.Client) *Worker {
+func NewWorker(logger *slog.Logger, config *config.Config, awsClient AwsClient, dynamoClient *dynamodb.Client) *Worker {
 	return &Worker{
 		logger:          logger,
 		config:          config,
-		siriusService:   siriusService,
+		siriusService:   sirius.NewService(config),
 		awsClient:       awsClient,
 		documentTracker: NewDocumentTracker(dynamoClient, config.Aws.DocumentsTable),
 		validator:       NewValidator(),
@@ -90,6 +97,13 @@ func NewWorker(logger *slog.Logger, config *config.Config, siriusService SiriusS
 }
 
 func (q *Worker) Process(ctx context.Context, bodyStr string) (*sirius.ScannedCaseResponse, error) {
+	filename, err := q.awsClient.PersistSetData(ctx, []byte(bodyStr))
+	if err != nil {
+		return nil, PersistSetError{Err: err}
+	}
+
+	q.logger.InfoContext(ctx, "Stored Set data", slog.String("set_filename", filename))
+
 	set, err := q.validateAndSanitizeXML(ctx, bodyStr)
 	if err != nil {
 		return nil, ValidateAndSanitizeError{Err: err}

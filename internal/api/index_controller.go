@@ -27,22 +27,15 @@ type Auth interface {
 	Check(next http.Handler) http.HandlerFunc
 }
 
-type AwsClient interface {
-	PersistFormData(ctx context.Context, body io.Reader, docType string) (string, error)
-	PersistSetData(ctx context.Context, body []byte) (string, error)
-	QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (string, error)
-}
-
 type worker interface {
 	Process(ctx context.Context, bodyStr string) (*sirius.ScannedCaseResponse, error)
 }
 
 type IndexController struct {
-	config    *config.Config
-	logger    *slog.Logger
-	auth      Auth
-	worker    worker
-	awsClient AwsClient
+	config *config.Config
+	logger *slog.Logger
+	auth   Auth
+	worker worker
 }
 
 type response struct {
@@ -59,14 +52,11 @@ type responseData struct {
 var uidReplacementRegex = regexp.MustCompile(`^7[0-9]{3}-[0-9]{4}-[0-9]{4}$`)
 
 func NewIndexController(logger *slog.Logger, awsClient aws.AwsClientInterface, appConfig *config.Config, dynamoClient *dynamodb.Client) *IndexController {
-	siriusService := sirius.NewService(appConfig)
-
 	return &IndexController{
-		config:    appConfig,
-		logger:    logger,
-		auth:      auth.New(appConfig, logger, awsClient),
-		worker:    ingestion.NewWorker(logger, appConfig, siriusService, awsClient, dynamoClient),
-		awsClient: awsClient,
+		config: appConfig,
+		logger: logger,
+		auth:   auth.New(appConfig, logger, awsClient),
+		worker: ingestion.NewWorker(logger, appConfig, awsClient, dynamoClient),
 	}
 }
 
@@ -146,15 +136,6 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Save Set to S3
-	filename, err := c.awsClient.PersistSetData(reqCtx, []byte(bodyStr))
-	if err != nil {
-		c.respondWithError(reqCtx, w, http.StatusInternalServerError, "Could not persist set to S3", err)
-		return
-	}
-
-	c.logger.InfoContext(reqCtx, "Stored Set data", slog.String("set_filename", filename))
-
 	scannedCaseResponse, err := c.worker.Process(context.WithoutCancel(reqCtx), bodyStr)
 	if scannedCaseResponse == nil {
 		scannedCaseResponse = &sirius.ScannedCaseResponse{}
@@ -221,6 +202,11 @@ func getPublicError(err error, uid string) (int, string) {
 	var sanitizeError ingestion.ValidateAndSanitizeError
 	if errors.As(err, &sanitizeError) {
 		return http.StatusBadRequest, "Validate and sanitize XML failed"
+	}
+
+	var persistError ingestion.PersistSetError
+	if errors.As(err, &persistError) {
+		return http.StatusInternalServerError, "Could not persist set to S3"
 	}
 
 	var clientError sirius.Error
