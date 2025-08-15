@@ -38,7 +38,7 @@ func (s *Service) AttachDocuments(ctx context.Context, set *types.BaseSet, origi
 
 	// Check for Correspondence or SupCorrespondence and extract SubType
 	if slices.Contains([]string{"Correspondence", "SupCorrespondence"}, originalDocType) {
-		correspInterface, err := corresp_parser.Parse([]byte(decodedXML))
+		correspInterface, err := corresp_parser.Parse(decodedXML)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to parse correspondence for document %s: %w", originalDocType, err)
 		}

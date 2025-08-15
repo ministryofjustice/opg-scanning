@@ -28,7 +28,7 @@ type Auth interface {
 }
 
 type worker interface {
-	Process(ctx context.Context, bodyStr string) (*sirius.ScannedCaseResponse, error)
+	Process(ctx context.Context, body []byte) (*sirius.ScannedCaseResponse, error)
 }
 
 type IndexController struct {
@@ -124,7 +124,7 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 
 	c.logger.InfoContext(reqCtx, "Received ingestion request")
 
-	bodyStr, err := c.readRequestBody(r)
+	body, err := c.readRequestBody(r)
 	if err != nil {
 		c.respondWithError(reqCtx, w, http.StatusBadRequest, "Invalid request body", err)
 		return
@@ -136,7 +136,7 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	scannedCaseResponse, err := c.worker.Process(context.WithoutCancel(reqCtx), bodyStr)
+	scannedCaseResponse, err := c.worker.Process(context.WithoutCancel(reqCtx), body)
 	if scannedCaseResponse == nil {
 		scannedCaseResponse = &sirius.ScannedCaseResponse{}
 	}
@@ -255,15 +255,16 @@ func (c *IndexController) respondWithError(ctx context.Context, w http.ResponseW
 	}
 }
 
-// Helper Method: Validate and Sanitize XML
-func (c *IndexController) readRequestBody(r *http.Request) (string, error) {
+func (c *IndexController) readRequestBody(r *http.Request) ([]byte, error) {
 	if r.Body == nil {
-		return "", errors.New("request body is empty")
+		return nil, errors.New("request body is empty")
 	}
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer r.Body.Close() //nolint:errcheck // no need to check error when closing body
-	return string(body), nil
+
+	return body, nil
 }

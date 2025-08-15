@@ -96,15 +96,15 @@ func NewWorker(logger *slog.Logger, config *config.Config, awsClient AwsClient, 
 	}
 }
 
-func (w *Worker) Process(ctx context.Context, bodyStr string) (*sirius.ScannedCaseResponse, error) {
-	filename, err := w.awsClient.PersistSetData(ctx, []byte(bodyStr))
+func (w *Worker) Process(ctx context.Context, body []byte) (*sirius.ScannedCaseResponse, error) {
+	filename, err := w.awsClient.PersistSetData(ctx, body)
 	if err != nil {
 		return nil, PersistSetError{Err: err}
 	}
 
 	w.logger.InfoContext(ctx, "Stored Set data", slog.String("set_filename", filename))
 
-	set, err := w.validateAndSanitizeXML(ctx, bodyStr)
+	set, err := w.validateAndSanitizeXML(ctx, body)
 	if err != nil {
 		return nil, ValidateAndSanitizeError{Err: err}
 	}
@@ -244,15 +244,15 @@ func (w *Worker) persist(ctx context.Context, decodedXML []byte, originalDoc *ty
 	return fileName, nil
 }
 
-func (w *Worker) validateAndSanitizeXML(ctx context.Context, bodyStr string) (*types.BaseSet, error) {
-	schemaLocation, err := ExtractSchemaLocation(bodyStr)
+func (w *Worker) validateAndSanitizeXML(ctx context.Context, body []byte) (*types.BaseSet, error) {
+	schemaLocation, err := ExtractSchemaLocation(body)
 	if err != nil {
 		return nil, err
 	}
 
 	// Validate against XSD
 	w.logger.InfoContext(ctx, "Validating against XSD")
-	xsdValidator, err := NewXSDValidator(w.config, schemaLocation, bodyStr)
+	xsdValidator, err := NewXSDValidator(w.config, schemaLocation, body)
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +273,7 @@ func (w *Worker) validateAndSanitizeXML(ctx context.Context, bodyStr string) (*t
 	// Validate and sanitize the XML
 	w.logger.InfoContext(ctx, "Validating XML")
 	xmlValidator := NewXmlValidator(*w.config)
-	parsedBaseXml, err := xmlValidator.XmlValidate(bodyStr)
+	parsedBaseXml, err := xmlValidator.XmlValidate(body)
 	if err != nil {
 		return nil, err
 	}
@@ -300,12 +300,12 @@ func (w *Worker) validateDocument(document types.BaseDocument) error {
 		return fmt.Errorf("failed to decode XML data from %s: %w", document.Type, err)
 	}
 
-	schemaLocation, err := ExtractSchemaLocation(string(decodedXML))
+	schemaLocation, err := ExtractSchemaLocation(decodedXML)
 	if err != nil {
 		return fmt.Errorf("failed to extract schema from %s: %w", document.Type, err)
 	}
 
-	xsdValidator, err := NewXSDValidator(w.config, schemaLocation, string(decodedXML))
+	xsdValidator, err := NewXSDValidator(w.config, schemaLocation, decodedXML)
 	if err != nil {
 		return fmt.Errorf("failed to load schema %s: %w", schemaLocation, err)
 	}

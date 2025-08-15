@@ -187,8 +187,8 @@ func (_m *mockWorker) EXPECT() *mockWorker_Expecter {
 }
 
 // Process provides a mock function for the type mockWorker
-func (_mock *mockWorker) Process(ctx context.Context, bodyStr string) (*sirius.ScannedCaseResponse, error) {
-	ret := _mock.Called(ctx, bodyStr)
+func (_mock *mockWorker) Process(ctx context.Context, body []byte) (*sirius.ScannedCaseResponse, error) {
+	ret := _mock.Called(ctx, body)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Process")
@@ -196,18 +196,18 @@ func (_mock *mockWorker) Process(ctx context.Context, bodyStr string) (*sirius.S
 
 	var r0 *sirius.ScannedCaseResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*sirius.ScannedCaseResponse, error)); ok {
-		return returnFunc(ctx, bodyStr)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []byte) (*sirius.ScannedCaseResponse, error)); ok {
+		return returnFunc(ctx, body)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *sirius.ScannedCaseResponse); ok {
-		r0 = returnFunc(ctx, bodyStr)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []byte) *sirius.ScannedCaseResponse); ok {
+		r0 = returnFunc(ctx, body)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*sirius.ScannedCaseResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, bodyStr)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []byte) error); ok {
+		r1 = returnFunc(ctx, body)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -221,20 +221,20 @@ type mockWorker_Process_Call struct {
 
 // Process is a helper method to define mock.On call
 //   - ctx context.Context
-//   - bodyStr string
-func (_e *mockWorker_Expecter) Process(ctx interface{}, bodyStr interface{}) *mockWorker_Process_Call {
-	return &mockWorker_Process_Call{Call: _e.mock.On("Process", ctx, bodyStr)}
+//   - body []byte
+func (_e *mockWorker_Expecter) Process(ctx interface{}, body interface{}) *mockWorker_Process_Call {
+	return &mockWorker_Process_Call{Call: _e.mock.On("Process", ctx, body)}
 }
 
-func (_c *mockWorker_Process_Call) Run(run func(ctx context.Context, bodyStr string)) *mockWorker_Process_Call {
+func (_c *mockWorker_Process_Call) Run(run func(ctx context.Context, body []byte)) *mockWorker_Process_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 string
+		var arg1 []byte
 		if args[1] != nil {
-			arg1 = args[1].(string)
+			arg1 = args[1].([]byte)
 		}
 		run(
 			arg0,
@@ -249,7 +249,7 @@ func (_c *mockWorker_Process_Call) Return(scannedCaseResponse *sirius.ScannedCas
 	return _c
 }
 
-func (_c *mockWorker_Process_Call) RunAndReturn(run func(ctx context.Context, bodyStr string) (*sirius.ScannedCaseResponse, error)) *mockWorker_Process_Call {
+func (_c *mockWorker_Process_Call) RunAndReturn(run func(ctx context.Context, body []byte) (*sirius.ScannedCaseResponse, error)) *mockWorker_Process_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -66,7 +66,7 @@ func TestWorkerPersist_IncludesXMLDeclaration(t *testing.T) {
 	// Verify that the captured XML starts with the XML declaration.
 	expectedHeader := regexp.MustCompile(`^<\?xml\s+version="1\.0"(?:\s+encoding="UTF-8")?.*\?>\n?`)
 	if !expectedHeader.Match(capturedXML) {
-		t.Errorf("expected XML header to match regex %q, got: %s", expectedHeader.String(), string(capturedXML))
+		t.Errorf("expected XML header to match regex %q, got: %s", expectedHeader.String(), capturedXML)
 	}
 }
 
@@ -83,7 +83,7 @@ func TestWorkerProcess_InvalidXML(t *testing.T) {
 		logger:    slog.New(slog.DiscardHandler),
 		awsClient: awsClient,
 	}
-	_, err := worker.Process(context.Background(), xmlPayloadMalformed)
+	_, err := worker.Process(context.Background(), []byte(xmlPayloadMalformed))
 
 	var verr ValidateAndSanitizeError
 	assert.ErrorAs(t, err, &verr)
@@ -106,7 +106,7 @@ func TestWorkerProcess_InvalidXMLExplainsXSDErrors(t *testing.T) {
 		config:    config,
 		awsClient: awsClient,
 	}
-	_, err := worker.Process(context.Background(), xmlPayloadMalformed)
+	_, err := worker.Process(context.Background(), []byte(xmlPayloadMalformed))
 
 	var verr ValidateAndSanitizeError
 	assert.ErrorAs(t, err, &verr)
@@ -140,7 +140,7 @@ func TestWorkerProcess_InvalidEmbeddedXMLProvidesDetails(t *testing.T) {
 		config:    config,
 		awsClient: awsClient,
 	}
-	_, err := worker.Process(context.Background(), xmlPayloadMalformed)
+	_, err := worker.Process(context.Background(), []byte(xmlPayloadMalformed))
 
 	var verr ValidateAndSanitizeError
 	assert.ErrorAs(t, err, &verr)
