@@ -18,12 +18,12 @@ func NewXmlValidator(config config.Config) *XmlValidator {
 	}
 }
 
-func (v *XmlValidator) XmlValidate(xmlData string) (*types.BaseSet, error) {
-	if xmlData == "" {
+func (v *XmlValidator) XmlValidate(xmlData []byte) (*types.BaseSet, error) {
+	if len(xmlData) == 0 {
 		return nil, fmt.Errorf("empty XML data provided")
 	}
 
-	parsedBaseXml, err := parser.BaseParserXml([]byte(xmlData))
+	parsedBaseXml, err := parser.BaseParserXml(xmlData)
 	if err != nil {
 		return nil, fmt.Errorf("base XML parsing failed: %w", err)
 	}
