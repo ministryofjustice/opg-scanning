@@ -1,4 +1,4 @@
-FROM golang:1.24-alpine AS build-env
+FROM golang:1.25-alpine AS build-env
 
 RUN apk add gcc libc-dev libxml2-dev
 
