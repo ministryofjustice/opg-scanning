@@ -53,7 +53,7 @@ jobs:
         continue-on-error: true
       - name: Upload golangci-lint results to GitHub Security tab
         if: ${{ always() }}
-        uses: github/codeql-action/upload-sarif@51f77329afa6477de8c49fc9c7046c15b9a4e79d # v3.29.7
+        uses: github/codeql-action/upload-sarif@2d92b76c45b91eb80fc44c74ce3fce0ee94e8f9d # v3.30.0
         with:
           sarif_file: "test-results/go-lint.sarif"
           category: golangci-lint
@@ -67,7 +67,7 @@ jobs:
         continue-on-error: true
       - name: Upload GoSec results to GitHub Security tab
         if: ${{ always() }}
-        uses: github/codeql-action/upload-sarif@51f77329afa6477de8c49fc9c7046c15b9a4e79d # v3.29.7
+        uses: github/codeql-action/upload-sarif@2d92b76c45b91eb80fc44c74ce3fce0ee94e8f9d # v3.30.0
         with:
           sarif_file: "test-results/gosec.sarif"
           category: gosec
@@ -91,7 +91,7 @@ jobs:
               echo "COMMIT=${{github.event.pull_request.head.sha}}" >> $GITHUB_OUTPUT
           fi
       - name: Upload code coverage
-        uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5.4.3
+        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
         with:
           files: ./test-results/coverage.out
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -199,7 +199,7 @@ jobs:
           registries: 311462405659
 
       - name: Trivy scan
-        uses: aquasecurity/trivy-action@dc5a429b52fcf669ce959baa2c2dd26090d2a6c4 # 0.32.0
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         env:
           TRIVY_DB_REPOSITORY: ${{ steps.login_ecr.outputs.registry }}/trivy-db-public-ecr/aquasecurity/trivy-db:2
           TRIVY_JAVA_DB_REPOSITORY: ${{ steps.login_ecr.outputs.registry }}/trivy-db-public-ecr/aquasecurity/trivy-java-db:1
@@ -208,7 +208,7 @@ jobs:
           format: "sarif"
           output: ${{ env.sarif_file }}
       - name: Trivy scan upload to github
-        uses: github/codeql-action/upload-sarif@51f77329afa6477de8c49fc9c7046c15b9a4e79d # v3.29.7
+        uses: github/codeql-action/upload-sarif@2d92b76c45b91eb80fc44c74ce3fce0ee94e8f9d # v3.30.0
         if: always()
         with:
           sarif_file: ${{ env.sarif_file }}
