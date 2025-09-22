@@ -24,7 +24,8 @@
   ],
   "major": {
     "schedule": ["on sunday"],
-    "commitMessageSuffix": " #minor"
+    "commitMessageSuffix": " #minor",
+    "minimumReleaseAge": "3 days"
   },
   "vulnerabilityAlerts": {
     "groupName": "Security Alerts",
