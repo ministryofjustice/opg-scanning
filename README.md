@@ -65,7 +65,9 @@ For local development and testing you will need:
 
 ## Testing locally with Sirius and Postman
 
-To start the scanning app with a connection to Sirius, run the `make start-sirius` command which uses the `docker-compose.sirius.yml` file to connect the scanning app to the Sirius docker network and passes uploads to its localstack instance.
+_If you don't need to check how Sirius processes an XML upload, you can just use `make start` to run the scanning app without Sirius_
+
+To start the scanning app with a connection to Sirius, first start running Sirius locally and then run the `make start-sirius` command in opg-scanning. This uses the `docker-compose.sirius.yml` file to connect the scanning app to the Sirius docker network and passes uploads to Sirius's localstack instance to be processed asynchronously.
 
 Load [the Postman collection](scripts/OPG%20Scanning.postman_collection.json) into Postman (or any tool which supports it). You will need to set the following environment variables for the local environment.
 
