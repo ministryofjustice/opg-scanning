@@ -9,7 +9,8 @@ COPY go.sum .
 
 RUN go mod download
 
-COPY . .
+COPY internal internal
+COPY main.go .
 
 RUN CGO_ENABLED=1 go build -a -installsuffix cgo -o /go/bin/opg-scanning .
 
