@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -186,7 +185,13 @@ func (a *AwsClient) FetchCredentials(ctx context.Context) (map[string]string, er
 }
 
 func (a *AwsClient) QueueSetForProcessing(ctx context.Context, scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) (string, error) {
-	message := createMessageBody(scannedCaseResponse, fileName)
+	message := struct {
+		UID      string `json:"uid"`
+		Filename string `json:"filename"`
+	}{
+		UID:      scannedCaseResponse.UID,
+		Filename: fileName,
+	}
 	messageJson, err := json.Marshal(message)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal message to JSON: %w", err)
@@ -211,53 +216,10 @@ func (a *AwsClient) QueueSetForProcessing(ctx context.Context, scannedCaseRespon
 	return *output.MessageId, nil
 }
 
-func createMessageBody(scannedCaseResponse *sirius.ScannedCaseResponse, fileName string) map[string]any {
-	// Create a message structure
-	content := map[string]any{
-		"uid":      scannedCaseResponse.UID,
-		"filename": fileName,
-	}
-
-	// Create the final message structure
-	message := map[string]any{
-		"content": phpSerialize(content),
-		"metadata": map[string]any{
-			"__name__": "Ddc\\Job\\FormJob",
-		},
-	}
-
-	return message
-}
-
 func isValidXML(data []byte) error {
 	var v any
 	if err := xml.Unmarshal(data, &v); err != nil {
 		return fmt.Errorf("xml unmarshal error: %w", err)
 	}
 	return nil
-}
-
-// Serializes a map of string keys and values of type string or int into a PHP serialized string format.
-// It supports only string and integer types for values.
-// Only supports flat arrays.
-func phpSerialize(data map[string]interface{}) string {
-	var sb strings.Builder
-	// Serialize the map as a PHP array
-	sb.WriteString("a:" + strconv.Itoa(len(data)) + ":{")
-
-	for key, value := range data {
-		// Serialize the key
-		sb.WriteString("s:" + strconv.Itoa(len(key)) + `:"` + key + `";`)
-
-		// Serialize the value based on type
-		switch v := value.(type) {
-		case string:
-			sb.WriteString("s:" + strconv.Itoa(len(v)) + `:"` + v + `";`)
-		case int:
-			sb.WriteString("i:" + strconv.Itoa(v) + ";")
-		}
-	}
-
-	sb.WriteString("}")
-	return sb.String()
 }
