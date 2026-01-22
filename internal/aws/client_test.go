@@ -104,30 +104,6 @@ func TestPersistSetData(t *testing.T) {
 	assert.True(t, found, fmt.Sprintf("Expected object key '%s' not found in the bucket", fileName))
 }
 
-func TestAwsQueue_PHPSerialization(t *testing.T) {
-	message := createMessageBody(scannedCaseResponse, fileName)
-
-	messageJson, err := json.Marshal(message)
-	assert.NoError(t, err, "Failed to marshal message to JSON")
-
-	metadataJson := `{"metadata":{"__name__":"Ddc\\Job\\FormJob"}}`
-
-	var actual map[string]interface{}
-	var expected map[string]interface{}
-
-	err = json.Unmarshal(messageJson, &actual)
-	assert.NoError(t, err)
-
-	err = json.Unmarshal([]byte(metadataJson), &expected)
-	assert.NoError(t, err)
-
-	// Compare metadata
-	assert.Equal(t, expected["metadata"], actual["metadata"])
-
-	assert.Contains(t, actual["content"], fileName)
-	assert.Contains(t, actual["content"], scannedCaseResponse.UID)
-}
-
 func TestAwsQueue_QueueSetForProcessing(t *testing.T) {
 	appConfig, _ := config.Read()
 	ctx := context.Background()
@@ -151,10 +127,13 @@ func TestAwsQueue_QueueSetForProcessing(t *testing.T) {
 	assert.NoError(t, err, "Failed to queue message")
 	assert.NotNil(t, messageID)
 
-	validateMessageInQueue(t, ctx, awsClient.SQS, awsClient.siriusQueueURL)
+	receivedMessage := validateMessageInQueue(t, ctx, awsClient.SQS, awsClient.siriusQueueURL)
+
+	assert.Equal(t, scannedCaseResponse.UID, receivedMessage["uid"])
+	assert.Equal(t, fileName, receivedMessage["filename"])
 }
 
-func validateMessageInQueue(t *testing.T, ctx context.Context, sqsClient *sqs.Client, queueUrl string) {
+func validateMessageInQueue(t *testing.T, ctx context.Context, sqsClient *sqs.Client, queueUrl string) map[string]any {
 	var output *sqs.ReceiveMessageOutput
 	var err error
 	// Poll for up to 5 seconds
@@ -180,7 +159,7 @@ func validateMessageInQueue(t *testing.T, ctx context.Context, sqsClient *sqs.Cl
 				var receivedMessage map[string]any
 				err = json.Unmarshal([]byte(*output.Messages[0].Body), &receivedMessage)
 				assert.NoError(t, err)
-				return
+				return receivedMessage
 			}
 		}
 	}
