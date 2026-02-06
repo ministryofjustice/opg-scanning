@@ -601,7 +601,13 @@
                 <xs:element name="Address1" type="xs:string"/>
                 <xs:element name="Address2" type="xs:string"/>
                 <xs:element name="Address3" type="xs:string"/>
-                <xs:element name="Postcode" type="xs:string"/>
+                <xs:element name="Postcode">
+                    <xs:simpleType>
+                        <xs:restriction base="xs:string">
+                            <xs:maxLength value="255"/>
+                        </xs:restriction>
+                    </xs:simpleType>
+                </xs:element>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
@@ -684,8 +690,20 @@
             </xs:sequence>
         </xs:complexType>
     </xs:element>
-    <xs:element name="LastName" type="xs:string"/>
-    <xs:element name="Forename" type="xs:string"/>
+    <xs:element name="LastName">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:maxLength value="255"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+    <xs:element name="Forename">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:maxLength value="255"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
     <xs:element name="Declaration">
         <xs:complexType>
             <xs:sequence>
@@ -713,7 +731,13 @@
     <xs:element name="PhysicalPage" type="xs:int"/>
     <xs:element name="MiddleName" type="xs:string"/>
     <xs:element name="FullAddress" type="xs:string"/>
-    <xs:element name="OtherNames" type="xs:string"/>
+    <xs:element name="OtherNames">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:maxLength value="255"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
     <xs:element name="Mobile" type="xs:string"/>
     <xs:element name="NamedOthers">
         <xs:complexType>
@@ -742,9 +766,27 @@
             </xs:sequence>
         </xs:complexType>
     </xs:element>
-    <xs:element name="FirstName" type="xs:string"/>
-    <xs:element name="Title" type="xs:string"/>
-    <xs:element name="EmailAddress" type="xs:string"/>
+    <xs:element name="FirstName">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:maxLength value="255"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+    <xs:element name="Title">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:maxLength value="255"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+    <xs:element name="EmailAddress">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:maxLength value="255"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
     <xs:element name="Phone" type="xs:boolean"/>
     <xs:element name="PhoneNumber" type="xs:string"/>
     <xs:element name="Post" type="xs:boolean"/>
