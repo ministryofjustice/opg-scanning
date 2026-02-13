@@ -27,7 +27,7 @@ services:
   app-test:
     build:
       context: .
-      dockerfile: Dockerfile.test
+      dockerfile: test.Dockerfile
     environment:
       - SIRIUS_BASE_URL=http://sirius-mock:8080
       - XSD_PATH=/app/xsd
@@ -47,7 +47,7 @@ services:
         condition: service_healthy
 
   localstack:
-    image: localstack/localstack:4.12
+    image: localstack/localstack:4.13
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "./scripts/localstack/init:/etc/localstack/init/ready.d"
