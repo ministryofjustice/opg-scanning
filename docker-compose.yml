@@ -27,7 +27,7 @@ services:
   app-test:
     build:
       context: .
-      dockerfile: Dockerfile.test
+      dockerfile: test.Dockerfile
     environment:
       - SIRIUS_BASE_URL=http://sirius-mock:8080
       - XSD_PATH=/app/xsd
