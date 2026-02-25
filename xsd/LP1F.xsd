@@ -430,7 +430,7 @@
                                                     <xs:element name="Attorney" type="xs:boolean"/>
                                                     <xs:element name="ReplacementAttorney" type="xs:boolean"/>
                                                     <xs:element name="PersonToNotify" type="xs:boolean"/>
-                                                    <xs:element name="Title" type="xs:string"/>
+                                                    <xs:element ref="Title"/>
                                                     <xs:element ref="FirstName"/>
                                                     <xs:element ref="LastName"/>
                                                     <xs:element ref="DOB"/>
@@ -591,7 +591,13 @@
                 <xs:element name="Ms" type="xs:boolean"/>
                 <xs:element name="Miss" type="xs:boolean"/>
                 <xs:element name="Other" type="xs:boolean"/>
-                <xs:element name="OtherName" type="xs:string"/>
+                <xs:element name="OtherName">
+                    <xs:simpleType>
+                        <xs:restriction base="xs:string">
+                            <xs:maxLength value="255"/>
+                        </xs:restriction>
+                    </xs:simpleType>
+                </xs:element>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
@@ -601,11 +607,23 @@
                 <xs:element name="Address1" type="xs:string"/>
                 <xs:element name="Address2" type="xs:string"/>
                 <xs:element name="Address3" type="xs:string"/>
-                <xs:element name="Postcode" type="xs:string"/>
+                <xs:element name="Postcode">
+                    <xs:simpleType>
+                        <xs:restriction base="xs:string">
+                            <xs:maxLength value="255"/>
+                        </xs:restriction>
+                    </xs:simpleType>
+                </xs:element>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
-    <xs:element name="Telephone" type="xs:string"/>
+    <xs:element name="Telephone">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:maxLength value="255"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
     <xs:element name="DOB" type="xs:string"/>
     <xs:element name="Email" type="xs:boolean"/>
     <xs:element name="Attorney">
@@ -635,8 +653,20 @@
     <xs:element name="DXDetails">
         <xs:complexType>
             <xs:sequence>
-                <xs:element name="DXNumber" type="xs:string"/>
-                <xs:element name="DXExchange" type="xs:string"/>
+                <xs:element name="DXNumber">
+                    <xs:simpleType>
+                        <xs:restriction base="xs:string">
+                            <xs:maxLength value="255"/>
+                        </xs:restriction>
+                    </xs:simpleType>
+                </xs:element>
+                <xs:element name="DXExchange">
+                    <xs:simpleType>
+                        <xs:restriction base="xs:string">
+                            <xs:maxLength value="255"/>
+                        </xs:restriction>
+                    </xs:simpleType>
+                </xs:element>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
@@ -649,10 +679,15 @@
                 <xs:element name="NoRelation" type="xs:boolean"/>
                 <xs:element name="Solicitor" type="xs:boolean"/>
                 <xs:element name="OtherProfessional" type="xs:boolean"/>
-                <xs:element name="OtherName" type="xs:string">
+                <xs:element name="OtherName">
                     <xs:annotation>
                         <xs:documentation>If other or other professional, please specify</xs:documentation>
                     </xs:annotation>
+                    <xs:simpleType>
+                        <xs:restriction base="xs:string">
+                            <xs:maxLength value="255"/>
+                        </xs:restriction>
+                    </xs:simpleType>
                 </xs:element>
             </xs:sequence>
         </xs:complexType>
@@ -661,8 +696,20 @@
         <xs:complexType>
             <xs:sequence>
                 <xs:element name="NoticeDate" type="xs:string"/>
-                <xs:element name="LastName" type="xs:string"/>
-                <xs:element name="FirstName" type="xs:string"/>
+                <xs:element name="LastName">
+                    <xs:simpleType>
+                        <xs:restriction base="xs:string">
+                            <xs:maxLength value="255"/>
+                        </xs:restriction>
+                    </xs:simpleType>
+                </xs:element>
+                <xs:element name="FirstName">
+                    <xs:simpleType>
+                        <xs:restriction base="xs:string">
+                            <xs:maxLength value="255"/>
+                        </xs:restriction>
+                    </xs:simpleType>
+                </xs:element>
                 <xs:element ref="Address"/>
             </xs:sequence>
         </xs:complexType>
@@ -684,8 +731,20 @@
             </xs:sequence>
         </xs:complexType>
     </xs:element>
-    <xs:element name="LastName" type="xs:string"/>
-    <xs:element name="Forename" type="xs:string"/>
+    <xs:element name="LastName">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:maxLength value="255"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+    <xs:element name="Forename">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:maxLength value="255"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
     <xs:element name="Declaration">
         <xs:complexType>
             <xs:sequence>
@@ -694,9 +753,27 @@
             </xs:sequence>
         </xs:complexType>
     </xs:element>
-    <xs:element name="CompanyName" type="xs:string"/>
-    <xs:element name="Occupation" type="xs:string"/>
-    <xs:element name="OtherForenames" type="xs:string"/>
+    <xs:element name="CompanyName">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:maxLength value="255"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+    <xs:element name="Occupation">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:maxLength value="255"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+    <xs:element name="OtherForenames">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:maxLength value="255"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
     <xs:element name="Relative">
         <xs:complexType>
             <xs:sequence>
@@ -713,7 +790,13 @@
     <xs:element name="PhysicalPage" type="xs:int"/>
     <xs:element name="MiddleName" type="xs:string"/>
     <xs:element name="FullAddress" type="xs:string"/>
-    <xs:element name="OtherNames" type="xs:string"/>
+    <xs:element name="OtherNames">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:maxLength value="255"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
     <xs:element name="Mobile" type="xs:string"/>
     <xs:element name="NamedOthers">
         <xs:complexType>
@@ -742,10 +825,34 @@
             </xs:sequence>
         </xs:complexType>
     </xs:element>
-    <xs:element name="FirstName" type="xs:string"/>
-    <xs:element name="Title" type="xs:string"/>
-    <xs:element name="EmailAddress" type="xs:string"/>
+    <xs:element name="FirstName">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:maxLength value="255"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+    <xs:element name="Title">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:maxLength value="255"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+    <xs:element name="EmailAddress">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:maxLength value="255"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
     <xs:element name="Phone" type="xs:boolean"/>
-    <xs:element name="PhoneNumber" type="xs:string"/>
+    <xs:element name="PhoneNumber">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:maxLength value="255"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
     <xs:element name="Post" type="xs:boolean"/>
 </xs:schema>
