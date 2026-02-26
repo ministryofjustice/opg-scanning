@@ -696,20 +696,8 @@
         <xs:complexType>
             <xs:sequence>
                 <xs:element name="NoticeDate" type="xs:string"/>
-                <xs:element name="LastName">
-                    <xs:simpleType>
-                        <xs:restriction base="xs:string">
-                            <xs:maxLength value="255"/>
-                        </xs:restriction>
-                    </xs:simpleType>
-                </xs:element>
-                <xs:element name="FirstName">
-                    <xs:simpleType>
-                        <xs:restriction base="xs:string">
-                            <xs:maxLength value="255"/>
-                        </xs:restriction>
-                    </xs:simpleType>
-                </xs:element>
+                <xs:element name="LastName" type="xs:string"/>
+                <xs:element name="FirstName" type="xs:string"/>
                 <xs:element ref="Address"/>
             </xs:sequence>
         </xs:complexType>
