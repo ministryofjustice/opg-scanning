@@ -16,6 +16,6 @@ venv/
 env/
 # build
 .cache
-.trivy-cache
+
 test-results
 internal/sirius/pacts

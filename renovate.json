@@ -11,13 +11,13 @@
   "branchConcurrentLimit": 0,
   "configMigration": true,
   "postUpdateOptions": ["gomodTidy"],
+  "minimumReleaseAge": "7 days",
   "packageRules": [
     {
       "groupName": "Minor & Patch Updates",
       "groupSlug": "all-minor-patch-updates",
       "matchUpdateTypes": ["minor", "patch"],
       "prPriority": 1,
-      "minimumReleaseAge": "3 days",
       "schedule": ["on sunday"],
       "commitMessageSuffix": " #patch",
       "matchPackageNames": ["*"]
@@ -28,7 +28,6 @@
       "groupSlug": "github-minor-patch-updates",
       "matchUpdateTypes": ["minor", "patch"],
       "prPriority": 2,
-      "minimumReleaseAge": "3 days",
       "schedule": ["on sunday"],
       "commitMessageSuffix": " #patch",
       "matchPackageNames": ["*"],
@@ -37,8 +36,7 @@
   ],
   "major": {
     "schedule": ["on sunday"],
-    "commitMessageSuffix": " #minor",
-    "minimumReleaseAge": "3 days"
+    "commitMessageSuffix": " #minor"
   },
   "vulnerabilityAlerts": {
     "groupName": "Security Alerts",
