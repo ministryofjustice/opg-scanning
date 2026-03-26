@@ -165,7 +165,7 @@ jobs:
       ]
     env:
       local_docker_image: 311462405659.dkr.ecr.eu-west-1.amazonaws.com/sirius/scanning/app:latest
-      sarif_file: trivy-results.sarif
+      sarif_file: test-results/snyk.sarif
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -197,22 +197,18 @@ jobs:
         with:
           registries: 311462405659
 
-      - name: Trivy scan
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
-        env:
-          TRIVY_DB_REPOSITORY: ${{ steps.login_ecr.outputs.registry }}/trivy-db-public-ecr/aquasecurity/trivy-db:2
-          TRIVY_JAVA_DB_REPOSITORY: ${{ steps.login_ecr.outputs.registry }}/trivy-db-public-ecr/aquasecurity/trivy-java-db:1
+      - name: Snyk Scan
+        uses: ministryofjustice/opg-github-actions/actions/snyk-scan@8dea82fc8b8e7ffca431f0fb83848d523147ccd8 # v4.5.0
         with:
-          version: v0.69.2
-          image-ref: ${{ env.local_docker_image }}
-          format: "sarif"
-          output: ${{ env.sarif_file }}
-      - name: Trivy scan upload to github
+          SNYK_TEST_IMAGE: ${{ env.local_docker_image }}
+          SNYK_TOKEN: ${{ secrets.SNYK_OPG_ORG_TOKEN }}
+
+      - name: Upload Snyk scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@0d579ffd059c29b07949a3cce3983f0780820c98 # v4.32.6
         if: always()
         with:
           sarif_file: ${{ env.sarif_file }}
-          category: trivy-docker-${{ matrix.data.image_app_name }}
+          category: snyk-docker-${{ matrix.data.image_app_name }}
 
       - name: Tag & Push
         env:
