@@ -1,3 +1,9 @@
 version: v1.25.1
-ignore: {}
+ignore:
+  SNYK-GOLANG-GOLANGORGXNETHTTP2-15363313:
+    - "*":
+        #         Ignore until after trivy remediation work
+        reason: Medium severity vulnerability found in golang.org/x/net/http2 - uncaught exception.
+        expires: 2026-05-01T16:43:32.163Z
+        created: 2026-04-01T16:43:32.164Z
 patch: {}
