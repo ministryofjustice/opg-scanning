@@ -41,7 +41,7 @@ jobs:
   # codeql for go
   codeql_analysis:
     name: "Run CodeQL against the code base"
-    uses: ministryofjustice/opg-github-workflows/.github/workflows/analysis-application-codeql-sast-to-github-security.yml@361d19a6d7b291dab5d46f04765239341a4ca86b # v3.16.0
+    uses: ministryofjustice/opg-github-workflows/.github/workflows/analysis-application-codeql-sast-to-github-security.yml@6e25a7da7d1f1d728915ef6a51f1a269e9751069 # v3.18.0
     with:
       application_languages: '["go"]'
 
@@ -109,7 +109,7 @@ jobs:
 
   build:
     name: Build Image
-    uses: ministryofjustice/opg-github-workflows/.github/workflows/build-multi-architecture-image.yml@361d19a6d7b291dab5d46f04765239341a4ca86b # v3.16.0
+    uses: ministryofjustice/opg-github-workflows/.github/workflows/build-multi-architecture-image.yml@6e25a7da7d1f1d728915ef6a51f1a269e9751069 # v3.18.0
     with:
       image_name: 311462405659.dkr.ecr.eu-west-1.amazonaws.com/sirius/scanning/app
       build_path: .
@@ -130,8 +130,8 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
         with:
-          go-version: '^1.24'
-          cache-dependency-path: '**/go.sum'
+          go-version: "^1.24"
+          cache-dependency-path: "**/go.sum"
 
       - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
@@ -161,7 +161,7 @@ jobs:
         codeql_analysis,
         unit-test,
         integration-test,
-        build
+        build,
       ]
     env:
       local_docker_image: 311462405659.dkr.ecr.eu-west-1.amazonaws.com/sirius/scanning/app:latest
@@ -229,7 +229,18 @@ jobs:
     name: End of PR Workflow
     runs-on: ubuntu-latest
     if: always()
-    needs:  [branch_name, create-tag, gosec, go-lint, codeql_analysis, unit-test, integration-test, build, push]
+    needs:
+      [
+        branch_name,
+        create-tag,
+        gosec,
+        go-lint,
+        codeql_analysis,
+        unit-test,
+        integration-test,
+        build,
+        push,
+      ]
     steps:
       - name: End of PR Workflow
         run: |
