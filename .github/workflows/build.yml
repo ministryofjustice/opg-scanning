@@ -41,7 +41,7 @@ jobs:
   # codeql for go
   codeql_analysis:
     name: "Run CodeQL against the code base"
-    uses: ministryofjustice/opg-github-workflows/.github/workflows/analysis-application-codeql-sast-to-github-security.yml@6e25a7da7d1f1d728915ef6a51f1a269e9751069 # v3.18.0
+    uses: ministryofjustice/opg-github-workflows/.github/workflows/analysis-application-codeql-sast-to-github-security.yml@52bd7a342cac0ed99690a3da1054cda827ab43e0 # v3.19.1
     with:
       application_languages: '["go"]'
 
@@ -54,7 +54,7 @@ jobs:
         continue-on-error: true
       - name: Upload golangci-lint results to GitHub Security tab
         if: ${{ always() }}
-        uses: github/codeql-action/upload-sarif@0d579ffd059c29b07949a3cce3983f0780820c98 # v4.32.6
+        uses: github/codeql-action/upload-sarif@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
         with:
           sarif_file: "test-results/go-lint.sarif"
           category: golangci-lint
@@ -68,7 +68,7 @@ jobs:
         continue-on-error: true
       - name: Upload GoSec results to GitHub Security tab
         if: ${{ always() }}
-        uses: github/codeql-action/upload-sarif@0d579ffd059c29b07949a3cce3983f0780820c98 # v4.32.6
+        uses: github/codeql-action/upload-sarif@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
         with:
           sarif_file: "test-results/gosec.sarif"
           category: gosec
@@ -92,7 +92,7 @@ jobs:
               echo "COMMIT=${{github.event.pull_request.head.sha}}" >> $GITHUB_OUTPUT
           fi
       - name: Upload code coverage
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5.5.4
         with:
           files: ./test-results/coverage.out
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -109,7 +109,7 @@ jobs:
 
   build:
     name: Build Image
-    uses: ministryofjustice/opg-github-workflows/.github/workflows/build-multi-architecture-image.yml@6e25a7da7d1f1d728915ef6a51f1a269e9751069 # v3.18.0
+    uses: ministryofjustice/opg-github-workflows/.github/workflows/build-multi-architecture-image.yml@52bd7a342cac0ed99690a3da1054cda827ab43e0 # v3.19.1
     with:
       image_name: 311462405659.dkr.ecr.eu-west-1.amazonaws.com/sirius/scanning/app
       build_path: .
@@ -128,12 +128,12 @@ jobs:
           docker run --privileged --rm tonistiigi/binfmt --install all
 
       - name: Setup Go
-        uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version: "^1.24"
           cache-dependency-path: "**/go.sum"
 
-      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: /tmp/images
           name: multi-arch-image
@@ -175,7 +175,7 @@ jobs:
           sudo systemctl restart docker
           docker run --privileged --rm tonistiigi/binfmt --install all
 
-      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: /tmp/images
           name: multi-arch-image
@@ -193,18 +193,18 @@ jobs:
 
       - name: ECR Login
         id: login_ecr
-        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
+        uses: aws-actions/amazon-ecr-login@f2e9fc6c2b355c1890b65e6f6f0e2ac3e6e22f78 # v2.1.2
         with:
           registries: 311462405659
 
       - name: Snyk Scan
-        uses: ministryofjustice/opg-github-actions/actions/snyk-scan@8dea82fc8b8e7ffca431f0fb83848d523147ccd8 # v4.5.0
+        uses: ministryofjustice/opg-github-actions/actions/snyk-scan@3a15a16fcc221821c2869eecd8822c5d62af2984 # v4.7.0
         with:
           SNYK_TEST_IMAGE: ${{ env.local_docker_image }}
           SNYK_TOKEN: ${{ secrets.SNYK_OPG_ORG_TOKEN }}
 
       - name: Upload Snyk scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@0d579ffd059c29b07949a3cce3983f0780820c98 # v4.32.6
+        uses: github/codeql-action/upload-sarif@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
         if: always()
         with:
           sarif_file: ${{ env.sarif_file }}
