@@ -18,7 +18,7 @@ FROM alpine:3
 
 RUN apk update && \
     apk add libxml2-dev && \
-    apk upgrade --no-cache busybox libcrypto3 libssl3
+    apk upgrade --no-cache busybox libcrypto3 libssl3 musl
 
 ENV XSD_PATH=/go/xsd
 
