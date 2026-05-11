@@ -1,6 +1,6 @@
 module github.com/ministryofjustice/opg-scanning
 
-go 1.25.4
+go 1.26.0
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.41.6
@@ -37,7 +37,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.43.0 // indirect
 	go.opentelemetry.io/otel/trace v1.43.0
 	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
-	golang.org/x/net v0.52.0 // indirect
+	golang.org/x/net v0.53.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/text v0.36.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260209200024-4cfbd4190f57 // indirect
