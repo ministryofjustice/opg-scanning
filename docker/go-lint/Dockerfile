@@ -1,3 +1,3 @@
-FROM golangci/golangci-lint:v2.11.4-alpine
+FROM golangci/golangci-lint:v2.11.4-alpine@sha256:72bcd68512b4e27540dd3a778a1b7afd45759d8145cfb3c089f1d7af53e718e9
 
 RUN apk add libxml2-dev
