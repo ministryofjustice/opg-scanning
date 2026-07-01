@@ -128,7 +128,7 @@ jobs:
           docker run --privileged --rm tonistiigi/binfmt --install all
 
       - name: Setup Go
-        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
         with:
           go-version: "^1.26"
           cache-dependency-path: "**/go.sum"
@@ -193,12 +193,12 @@ jobs:
 
       - name: ECR Login
         id: login_ecr
-        uses: aws-actions/amazon-ecr-login@fa648b43de3d4d023bcb3f89ed6940096949c419 # v2.1.5
+        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2.1.6
         with:
           registries: 311462405659
 
       - name: Snyk Scan
-        uses: ministryofjustice/opg-github-actions/actions/snyk-scan@2ad72748485e27f590599a7e9768b9fc0d5b8e03 # v4.8.7
+        uses: ministryofjustice/opg-github-actions/actions/snyk-scan@77bb12e7fec3bcee9a6a35cb21361195e027a12a # v4.9.0
         with:
           SNYK_TEST_IMAGE: ${{ env.local_docker_image }}
           SNYK_TOKEN: ${{ secrets.SNYK_OPG_ORG_TOKEN }}
