@@ -5,6 +5,8 @@ services:
       context: .
     ports:
       - "8081:8081"
+    privileged: false
+    user: app
     environment:
       - SIRIUS_BASE_URL=http://sirius-mock:8080
       - AWS_ENDPOINT=http://localstack:4566
