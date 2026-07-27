@@ -110,7 +110,7 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/lestrrat-go/libxml2 v0.0.0-20260304224138-bb3877930cf7
+	github.com/lestrrat-go/libxml2 v0.0.0-20260709020957-3f0f7bd60b63
 	github.com/ministryofjustice/opg-go-common v1.165.13
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	golang.org/x/crypto v0.53.0
