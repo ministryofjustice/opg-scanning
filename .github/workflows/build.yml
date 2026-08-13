@@ -149,6 +149,40 @@ jobs:
     name: Create Tags
     uses: ./.github/workflows/create-tags.yml
 
+  verify-readonly-fs:
+    name: Verify Read-only Filesystem
+    runs-on: ubuntu-latest
+    env:
+      AWS_ROLE_ARN: ${{ github.ref_name == 'main' && 'arn:aws:iam::997462338508:role/sirius-component-ssm-role' || 'arn:aws:iam::679638075911:role/sirius-component-ssm-pr-role' }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@99214aa6889fcddfa57764031d71add364327e59 # v6.1.3
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          role-session-name: opg-scanning-verify-readonly-fs
+          aws-region: eu-west-1
+
+      - name: Fetch ECS mounts config from SSM
+        id: ssm
+        run: |
+          mounts_json=$(aws ssm get-parameter \
+            --name "/sirius/production/ecs-mounts" \
+            --region eu-west-1 \
+            --query "Parameter.Value" \
+            --output text)
+          echo "mounts_json<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$mounts_json" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Verify docker-compose read_only/tmpfs matches infrastructure
+        uses: ministryofjustice/opg-github-actions/actions/verify-readonly-fs@722a5f955424aaba01e9ca43d68390cd4048d6e1
+        with:
+          mounts_json: ${{ steps.ssm.outputs.mounts_json }}
+          service_json: |
+            { "app": null }
+
   push:
     name: "Push Image"
     runs-on: ubuntu-latest
@@ -156,6 +190,7 @@ jobs:
       [
         branch_name,
         create-tag,
+        verify-readonly-fs,
         gosec,
         go-lint,
         codeql_analysis,
@@ -233,6 +268,7 @@ jobs:
       [
         branch_name,
         create-tag,
+        verify-readonly-fs,
         gosec,
         go-lint,
         codeql_analysis,

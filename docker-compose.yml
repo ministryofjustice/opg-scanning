@@ -7,6 +7,7 @@ services:
       - "8081:8081"
     privileged: false
     user: app
+    read_only: true
     environment:
       - SIRIUS_BASE_URL=http://sirius-mock:8080
       - AWS_ENDPOINT=http://localstack:4566
