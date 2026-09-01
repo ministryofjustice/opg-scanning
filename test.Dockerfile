@@ -1,4 +1,4 @@
-FROM golang:1.26-bookworm@sha256:5f68ec6805843bd3981a951ffada82a26a0bd2631045c8f7dba483fa868f5ec5
+FROM golang:1.27-bookworm@sha256:ded31c68586d2e49e760acc2e65a884b23d032e9bbbed0ae0c55abd3fcaf4452
 
 RUN apt-get update && apt-get install -y netcat-openbsd libxml2-dev
 
