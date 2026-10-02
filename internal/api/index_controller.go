@@ -149,6 +149,7 @@ func (c *IndexController) ingestHandler(w http.ResponseWriter, r *http.Request) 
 		if errors.As(err, &aperr) {
 			uid = aperr.CaseNo
 			statusCode = http.StatusAlreadyReported
+			c.logger.InfoContext(reqCtx, "Document has already been processed")
 		} else {
 			statusCode, message := getPublicError(err, scannedCaseResponse.UID)
 			c.respondWithError(reqCtx, w, statusCode, message, err)
