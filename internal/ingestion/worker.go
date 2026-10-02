@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
+	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/lestrrat-go/libxml2/xsd"
@@ -93,10 +94,27 @@ func (w *Worker) Process(ctx context.Context, body []byte) (*sirius.ScannedCaseR
 			return scannedCaseResponse, fmt.Errorf("failed to set document to processing '%s': %w", doc.ID, err)
 		}
 
+		var setOutcomeOnce sync.Once
+		setOutcome := func(outcome string) {
+			setOutcomeOnce.Do(func() {
+				switch outcome {
+				case statusFailed:
+					if err := w.documentTracker.SetFailed(ctx, doc.ID); err != nil {
+						w.logger.ErrorContext(ctx, err.Error())
+					}
+				case statusCompleted:
+					if err := w.documentTracker.SetCompleted(ctx, doc.ID); err != nil {
+						w.logger.ErrorContext(ctx, err.Error())
+					}
+				default:
+					w.logger.ErrorContext(ctx, fmt.Sprintf("unexpected outcome: %s", outcome))
+				}
+			})
+		}
+		defer setOutcome(statusFailed) // Ensure the document is marked as failed if the function exits prematurely
+
 		if err := w.processDocument(ctx, set, doc, scannedCaseResponse); err != nil {
-			if err := w.documentTracker.SetFailed(ctx, doc.ID); err != nil {
-				w.logger.ErrorContext(ctx, err.Error())
-			}
+			setOutcome(statusFailed)
 
 			if !errors.As(err, &sirius.Error{}) {
 				w.logger.ErrorContext(ctx, err.Error())
@@ -105,9 +123,7 @@ func (w *Worker) Process(ctx context.Context, body []byte) (*sirius.ScannedCaseR
 			return scannedCaseResponse, err
 		}
 
-		if err := w.documentTracker.SetCompleted(ctx, doc.ID); err != nil {
-			w.logger.ErrorContext(ctx, err.Error())
-		}
+		setOutcome(statusCompleted)
 
 		w.logger.InfoContext(ctx, "Document added for processing")
 	}
