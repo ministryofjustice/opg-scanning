@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
@@ -77,6 +78,14 @@ func main() {
 
 	// Start shutdown sequence
 	logWrapper.Info("Shutting down gracefully...")
+
+	// Shutdown the server gracefully
+	shutdownCtx, cancelShutdown := context.WithTimeout(ctx, 60*time.Second)
+	defer cancelShutdown()
+	if err := controller.Shutdown(shutdownCtx); err != nil {
+		logWrapper.Error("Failed to shutdown server gracefully", "error", err)
+	}
+
 	cancel()
 	logWrapper.Info("All jobs processed. Exiting.")
 }
