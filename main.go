@@ -77,6 +77,12 @@ func main() {
 
 	// Start shutdown sequence
 	logWrapper.Info("Shutting down gracefully...")
+
+	// Shutdown the server gracefully
+	if err := controller.Shutdown(ctx); err != nil {
+		logWrapper.Error("Failed to shutdown server gracefully", "error", err)
+	}
+
 	cancel()
 	logWrapper.Info("All jobs processed. Exiting.")
 }
