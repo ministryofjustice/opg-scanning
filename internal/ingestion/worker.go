@@ -90,6 +90,8 @@ func (w *Worker) Process(ctx context.Context, body []byte) (*sirius.ScannedCaseR
 			slog.String("document_type", doc.Type),
 		)
 
+		w.logger.InfoContext(ctx, "Starting document")
+
 		if err := w.documentTracker.SetProcessing(ctx, doc.ID, scannedCaseResponse.UID); err != nil {
 			return scannedCaseResponse, fmt.Errorf("failed to set document to processing '%s': %w", doc.ID, err)
 		}
