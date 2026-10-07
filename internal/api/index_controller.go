@@ -34,6 +34,7 @@ type worker interface {
 type IndexController struct {
 	config *config.Config
 	logger *slog.Logger
+	server *http.Server
 	auth   Auth
 	worker worker
 }
@@ -79,14 +80,18 @@ func (c *IndexController) HandleRequests() {
 
 	c.logger.Info("Starting server on :" + c.config.HTTP.Port)
 
-	server := &http.Server{
+	c.server = &http.Server{
 		Addr:              ":" + c.config.HTTP.Port,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
-	if err := server.ListenAndServe(); err != nil {
+	if err := c.server.ListenAndServe(); err != nil {
 		c.logger.Error(err.Error())
 	}
+}
+
+func (c *IndexController) Shutdown(ctx context.Context) error {
+    return c.server.Shutdown(ctx)
 }
 
 func (c *IndexController) authHandler(w http.ResponseWriter, r *http.Request) {
