@@ -283,7 +283,7 @@ func getToken() (string, error) {
 }
 
 func checkFile(token, fileType, fileName, id string) error {
-	if err := exec.Command("docker", "compose", "exec", "localstack", "awslocal", "sqs", "purge-queue", "--queue-url=ddc.fifo").Run(); err != nil {
+	if err := exec.Command("docker", "compose", "exec", "ministack", "awslocal", "sqs", "purge-queue", "--queue-url=ddc.fifo").Run(); err != nil {
 		return err
 	}
 
@@ -319,7 +319,7 @@ func checkFile(token, fileType, fileName, id string) error {
 		return ingestion.AlreadyProcessedError{}
 	}
 
-	cmdOut, err := exec.Command("docker", "compose", "exec", "localstack", "awslocal", "sqs", "receive-message", "--queue-url=ddc.fifo").Output()
+	cmdOut, err := exec.Command("docker", "compose", "exec", "ministack", "awslocal", "sqs", "receive-message", "--queue-url=ddc.fifo").Output()
 	if err != nil {
 		return err
 	}

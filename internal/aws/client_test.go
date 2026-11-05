@@ -24,13 +24,13 @@ var scannedCaseResponse = &sirius.ScannedCaseResponse{
 
 const fileName = "SET_DDC_20250106093401__LPA_677ba389ab101.xml"
 
-func TestPersistFormData_LocalStack(t *testing.T) {
+func TestPersistFormData_MiniStack(t *testing.T) {
 	ctx := context.Background()
 
 	appConfig, _ := config.Read()
 
 	if appConfig.App.Environment != "local" {
-		t.Skip("Skipping test as it requires localstack")
+		t.Skip("Skipping test as it requires ministack")
 	}
 
 	cfg, err := awsConfig.LoadDefaultConfig(ctx,
@@ -110,7 +110,7 @@ func TestAwsQueue_QueueSetForProcessing(t *testing.T) {
 
 	// Only run this test if we're in the "local" environment
 	if appConfig.App.Environment != "local" {
-		t.Skip("Skipping test as it requires localstack")
+		t.Skip("Skipping test as it requires ministack")
 	}
 
 	cfg, err := awsConfig.LoadDefaultConfig(ctx,

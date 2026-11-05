@@ -10,7 +10,7 @@ services:
     read_only: true
     environment:
       - SIRIUS_BASE_URL=http://sirius-mock:8080
-      - AWS_ENDPOINT=http://localstack:4566
+      - AWS_ENDPOINT=http://ministack:4566
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
       - SECRETS_MANAGER_PREFIX=local/
@@ -22,7 +22,7 @@ services:
       timeout: 2s
       retries: 5
     depends_on:
-      localstack:
+      ministack:
         condition: service_healthy
       sirius-mock:
         condition: service_healthy
@@ -34,7 +34,7 @@ services:
     environment:
       - SIRIUS_BASE_URL=http://sirius-mock:8080
       - XSD_PATH=/app/xsd
-      - AWS_ENDPOINT=http://localstack:4566
+      - AWS_ENDPOINT=http://ministack:4566
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
       - SECRETS_MANAGER_PREFIX=local/
@@ -46,7 +46,7 @@ services:
     working_dir: /app
     command: go test -short ./... -covermode=atomic -coverprofile=/tmp/test-results/coverage.out
     depends_on:
-      localstack:
+      ministack:
         condition: service_healthy
 
   pact-cli:
@@ -54,21 +54,17 @@ services:
     volumes:
       - ./internal/sirius/pacts:/tmp/pacts
 
-  localstack:
-    image: localstack/localstack:4.14@sha256:3ebc37595918b8accb852f8048fef2aff047d465167edd655528065b07bc364a
+  ministack:
+    image: ministackorg/ministack:1.5.34@sha256:21dd9d52bd1e3308b55e5205945963eb024398f69e874ecc329f76783da01e62
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-      - "./scripts/localstack/init:/etc/localstack/init/ready.d"
-      - "./scripts/localstack/wait:/scripts/wait"
-      - "./localstack-data:/var/lib/localstack/data"
+      - "./scripts/ministack/init:/docker-entrypoint-initaws.d/ready.d"
+      - "./scripts/ministack/wait:/scripts/wait"
     environment:
       AWS_DEFAULT_REGION: eu-west-1
       SERVICES: "dynamodb,s3,secretsmanager,sqs,ssm"
-      DEBUG: 1
-      DATA_DIR: /var/lib/locals
+      LOG_LEVEL: DEBUG
     ports:
       - "4566:4566"
-      - "4571:4571"
     healthcheck:
       test: ["CMD", "bash", "/scripts/wait/healthcheck.sh"]
       interval: 5s
