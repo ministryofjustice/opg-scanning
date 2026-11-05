@@ -4,7 +4,7 @@ OPG Scanning is a Go-based microservice designed to perform scanning and documen
 
 ## Overview
 
-The OPG Scanning service enables you to run tests, build the application, and perform security and lint analysis through a set of defined Makefile commands. The project is structured for rapid local development and integration testing with external dependencies such as Localstack and a Sirius mock service.
+The OPG Scanning service enables you to run tests, build the application, and perform security and lint analysis through a set of defined Makefile commands. The project is structured for rapid local development and integration testing with external dependencies such as MiniStack and a Sirius mock service.
 
 ## Requirements
 

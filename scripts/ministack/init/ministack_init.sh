@@ -24,13 +24,6 @@ create_bucket() {
         --policy '{
             "Statement": [
                 {
-                    "Sid": "AllowListingObjects",
-                    "Effect": "Allow",
-                    "Principal": { "AWS": "*" },
-                    "Action": ["s3:ListBucket"],
-                    "Resource": "arn:aws:s3:::'${BUCKET}'"
-                },
-                {
                     "Sid": "DenyUnEncryptedObjectUploads",
                     "Effect": "Deny",
                     "Principal": { "AWS": "*" },

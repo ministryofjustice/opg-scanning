@@ -2,7 +2,7 @@
 
 # SQS
 queues=$(awslocal sqs list-queues)
-echo $queues | grep '"http://sqs.eu-west-1.localhost.localstack.cloud:4566/000000000000/ddc.fifo"' || exit 1
+echo $queues | grep '/000000000000/ddc.fifo"' || exit 1
 
 # Secrets Manager
 secrets=$(awslocal secretsmanager list-secrets)

@@ -1,5 +1,5 @@
 services:
-  localstack: !reset null
+  ministack: !reset null
   sirius-mock: !reset null
 
   app:
