@@ -55,7 +55,7 @@ services:
       - ./internal/sirius/pacts:/tmp/pacts
 
   ministack:
-    image: ministackorg/ministack:1.5.34@sha256:21dd9d52bd1e3308b55e5205945963eb024398f69e874ecc329f76783da01e62
+    image: ministackorg/ministack:1.5.38@sha256:c2f82812bec8eb1145a5f09b9937e51da5e796ad2240bcb6e2ae955ee5ee3930
     volumes:
       - "./scripts/ministack/init:/docker-entrypoint-initaws.d/ready.d"
       - "./scripts/ministack/wait:/scripts/wait"
