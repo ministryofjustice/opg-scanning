@@ -38,7 +38,7 @@ func validateStruct(s any) error {
 	val := reflect.ValueOf(s)
 
 	// Check if val is a pointer and dereference it
-	if val.Kind() == reflect.Ptr {
+	if val.Kind() == reflect.Pointer {
 		val = val.Elem()
 	}
 	typeOfS := val.Type()

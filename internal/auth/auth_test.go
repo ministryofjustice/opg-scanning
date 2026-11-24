@@ -18,7 +18,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var expectedError = errors.New("problem")
+var errExpected = errors.New("problem")
 
 func TestAuthAuthenticate(t *testing.T) {
 	w := httptest.NewRecorder()
@@ -64,7 +64,7 @@ func TestAuthAuthenticate_TokenCannotBeGenerated(t *testing.T) {
 	tokens := newMockTokens(t)
 	tokens.EXPECT().
 		Generate().
-		Return("", time.Time{}, expectedError)
+		Return("", time.Time{}, errExpected)
 
 	auth := &Auth{
 		credentials: credentials,
@@ -72,7 +72,7 @@ func TestAuthAuthenticate_TokenCannotBeGenerated(t *testing.T) {
 	}
 
 	_, err := auth.Authenticate(w, r)
-	assert.ErrorIs(t, err, expectedError)
+	assert.ErrorIs(t, err, errExpected)
 }
 
 func TestAuthAuthenticate_CredentialsCannotBeFetched(t *testing.T) {
@@ -82,14 +82,14 @@ func TestAuthAuthenticate_CredentialsCannotBeFetched(t *testing.T) {
 	credentials := newMockCredentialsClient(t)
 	credentials.EXPECT().
 		FetchCredentials(mock.Anything).
-		Return(nil, expectedError)
+		Return(nil, errExpected)
 
 	auth := &Auth{
 		credentials: credentials,
 	}
 
 	_, err := auth.Authenticate(w, r)
-	assert.ErrorIs(t, err, expectedError)
+	assert.ErrorIs(t, err, errExpected)
 }
 
 func TestAuthAuthenticate_InvalidCredentials(t *testing.T) {
@@ -171,7 +171,7 @@ func TestAuthCheck_InvalidToken(t *testing.T) {
 	tokens := newMockTokens(t)
 	tokens.EXPECT().
 		Validate("a-token").
-		Return(expectedError)
+		Return(errExpected)
 
 	var logBuffer bytes.Buffer
 	logger := slog.New(slog.NewTextHandler(&logBuffer, nil))

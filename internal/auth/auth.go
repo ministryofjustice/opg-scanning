@@ -60,7 +60,7 @@ func (a *Auth) Authenticate(w http.ResponseWriter, r *http.Request) (Authenticat
 		return AuthenticatedUser{}, fmt.Errorf("failed to generate token: %w", err)
 	}
 
-	http.SetCookie(w, &http.Cookie{
+	http.SetCookie(w, &http.Cookie{ // #nosec G124 -- Secure is true everywhere but local
 		Name:     cookieName,
 		Value:    token,
 		Expires:  expiry,
