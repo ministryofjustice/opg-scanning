@@ -58,7 +58,7 @@ func (v *BaseValidator) GetFieldByPath(page string, section string, fields ...st
 			return nil, fmt.Errorf("field %s does not exist in path %v", field, fields)
 		}
 
-		if current.Kind() == reflect.Ptr {
+		if current.Kind() == reflect.Pointer {
 			if current.IsNil() {
 				return nil, fmt.Errorf("field %s in path %v is nil", field, fields)
 			}
@@ -157,7 +157,7 @@ func (v *BaseValidator) ApplicantSignatureValidator(page string) []time.Time {
 
 	for _, applicant := range applicants {
 		applicantVal := reflect.ValueOf(applicant)
-		if applicantVal.Kind() == reflect.Ptr {
+		if applicantVal.Kind() == reflect.Pointer {
 			applicantVal = applicantVal.Elem()
 		}
 
