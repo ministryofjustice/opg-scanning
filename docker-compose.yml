@@ -55,7 +55,7 @@ services:
       - ./internal/sirius/pacts:/tmp/pacts
 
   ministack:
-    image: ministackorg/ministack:1.5.34@sha256:21dd9d52bd1e3308b55e5205945963eb024398f69e874ecc329f76783da01e62
+    image: ministackorg/ministack:1.5.41@sha256:aef90fec1a4581c5fa7b4f79d347898f8475111bac95bbab3736f4a44f5f8573
     volumes:
       - "./scripts/ministack/init:/docker-entrypoint-initaws.d/ready.d"
       - "./scripts/ministack/wait:/scripts/wait"
@@ -92,7 +92,7 @@ services:
     command: golangci-lint run -v --timeout 5m --output.text.path stdout --output.sarif.path /go/src/app/test-results/go-lint.sarif --modules-download-mode=readonly
 
   gosec:
-    image: golang:1.27.3-alpine@sha256:b8c9b82affbbb82a020bbcf998dad2ba9516944ac7e883524642a481a9505e9c
+    image: golang:1.27.4-alpine@sha256:70bd7ddea8b6cbe5d6943cde279d6b67feb10cc924fb9100d1d8757c1575b280
     working_dir: /app
     volumes:
       - .:/app
