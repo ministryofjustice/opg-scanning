@@ -137,7 +137,7 @@ require (
 )
 
 require (
-	github.com/lestrrat-go/libxml2 v0.0.0-20260304224138-bb3877930cf7
+	github.com/lestrrat-go/libxml2 v0.0.0-20260709020957-3f0f7bd60b63
 	github.com/ministryofjustice/opg-go-common v1.165.22
 	golang.org/x/crypto v0.58.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
